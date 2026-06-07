@@ -1,0 +1,19 @@
+{
+  "name": "Each Spirit | 比較・ランキングで選ぶ情報メディア",
+  "short_name": "Each Spirit",
+  "description": "比較・ランキング・地域情報で、選ぶ前の判断材料を整理する情報メディア。",
+  "lang": "ja",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5ef",
+  "theme_color": "#1d4f8f",
+  "icons": [
+    {
+      "src": "/brand/each-spirit-mark.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

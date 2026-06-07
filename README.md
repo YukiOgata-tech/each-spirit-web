@@ -1,36 +1,60 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Each Spirit
 
-## Getting Started
+Next.js 15 + TypeScript + Tailwind CSS + shadcn/ui style components を使った、each-spirit.com 向け情報メディアMVPです。
 
-First, run the development server:
+## セットアップ
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+ローカル開発サーバーを起動する場合のみ、別途 `npm run dev` を実行します。
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 実装済みページ
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `/`
+- `/ramen`
+- `/ramen/articles/niigata-ramen-first-guide`
+- `/ramen/rankings/niigata-ramen-starter`
+- `/ramen/items/aoba-niigata-ekimae`
+- `/ramen/items/seabura-dou-bandai`
+- `/ramen/items/iekei-minami`
+- `/about`
+- `/contact`
+- `/privacy`
+- `/disclaimer`
+- `/sitemap.xml`
+- `/robots.txt`
+- `/llms.txt`
 
-## Learn More
+## ディレクトリ構成
 
-To learn more about Next.js, take a look at the following resources:
+要求された構成をベースに、Next.js App Routerの責務に合わせて以下のように整理しています。
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- `app/`: ルーティング、metadata、sitemap、robots、llms.txt
+- `components/`: layout、cards、seo、ui の再利用コンポーネント
+- `content/`: 静的コンテンツ。記事本文はMarkdown、メタデータ・ランキング・店舗情報は型付きTS
+- `lib/`: content取得層、SEO/JSON-LD、routes、型、ユーティリティ
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+UIが直接 `content/` を読まず、`lib/content.ts` の取得関数経由で表示する構成にしています。将来的にSupabase等へ移行する場合は、`lib/content.ts` の内部実装をDB取得へ差し替えます。
 
-## Deploy on Vercel
+## SEO / AI検索対策
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Metadata API
+- canonical / OGP
+- JSON-LD: WebSite, Organization, Article, ItemList, Restaurant, BreadcrumbList, FAQPage
+- 記事冒頭の要点まとめ
+- ランキング冒頭の結論と早見表
+- 評価基準の明文化
+- Source型による参照元、確認日、メモの追跡
+- `llms.txt` 生成ルート
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## 今後の拡張方針
+
+- カテゴリ追加時は `content/categories.ts` にカテゴリを追加し、カテゴリ専用ディレクトリを `app/{category}` に作成します。
+- カテゴリごとの配色はCSS変数またはカテゴリテーマを使って差し替えます。
+- PR掲載や収益化を始める場合は、ランキング項目の `isPr` と記事/店舗ページの表記ルールを拡張します。
+- 管理画面やDB化を行う場合も、UI側は取得関数を使い続け、データソースだけを変更します。
