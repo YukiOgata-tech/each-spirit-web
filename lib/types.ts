@@ -113,6 +113,70 @@ export type BeautyRegion = {
   status: "live" | "planned";
 };
 
+export type ProteinType = "whey-wpc" | "whey-wpi" | "casein" | "soy" | "pea" | "plant-blend";
+
+export type ProteinTarget = "women" | "men" | "trainer" | "student" | "diet" | "beginner";
+
+export type ProteinProduct = {
+  slug: string;
+  brand: string;
+  name: string;
+  description: string;
+  proteinType: ProteinType;
+  targets: ProteinTarget[];
+  servingSize: number;
+  protein: number;
+  calories: number;
+  carbs: number;
+  fat: number;
+  packageWeight: number;
+  packagePrice: number;
+  pricePerKg: number;
+  flavors: string[];
+  features: string[];
+  pros: string[];
+  cons: string[];
+  officialUrl: string;
+  imageUrl: string;
+  editorNote: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+};
+
+export type ProteinTargetInfo = {
+  slug: ProteinTarget;
+  name: string;
+  description: string;
+  tagline: string;
+  imageUrl: string;
+  keyNeeds: string[];
+  proteinPerDay: string;
+  recommendedTypes: ProteinType[];
+  status: "live" | "planned";
+};
+
+export type ProteinRankingEntry = {
+  rank: number;
+  productSlug: string;
+  score: number;
+  reason: string;
+};
+
+export type ProteinRanking = {
+  slug: string;
+  target: ProteinTarget;
+  title: string;
+  description: string;
+  criteria: string[];
+  conclusion: string;
+  quickTableLabel: string;
+  lastUpdatedAt: string;
+  items: ProteinRankingEntry[];
+  sources: Source[];
+  faqs: FAQ[];
+};
+
 export type Treatment =
   | "cut"
   | "color"
@@ -168,4 +232,38 @@ export type Ranking = {
   items: RankingItem[];
   sources: Source[];
   faqs: FAQ[];
+};
+
+export type LeisureKind = "outdoor" | "indoor" | "hybrid";
+
+export type LeisureSpot = {
+  slug: string;
+  name: string;
+  description: string;
+  region: string;
+  area: string;
+  address: string;
+  phone?: string;
+  kind: LeisureKind;
+  genre: string;
+  tags: string[];
+  bestFor: string[];
+  highlight: string;
+  priceRange: string;
+  parking: boolean;
+  parkingNote?: string;
+  businessHours: string;
+  closedDays: string;
+  officialUrl: string;
+  mapUrl: string;
+  officialLinks: OfficialLink[];
+  editorComment: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+  relatedRankingSlugs: string[];
+};
+
+export type LeisureRanking = Omit<Ranking, "items"> & {
+  items: RankingItem[];
 };

@@ -1,6 +1,6 @@
 import type { Ranking } from "@/lib/types";
 
-const collectedAt = "2026-06-07";
+const collectedAt = "2026-06-08";
 
 export const ramenRankings: Ranking[] = [
   {
@@ -105,6 +105,44 @@ export const ramenRankings: Ranking[] = [
     faqs: [
       { question: "駐車場ありでも満車になりますか？", answer: "人気店は満車になる可能性があります。ピーク時間を避ける、周辺駐車場を確認するなどの準備がおすすめです。" },
       { question: "このランキングは駐車台数だけで決めていますか？", answer: "駐車場情報の明確さに加え、エリア、営業時間、味の特徴も含めて整理しています。" },
+    ],
+  },
+  {
+    slug: "niigata-independent-selection",
+    title: "チェーン店以外で選ぶ新潟市周辺の個性派ラーメン",
+    description:
+      "複数店舗展開のチェーン店を外し、新潟市ラーメンガイドで基本情報を確認できる個店を中心に、味の個性とエリアの広がりで整理しました。",
+    conclusion:
+      "濃厚煮干しなら石黒、味噌なら花咲・神田屋・八珍亭、夜の古町なら麺亭、貝だし塩なら貝晴を候補にすると目的別に選びやすいです。",
+    quickTableLabel: "非チェーン個店早見表",
+    criteria: [
+      "チェーン店・大規模多店舗展開店を今回の追加対象から外すこと",
+      "住所、営業時間、定休日、駐車場などの基本情報を参照元で確認できること",
+      "煮干し、味噌、つけ麺、夜営業、貝だしなど味や利用シーンの違いが明確なこと",
+      "中央区だけに偏らず、江南区、西蒲区、南区、西区まで広げられること",
+      "PR掲載ではなく、参照情報に基づく編集整理であること",
+    ],
+    lastUpdatedAt: collectedAt,
+    items: [
+      { rank: 1, itemSlug: "ishiguro-bentenbashi", score: 90, reason: "3種の煮干しと動物系を重ねる極にぼが明確で、濃厚煮干し目的の入口にしやすい。", isPr: false },
+      { rank: 2, itemSlug: "hanasaki-nuttari", score: 88, reason: "沼垂と発酵文化、峰村醸造の米こうじみそという文脈を作りやすい。", isPr: false },
+      { rank: 3, itemSlug: "kaisei-kobari", score: 87, reason: "貝だし塩という軽い選択肢を追加でき、味噌・背脂中心の一覧に幅が出る。", isPr: false },
+      { rank: 4, itemSlug: "ippongi-konan", score: 86, reason: "辛つけ麺とWスープの特徴があり、江南区の検索導線も補強できる。", isPr: false },
+      { rank: 5, itemSlug: "mentei-furumachi", score: 85, reason: "古町で夜営業という利用シーンが明確で、締めラーメン需要を拾いやすい。", isPr: false },
+      { rank: 6, itemSlug: "hachintei-nishikan", score: 84, reason: "西蒲区、特製みそ、駐車場60台掲載という車移動向けの情報価値がある。", isPr: false },
+      { rank: 7, itemSlug: "kandaya-minami", score: 83, reason: "南区の味噌ラーメン候補として特徴があり、夜営業の情報も整理しやすい。", isPr: false },
+      { rank: 8, itemSlug: "mentei-kogane", score: 82, reason: "3種チャーシューのこがねら〜めんが分かりやすく、南区の掲載厚みを作れる。", isPr: false },
+    ],
+    sources: [
+      { title: "新潟市ラーメンガイド 中華そば 石黒", url: "https://niigatacity-ramen.jp/ramen/ishiguro/", sourceType: "official", collectedAt, note: "中華そば石黒の基本情報と極にぼの特徴確認。" },
+      { title: "新潟市ラーメンガイド みそ蔵らーめん 花咲", url: "https://niigatacity-ramen.jp/ramen/%E3%81%BF%E3%81%9D%E8%94%B5%E3%82%89%E3%83%BC%E3%82%81%E3%82%93-%E8%8A%B1%E5%92%B2/", sourceType: "official", collectedAt, note: "花咲の基本情報と味噌の特徴確認。" },
+      { title: "新潟市ラーメンガイド 麺屋 一本気", url: "https://niigatacity-ramen.jp/ramen/ippongi/", sourceType: "official", collectedAt, note: "一本気の基本情報と辛つけ麺の特徴確認。" },
+      { title: "新潟市ラーメンガイド ラーメン 麺亭", url: "https://niigatacity-ramen.jp/ramen/%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3-%E9%BA%BA%E4%BA%AD/", sourceType: "official", collectedAt, note: "麺亭の基本情報と夜営業、エビらーめん確認。" },
+      { title: "新潟市ラーメンガイド らぁ麺 貝晴", url: "https://niigatacity-ramen.jp/ramen/%E3%82%89%E3%81%81%E9%BA%BA-%E8%B2%9D%E6%99%B4/", sourceType: "official", collectedAt, note: "貝晴の基本情報と貝だし塩の特徴確認。" },
+    ],
+    faqs: [
+      { question: "このランキングはチェーン店を含みますか？", answer: "今回の追加対象では、複数店舗展開のチェーン店を外し、個店として紹介しやすい店舗を中心に整理しています。" },
+      { question: "掲載情報は実食レビューですか？", answer: "現時点では公式・地域ガイド等の公開情報に基づく編集整理です。営業時間や定休日は変更される可能性があるため、訪問前確認を推奨します。" },
     ],
   },
 ];

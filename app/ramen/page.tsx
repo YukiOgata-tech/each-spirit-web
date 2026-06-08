@@ -5,7 +5,7 @@ import { ItemCard } from "@/components/cards/ItemCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCategory, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
+import { getCategory, getRamenArticles, getRamenItemsByRegion, getRamenRankingsByRegion } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -15,8 +15,9 @@ export const metadata = pageMetadata({
   path: routes.ramen,
 });
 
-const areas = ["新潟市中央区", "古町", "紫竹山", "東区", "西蒲区", "燕市", "長岡市", "三条市"];
-const genres = ["新潟あっさり醤油", "新潟濃厚味噌", "燕背脂", "煮干し", "背脂しょうゆ", "駐車場あり"];
+const areas = ["新潟市中央区", "古町", "沼垂", "江南区", "西区", "南区", "西蒲区", "燕市"];
+const genres = ["新潟あっさり醤油", "新潟濃厚味噌", "燕背脂", "煮干し", "貝だし", "つけ麺", "夜営業", "個店"];
+const featuredSlugs = ["ishiguro-bentenbashi", "hanasaki-nuttari", "ippongi-konan", "kaisei-kobari"];
 const fiveStyles = [
   { name: "新潟あっさり醤油", text: "細麺と淡麗スープ。古町の老舗を入口にしやすい。" },
   { name: "新潟濃厚味噌", text: "濃い味噌と太麺。割りスープ文化も分かりやすい。" },
@@ -26,11 +27,15 @@ const fiveStyles = [
 ];
 
 export default function RamenPage() {
-  const articles = getRamenArticles();
-  const rankings = getRamenRankings();
-  const items = getRamenItems();
+  const articles = getRamenArticles().filter((a) => a.tags.includes("新潟"));
+  const rankings = getRamenRankingsByRegion("niigata");
+  const items = getRamenItemsByRegion("niigata");
+  const yamagataItems = getRamenItemsByRegion("yamagata");
+  const yamagataRankings = getRamenRankingsByRegion("yamagata");
   const category = getCategory("ramen");
-  const featured = items.slice(0, 4);
+  const featured = featuredSlugs
+    .map((slug) => items.find((item) => item.slug === slug))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item));
   return (
     <div className="ramen-theme">
       <section className="border-b border-orange-100 bg-[linear-gradient(135deg,#fff7eb_0%,#fff_55%,#f8e1c2_100%)]">
@@ -44,7 +49,7 @@ export default function RamenPage() {
               新潟5大ラーメン、実在店舗、営業時間、駐車場、参照ソースを整理。観光でも地元利用でも、条件を絞って比較しやすいカテゴリに育てます。
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild><Link href={routes.ramenRanking("niigata-ramen-essential")}>主要10店ランキング<ArrowRight className="h-4 w-4" /></Link></Button>
+              <Button asChild><Link href={routes.ramenRanking("niigata-independent-selection")}>個店8店ランキング<ArrowRight className="h-4 w-4" /></Link></Button>
               <Button asChild variant="outline"><Link href="#items">店舗一覧</Link></Button>
             </div>
           </div>
@@ -104,7 +109,7 @@ export default function RamenPage() {
 
       <section className="section-shell grid gap-8 lg:grid-cols-[1fr_1fr]">
         <div>
-          <h2 className="section-heading">注目店舗</h2>
+          <h2 className="section-heading">非チェーンの注目店舗</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
             {featured.map((item) => <ItemCard key={item.slug} item={item} />)}
           </div>
@@ -118,12 +123,33 @@ export default function RamenPage() {
       </section>
 
       <section id="items" className="section-shell">
-        <h2 className="section-heading">店舗カード一覧</h2>
+        <h2 className="section-heading">新潟県 店舗カード一覧</h2>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-slate-600">
           営業時間・定休日・駐車場は変更される可能性があります。各店舗ページの参照ソースと確認日を見たうえで、訪問前に公式情報を確認してください。
         </p>
         <div className="mt-5 grid gap-4 md:grid-cols-3">
           {items.map((item) => <ItemCard key={item.slug} item={item} />)}
+        </div>
+      </section>
+
+      <section className="section-shell border-t border-orange-100">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <Badge className="border-orange-200 bg-white text-orange-800">Yamagata</Badge>
+            <h2 className="mt-3 text-2xl font-bold text-slate-950">山形県ラーメン</h2>
+            <p className="mt-2 max-w-2xl text-sm leading-7 text-slate-600">
+              消費量日本一の山形は、からみそ（龍上海）・冷やしラーメン（栄屋本店）・酒田ラーメン（満月）・冬季限定の手揉み麺（琴平荘）など地域ごとにスタイルが異なります。
+            </p>
+          </div>
+          <Button asChild>
+            <Link href={routes.ramenRegion("yamagata")}>山形ラーメンを見る<ArrowRight className="h-4 w-4" /></Link>
+          </Button>
+        </div>
+        <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {yamagataRankings.map((ranking) => <RankingCard key={ranking.slug} ranking={ranking} />)}
+        </div>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {yamagataItems.map((item) => <ItemCard key={item.slug} item={item} />)}
         </div>
       </section>
     </div>

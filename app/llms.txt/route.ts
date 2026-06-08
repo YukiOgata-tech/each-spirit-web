@@ -1,7 +1,8 @@
-import { getCategories, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
+import { getCategories, getLeisureRankings, getLeisureRegions, getLeisureSpots, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export function GET() {
+  const leisureRegions = getLeisureRegions();
   const lines = [
     "# Each Spirit",
     "",
@@ -23,6 +24,15 @@ export function GET() {
     "",
     "## Ramen items",
     ...getRamenItems().map((item) => "- " + item.name + ": " + absoluteUrl(routes.ramenItem(item.slug))),
+    "",
+    "## Leisure regions",
+    ...leisureRegions.map((region) => "- " + region + ": " + absoluteUrl(routes.leisureRegion(region))),
+    "",
+    "## Leisure rankings",
+    ...leisureRegions.flatMap((region) => getLeisureRankings(region).map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.leisureRanking(region, ranking.slug)))),
+    "",
+    "## Leisure spots",
+    ...leisureRegions.flatMap((region) => getLeisureSpots(region).map((spot) => "- " + spot.name + ": " + absoluteUrl(routes.leisureSpot(region, spot.slug)))),
   ];
   return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8" } });
 }

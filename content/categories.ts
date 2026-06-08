@@ -2,6 +2,18 @@ import type { Category } from "@/lib/types";
 
 export const categories: Category[] = [
   {
+    slug: "protein",
+    name: "プロテイン",
+    href: "/protein",
+    description: "女性・男性・ダイエット・初心者など目的別にプロテインを比較。栄養成分・価格・味・溶けやすさを実データで整理。",
+    tagline: "目的・年代・価格帯で選ぶプロテインガイド",
+    status: "live",
+    contentTypes: ["ランキング", "商品カード", "栄養成分比較"],
+    searchFacets: ["目的", "種類", "価格帯", "フレーバー", "国産・海外"],
+    plannedTopics: ["EAA・BCAA比較", "プロテインバー", "植物性プロテイン", "プロテイン飲み方", "コンビニで買える"],
+    theme: { primary: "#1e3a5f", accent: "#f97316", background: "#eff6ff" },
+  },
+  {
     slug: "beauty",
     name: "美容室",
     href: "/beauty",
@@ -21,9 +33,21 @@ export const categories: Category[] = [
     tagline: "地域、味、移動手段で選ぶ外食ガイド",
     status: "live",
     contentTypes: ["記事", "ランキング", "店舗カード"],
-    searchFacets: ["エリア", "ジャンル", "駐車場", "営業時間", "代表店"],
-    plannedTopics: ["県内全域", "深夜営業", "子連れ", "駅近", "観光ルート"],
+    searchFacets: ["エリア", "ジャンル", "駐車場", "営業時間", "個店", "夜営業"],
+    plannedTopics: ["県内全域", "非チェーン個店", "深夜営業", "子連れ", "駅近", "観光ルート"],
     theme: { primary: "#a64019", accent: "#e5a126", background: "#fff6ea" },
+  },
+  {
+    slug: "leisure",
+    name: "レジャー",
+    href: "/leisure",
+    description: "新潟を中心に、アウトドア・インドア・雨の日・子連れ・車なしで選べるレジャースポットを整理するカテゴリ。",
+    tagline: "天候、同行者、移動手段で選ぶおでかけガイド",
+    status: "live",
+    contentTypes: ["地域ページ", "ランキング", "スポットカード"],
+    searchFacets: ["エリア", "屋外", "屋内", "雨の日", "子連れ", "車なし"],
+    plannedTopics: ["季節イベント", "温泉", "道の駅", "キャンプ", "半日モデルコース"],
+    theme: { primary: "#176b87", accent: "#f4a261", background: "#edf9f8" },
   },
   {
     slug: "travel",

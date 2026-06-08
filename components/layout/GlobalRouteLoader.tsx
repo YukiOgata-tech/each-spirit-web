@@ -4,63 +4,84 @@ import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { LoadingScreen } from "@/components/layout/LoadingScreen";
 
-const MIN_VISIBLE_MS = 520;
-const MAX_VISIBLE_MS = 2200;
+const MIN_MS = 350;
+const MAX_MS = 5000;
 
-function isModifiedEvent(event: MouseEvent) {
-  return event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0;
+function isModifiedEvent(e: MouseEvent) {
+  return e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0;
 }
 
-function shouldHandleLink(anchor: HTMLAnchorElement) {
-  if (anchor.target && anchor.target !== "_self") return false;
-  if (anchor.hasAttribute("download")) return false;
-  const href = anchor.getAttribute("href");
+function shouldHandleLink(a: HTMLAnchorElement) {
+  if (a.target && a.target !== "_self") return false;
+  if (a.hasAttribute("download")) return false;
+  const href = a.getAttribute("href");
   if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) return false;
-  const url = new URL(anchor.href);
-  if (url.origin !== window.location.origin) return false;
-  const current = window.location.pathname + window.location.search;
-  const next = url.pathname + url.search;
-  return current !== next;
+  try {
+    const url = new URL(a.href);
+    if (url.origin !== window.location.origin) return false;
+    return url.pathname + url.search !== window.location.pathname + window.location.search;
+  } catch {
+    return false;
+  }
 }
 
 export function GlobalRouteLoader() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
-  const startedAtRef = useRef(0);
-  const maxTimerRef = useRef<number | null>(null);
 
-  const start = () => {
-    startedAtRef.current = Date.now();
+  // Mutable state kept in a ref to avoid stale closures in event listeners
+  const nav = useRef({ active: false, startedAt: 0, maxTimer: 0, minTimer: 0 });
+
+  // Stable function refs — safe to call from event listeners set up once
+  const start = useRef(() => {
+    const n = nav.current;
+    window.clearTimeout(n.maxTimer);
+    window.clearTimeout(n.minTimer);
+    n.active = true;
+    n.startedAt = Date.now();
+    // Safety valve: dismiss if navigation never resolves
+    n.maxTimer = window.setTimeout(() => {
+      nav.current.active = false;
+      setVisible(false);
+    }, MAX_MS);
     setVisible(true);
-    if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
-    maxTimerRef.current = window.setTimeout(() => setVisible(false), MAX_VISIBLE_MS);
-  };
+  });
 
+  // Called when usePathname() reports the new route is committed
+  const stop = useRef(() => {
+    const n = nav.current;
+    if (!n.active) return;
+    window.clearTimeout(n.maxTimer);
+    n.active = false;
+    const delay = Math.max(0, MIN_MS - (Date.now() - n.startedAt));
+    n.minTimer = window.setTimeout(() => setVisible(false), delay);
+  });
+
+  // Register click and popstate listeners once
   useEffect(() => {
-    const onClick = (event: MouseEvent) => {
-      if (event.defaultPrevented || isModifiedEvent(event)) return;
-      const target = event.target as HTMLElement | null;
-      const anchor = target?.closest("a");
-      if (!anchor || !shouldHandleLink(anchor)) return;
-      start();
+    const n = nav.current; // capture for stable cleanup reference
+    const onClick = (e: MouseEvent) => {
+      if (e.defaultPrevented || isModifiedEvent(e)) return;
+      const anchor = (e.target as Element)?.closest("a");
+      if (anchor && shouldHandleLink(anchor)) start.current();
     };
-    const onPopState = () => start();
+    const onPop = () => start.current();
+
     document.addEventListener("click", onClick, true);
-    window.addEventListener("popstate", onPopState);
+    window.addEventListener("popstate", onPop);
+
     return () => {
       document.removeEventListener("click", onClick, true);
-      window.removeEventListener("popstate", onPopState);
-      if (maxTimerRef.current) window.clearTimeout(maxTimerRef.current);
+      window.removeEventListener("popstate", onPop);
+      window.clearTimeout(n.maxTimer);
+      window.clearTimeout(n.minTimer);
     };
   }, []);
 
+  // pathname changes when Next.js has committed the new page to the DOM
   useEffect(() => {
-    if (!visible) return;
-    const elapsed = Date.now() - startedAtRef.current;
-    const delay = Math.max(0, MIN_VISIBLE_MS - elapsed);
-    const timer = window.setTimeout(() => setVisible(false), delay);
-    return () => window.clearTimeout(timer);
-  }, [pathname, visible]);
+    stop.current();
+  }, [pathname]);
 
   if (!visible) return null;
   return <LoadingScreen fullScreen compact label="ページを切り替えています" />;

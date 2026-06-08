@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { Article, FAQ, Item, Ranking } from "@/lib/types";
+import type { Article, FAQ, Item, LeisureRanking, LeisureSpot, Ranking } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
 import { site } from "@/content/site";
 
@@ -129,6 +129,53 @@ export function itemListSchema(ranking: Ranking, entries: { entry: { rank: numbe
         },
       },
     })),
+  };
+}
+
+export function leisureItemListSchema(ranking: LeisureRanking, region: string, entries: { entry: { rank: number; score: number }; spot: LeisureSpot }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, spot }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "TouristAttraction",
+        name: spot.name,
+        url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: entry.score / 20,
+          bestRating: 5,
+          worstRating: 1,
+          ratingCount: 1,
+        },
+      },
+    })),
+  };
+}
+
+export function touristAttractionSchema(region: string, spot: LeisureSpot) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    name: spot.name,
+    description: spot.description,
+    url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
+    sameAs: spot.officialLinks.map((link) => link.url),
+    telephone: spot.phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: spot.address,
+      addressRegion: "新潟県",
+      addressCountry: "JP",
+    },
+    openingHours: spot.businessHours,
+    hasMap: spot.mapUrl,
   };
 }
 

@@ -2,6 +2,7 @@ import { editorAuthor } from "@/content/site";
 import type { Article } from "@/lib/types";
 
 const collectedAt = "2026-06-07";
+const collectedAtYamagata = "2026-06-08";
 
 export const ramenArticles: Article[] = [
   {
@@ -96,6 +97,39 @@ export const ramenArticles: Article[] = [
     faqs: [
       { question: "駐車場ありならいつでも停められますか？", answer: "人気店は駐車場ありでも満車になることがあります。開店直後、昼ピーク後、夜営業開始直後などを検討してください。" },
       { question: "車移動で避けたい条件はありますか？", answer: "営業時間が短い店、売り切れ終了がある店、専用駐車場がない中心部店舗は事前確認が重要です。" },
+    ],
+    relatedSlugs: ["niigata-ramen-first-guide"],
+  },
+  {
+    slug: "yamagata-ramen-first-guide",
+    title: "山形ラーメンを初めて選ぶ人のための見方",
+    description:
+      "ラーメン消費量日本一の背景、からみそ・冷やしラーメン・酒田ラーメンのエリア別スタイル、各エリアの代表店を整理します。",
+    category: "ラーメン",
+    tags: ["山形", "ラーメン", "選び方", "からみそ", "酒田ラーメン", "冷やしラーメン", "エリア別"],
+    publishedAt: collectedAtYamagata,
+    updatedAt: collectedAtYamagata,
+    author: editorAuthor,
+    summary: [
+      "山形ラーメンは南陽のからみそ、山形市の冷やしラーメン、酒田の魚介ワンタン、鶴岡の手揉み麺とエリアごとにジャンルが異なります。",
+      "消費量日本一の背景には、日常食としてのラーメン文化が地域に深く根付いていることがあります。",
+      "琴平荘のような冬季限定店もあるため、営業時期の確認が訪問計画では重要です。",
+    ],
+    whatYouLearn: [
+      "山形4エリア（南陽・山形市・酒田・鶴岡）のラーメンスタイルの違い",
+      "からみそ・冷やしラーメン発祥・酒田ラーメンの背景",
+      "訪問前に確認すべき営業時期・時間・駐車場",
+    ],
+    markdownFile: "yamagata-ramen-first-guide.md",
+    sources: [
+      { title: "山形市公式 ラーメン消費額日本一", url: "https://www.city.yamagata-yamagata.lg.jp/jigyosya/miryoku/brand/1017939.html", sourceType: "government", collectedAt: collectedAtYamagata, note: "山形市のラーメン消費額日本一の確認。" },
+      { title: "龍上海 公式サイト", url: "https://ryushanhai.com/group/", sourceType: "official", collectedAt: collectedAtYamagata, note: "からみそラーメン発祥・龍上海の店舗情報確認。" },
+      { title: "VISIT YAMAGATA 栄屋本店", url: "https://www.visityamagata.jp/spot-yamagata-sakaeyahonten/", sourceType: "tourism", collectedAt: collectedAtYamagata, note: "冷やしラーメン発祥・栄屋本店の情報確認。" },
+      { title: "酒田ラーメン完全ガイド マルメン製麺所", url: "https://shop.onlyone-marumen.com/%E9%85%92%E7%94%B0%E3%83%A9%E3%83%BC%E3%83%A1%E3%83%B3%E5%AE%8C%E5%85%A8%E3%82%AC%E3%82%A4%E3%83%89/", sourceType: "editorial", collectedAt: collectedAtYamagata, note: "酒田ラーメンの特徴・自家製麺率・地域背景確認。" },
+    ],
+    faqs: [
+      { question: "山形ラーメン初心者は何から選ぶべきですか？", answer: "からみそ（龍上海）・冷やしラーメン（栄屋本店・夏期）・酒田ラーメン（満月）のように、エリアとジャンルをセットで選ぶと選択しやすいです。" },
+      { question: "冬季限定の店があると聞きましたが？", answer: "鶴岡市の琴平荘は10〜5月の冬季のみ営業しています。夏に訪問する場合は他のエリアを中心に計画してください。" },
     ],
     relatedSlugs: ["niigata-ramen-first-guide"],
   },
