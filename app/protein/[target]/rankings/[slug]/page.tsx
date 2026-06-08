@@ -12,7 +12,6 @@ import {
   getProteinRanking, getProteinRankingEntries,
   getProteinRankings, getProteinTargets,
 } from "@/lib/content";
-import type { ProteinTarget } from "@/lib/types";
 
 type PageProps = { params: Promise<{ target: string; slug: string }> };
 

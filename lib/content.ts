@@ -14,6 +14,7 @@ import { proteinRankings } from "@/content/protein/rankings";
 import { niigataLeisureSpots } from "@/content/leisure/niigata/spots";
 import { niigataLeisureRankings } from "@/content/leisure/niigata/rankings";
 import { beautyRegions } from "@/content/beauty/regions";
+import { ramenRegions } from "@/content/ramen/regions";
 import { beautySalons as niigataBeautySalons } from "@/content/beauty/niigata/salons";
 import { beautyRankings as niigataBeautyRankings } from "@/content/beauty/niigata/rankings";
 import { beautyArticles as niigataBeautyArticles } from "@/content/beauty/niigata/articles";
@@ -147,7 +148,11 @@ export function getArticleMarkdown(articleSlug: string) {
 }
 
 export function getRamenRegions() {
-  return Object.keys(ramenRegistry);
+  return ramenRegions;
+}
+
+export function getRamenRegion(slug: string) {
+  return ramenRegions.find((r) => r.slug === slug);
 }
 
 export function getRamenItems() {

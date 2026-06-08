@@ -23,8 +23,8 @@ export function MainNav({ categories }: { categories: Category[] }) {
         <div className="pointer-events-none absolute right-0 top-full w-[520px] translate-y-2 rounded-lg border border-slate-200 bg-white p-3 opacity-0 shadow-xl transition group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
           <div className="grid grid-cols-2 gap-2">
             {categories.map((category) => (
-              <Link key={category.slug} href={category.href} className="rounded-md border border-slate-100 p-3 transition hover:bg-slate-50">
-                <span className="text-sm font-bold text-slate-950">{category.name}</span>
+              <Link key={category.slug} href={category.href} className="group rounded-md border border-slate-100 p-3 transition-all duration-150 hover:border-slate-200 hover:bg-slate-50 hover:shadow-sm active:scale-[0.98]">
+                <span className="text-sm font-bold text-slate-950 transition-colors duration-150 group-hover:text-[var(--primary)]">{category.name}</span>
                 <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
                   {category.status === "live" ? "公開中" : "準備中"}
                 </span>

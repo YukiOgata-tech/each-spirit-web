@@ -2,7 +2,7 @@ import { StaticPage } from "@/components/layout/StaticPage";
 import { ContactForm } from "@/components/contact/ContactForm";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getInitialContactFormState } from "@/app/contact/actions";
+import { initialContactFormState } from "@/app/contact/form-state";
 
 export const metadata = pageMetadata({
   title: "お問い合わせ",
@@ -18,7 +18,7 @@ export default function ContactPage() {
         <p><strong>取材・掲載相談:</strong> 地域、ジャンル、希望内容、公開可能な公式情報や写真素材の有無をお知らせください。</p>
         <p><strong>返信について:</strong> すべての内容に返信を保証するものではありませんが、必要に応じて編集部より連絡します。</p>
       </div>
-      <ContactForm initialState={getInitialContactFormState()} />
+      <ContactForm initialState={initialContactFormState} />
     </StaticPage>
   );
 }

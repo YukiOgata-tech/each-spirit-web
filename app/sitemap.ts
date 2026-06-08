@@ -4,11 +4,10 @@ import { absoluteUrl, routes } from "@/lib/routes";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const leisureRegions = getLeisureRegions();
-  const ramenRegions = getRamenRegions();
   const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure];
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
-    ...ramenRegions.filter((r) => r !== "niigata").map((region) => ({ url: absoluteUrl(routes.ramenRegion(region)), lastModified: new Date("2026-06-08") })),
+    ...getRamenRegions().map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...getRamenArticles().map((article) => ({ url: absoluteUrl(routes.ramenArticle(article.slug)), lastModified: new Date(article.updatedAt) })),
     ...getRamenRankings().map((ranking) => ({ url: absoluteUrl(routes.ramenRanking(ranking.slug)), lastModified: new Date(ranking.lastUpdatedAt) })),
     ...getRamenItems().map((item) => ({ url: absoluteUrl(routes.ramenItem(item.slug)), lastModified: new Date(item.lastVerifiedAt) })),

@@ -1,22 +1,8 @@
 "use server";
 
-export type ContactFormState = {
-  ok: boolean;
-  message: string;
-  fieldErrors: Partial<Record<"name" | "email" | "category" | "subject" | "body" | "privacy", string>>;
-};
+import type { ContactFormState } from "@/app/contact/form-state";
 
 const categories = new Set(["情報提供", "掲載内容の修正依頼", "取材・掲載相談", "広告・提携相談", "その他"]);
-
-const initialState: ContactFormState = {
-  ok: false,
-  message: "",
-  fieldErrors: {},
-};
-
-export function getInitialContactFormState(): ContactFormState {
-  return initialState;
-}
 
 const clean = (value: FormDataEntryValue | null, maxLength: number) =>
   String(value ?? "")

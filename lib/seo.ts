@@ -8,17 +8,19 @@ export function pageMetadata({
   description,
   path,
   image = site.ogImage,
+  keywords,
 }: {
   title: string;
   description: string;
   path: string;
   image?: string;
+  keywords?: string[];
 }): Metadata {
   const fullTitle = title === site.name || title === site.title ? title : title + " | " + site.name;
   return {
     title: { absolute: fullTitle },
     description,
-    keywords: site.keywords,
+    keywords: keywords ? [...site.keywords, ...keywords] : site.keywords,
     alternates: { canonical: absoluteUrl(path) },
     openGraph: {
       title: fullTitle,
@@ -180,6 +182,8 @@ export function touristAttractionSchema(region: string, spot: LeisureSpot) {
 }
 
 export function restaurantSchema(item: Item) {
+  const prefectureMatch = item.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
+  const addressRegion = prefectureMatch?.[1] ?? "";
   return {
     "@context": "https://schema.org",
     "@type": "Restaurant",
@@ -192,11 +196,35 @@ export function restaurantSchema(item: Item) {
     address: {
       "@type": "PostalAddress",
       streetAddress: item.address,
-      addressRegion: "新潟県",
+      addressRegion,
       addressCountry: "JP",
     },
     priceRange: item.priceRange,
     openingHours: item.businessHours,
     hasMap: item.mapUrl,
+  };
+}
+
+export function ramenRegionItemListSchema(regionName: string, items: Item[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: regionName + "ラーメン 掲載店舗",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Restaurant",
+        name: item.name,
+        url: absoluteUrl(routes.ramenItem(item.slug)),
+        servesCuisine: "Ramen",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: item.address,
+          addressCountry: "JP",
+        },
+      },
+    })),
   };
 }

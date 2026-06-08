@@ -29,37 +29,77 @@ export function GlobalRouteLoader() {
   const pathname = usePathname();
   const [visible, setVisible] = useState(false);
 
-  // Mutable state kept in a ref to avoid stale closures in event listeners
   const nav = useRef({ active: false, startedAt: 0, maxTimer: 0, minTimer: 0 });
+  const observerRef = useRef<MutationObserver | null>(null);
 
-  // Stable function refs — safe to call from event listeners set up once
-  const start = useRef(() => {
+  // Shared teardown — clears all timers and any pending observer
+  const teardown = useRef(() => {
     const n = nav.current;
     window.clearTimeout(n.maxTimer);
     window.clearTimeout(n.minTimer);
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+  });
+
+  // Schedule final hide with minimum display guarantee
+  const scheduleHide = useRef(() => {
+    const n = nav.current;
+    const delay = Math.max(0, MIN_MS - (Date.now() - n.startedAt));
+    window.clearTimeout(n.minTimer);
+    n.minTimer = window.setTimeout(() => {
+      n.active = false;
+      setVisible(false);
+    }, delay);
+  });
+
+  // Show loader and arm the safety max timer
+  const start = useRef(() => {
+    const n = nav.current;
+    teardown.current();
     n.active = true;
     n.startedAt = Date.now();
-    // Safety valve: dismiss if navigation never resolves
     n.maxTimer = window.setTimeout(() => {
-      nav.current.active = false;
+      n.active = false;
       setVisible(false);
     }, MAX_MS);
     setVisible(true);
   });
 
-  // Called when usePathname() reports the new route is committed
-  const stop = useRef(() => {
+  // Called when pathname changes.
+  // At this point Next.js has committed the new page shell:
+  //   - If a loading.tsx fallback is in <main>, wait for it to be replaced.
+  //   - Otherwise the full page is already in the DOM; hide after MIN_MS.
+  const onPathnameChange = useRef(() => {
     const n = nav.current;
     if (!n.active) return;
-    window.clearTimeout(n.maxTimer);
-    n.active = false;
-    const delay = Math.max(0, MIN_MS - (Date.now() - n.startedAt));
-    n.minTimer = window.setTimeout(() => setVisible(false), delay);
+
+    // Clear any previous observer (rapid navigation guard)
+    observerRef.current?.disconnect();
+    observerRef.current = null;
+
+    const main = document.querySelector("main");
+    if (!main || !main.querySelector(".each-spirit-loader")) {
+      // No page-level loading fallback — page is fully rendered
+      scheduleHide.current();
+      return;
+    }
+
+    // loading.tsx is showing; watch for it to leave the DOM
+    const observer = new MutationObserver(() => {
+      if (main.querySelector(".each-spirit-loader")) return; // still loading
+      observer.disconnect();
+      observerRef.current = null;
+      scheduleHide.current();
+    });
+    observerRef.current = observer;
+    observer.observe(main, { childList: true, subtree: true });
   });
 
   // Register click and popstate listeners once
   useEffect(() => {
-    const n = nav.current; // capture for stable cleanup reference
+    const n = nav.current;
+    const obs = observerRef;
+
     const onClick = (e: MouseEvent) => {
       if (e.defaultPrevented || isModifiedEvent(e)) return;
       const anchor = (e.target as Element)?.closest("a");
@@ -75,12 +115,13 @@ export function GlobalRouteLoader() {
       window.removeEventListener("popstate", onPop);
       window.clearTimeout(n.maxTimer);
       window.clearTimeout(n.minTimer);
+      obs.current?.disconnect();
     };
   }, []);
 
-  // pathname changes when Next.js has committed the new page to the DOM
+  // pathname changes when Next.js commits the new route's layout/shell
   useEffect(() => {
-    stop.current();
+    onPathnameChange.current();
   }, [pathname]);
 
   if (!visible) return null;

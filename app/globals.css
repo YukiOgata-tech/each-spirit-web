@@ -105,13 +105,19 @@ a {
   color: #334155;
   font-size: 0.875rem;
   font-weight: 700;
-  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+  cursor: pointer;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease, box-shadow 160ms ease;
 }
 
 .nav-link:hover {
   background: #f1f5f9;
   color: #0f172a;
   transform: translateY(-1px);
+}
+
+.nav-link:active {
+  transform: translateY(0);
+  background: #e2e8f0;
 }
 
 .animate-rise {

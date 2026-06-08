@@ -113,6 +113,28 @@ export type BeautyRegion = {
   status: "live" | "planned";
 };
 
+export type RamenRegion = {
+  slug: string;
+  name: string;
+  shortName: string;
+  description: string;
+  tagline: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
+  status: "live" | "planned";
+  headline: string;
+  subtext: string;
+  heroBadge: string;
+  heroCtaSlug: string;
+  heroCtaLabel: string;
+  statsNote: string;
+  styles: Array<{ name: string; area: string; text: string }>;
+  areas: string[];
+  featuredSlugs: string[];
+  articleTag: string;
+};
+
 export type ProteinType = "whey-wpc" | "whey-wpi" | "casein" | "soy" | "pea" | "plant-blend";
 
 export type ProteinTarget = "women" | "men" | "trainer" | "student" | "diet" | "beginner";

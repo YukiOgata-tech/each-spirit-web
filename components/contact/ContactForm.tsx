@@ -2,7 +2,8 @@
 
 import { useActionState, useMemo } from "react";
 import { AlertCircle, CheckCircle2, Send } from "lucide-react";
-import { submitContactForm, type ContactFormState } from "@/app/contact/actions";
+import { submitContactForm } from "@/app/contact/actions";
+import type { ContactFormState } from "@/app/contact/form-state";
 import { Button } from "@/components/ui/button";
 
 const categories = ["情報提供", "掲載内容の修正依頼", "取材・掲載相談", "広告・提携相談", "その他"];

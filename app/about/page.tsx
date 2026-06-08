@@ -27,7 +27,7 @@ export default function AboutPage() {
           <div>
             <h2 className="text-xl font-bold leading-tight text-slate-950 sm:text-2xl">調査・取材・記事化を3人で回しています</h2>
             <p className="mt-3 text-sm leading-7 text-slate-600">
-              公式情報の確認だけでなく、アンケート、実際の訪問、人脈を通じた聞き取りや取材を組み合わせ、比較しやすい形に整理します。
+              公式情報だけでなく、アンケート、実際の訪問、人脈を通じた聞き取りや取材を組み合わせ、比較しやすい形に整理しています！
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {teamStats.map((stat) => (
