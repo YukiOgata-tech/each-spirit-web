@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import type { Article, FAQ, Item, LeisureRanking, LeisureSpot, Ranking } from "@/lib/types";
+import type { Article, CafeItem, CafeRanking, CafeRankingItem, FAQ, Hotel, Item, LeisureRanking, LeisureSpot, Ranking, RankingItem } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
 import { site } from "@/content/site";
 
@@ -202,6 +202,162 @@ export function restaurantSchema(item: Item) {
     priceRange: item.priceRange,
     openingHours: item.businessHours,
     hasMap: item.mapUrl,
+  };
+}
+
+export function lodgingBusinessSchema(region: string, hotel: Hotel) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "LodgingBusiness",
+    name: hotel.name,
+    description: hotel.description,
+    url: absoluteUrl(routes.travelHotel(region, hotel.slug)),
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: hotel.address,
+      addressCountry: "JP",
+    },
+    priceRange: hotel.pricePerPerson,
+    telephone: hotel.phone,
+    hasMap: hotel.mapUrl,
+    amenityFeature: hotel.onsen
+      ? [{ "@type": "LocationFeatureSpecification", name: "温泉", value: true }]
+      : [],
+  };
+}
+
+export function travelRankingItemListSchema(
+  region: string,
+  ranking: Ranking,
+  entries: { entry: RankingItem; hotel: Hotel }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, hotel }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "LodgingBusiness",
+        name: hotel.name,
+        url: absoluteUrl(routes.travelHotel(region, hotel.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: entry.score / 20,
+          bestRating: 5,
+          worstRating: 1,
+          ratingCount: 1,
+        },
+      },
+    })),
+  };
+}
+
+export function travelRegionItemListSchema(region: string, regionName: string, hotels: Hotel[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: regionName + " おすすめ旅館・温泉宿",
+    numberOfItems: hotels.length,
+    itemListElement: hotels.map((hotel, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "LodgingBusiness",
+        name: hotel.name,
+        url: absoluteUrl(routes.travelHotel(region, hotel.slug)),
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: hotel.address,
+          addressCountry: "JP",
+        },
+      },
+    })),
+  };
+}
+
+export function cafeSchema(region: string, cafe: CafeItem) {
+  const prefectureMatch = cafe.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
+  const addressRegion = prefectureMatch?.[1] ?? "";
+  return {
+    "@context": "https://schema.org",
+    "@type": "CafeOrCoffeeShop",
+    name: cafe.name,
+    description: cafe.description,
+    url: absoluteUrl(routes.cafeItem(region, cafe.slug)),
+    sameAs: cafe.officialLinks.map((link) => link.url),
+    telephone: cafe.phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: cafe.address,
+      addressRegion,
+      addressCountry: "JP",
+    },
+    priceRange: cafe.priceRange,
+    openingHours: cafe.businessHours,
+    hasMap: cafe.mapUrl,
+    amenityFeature: [
+      ...(cafe.wifi ? [{ "@type": "LocationFeatureSpecification", name: "WiFi", value: true }] : []),
+      ...(cafe.parking ? [{ "@type": "LocationFeatureSpecification", name: "駐車場", value: true }] : []),
+    ],
+  };
+}
+
+export function cafeRegionItemListSchema(region: string, regionName: string, cafes: CafeItem[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: regionName + " カフェ 掲載店舗",
+    numberOfItems: cafes.length,
+    itemListElement: cafes.map((cafe, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "CafeOrCoffeeShop",
+        name: cafe.name,
+        url: absoluteUrl(routes.cafeItem(region, cafe.slug)),
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: cafe.address,
+          addressCountry: "JP",
+        },
+      },
+    })),
+  };
+}
+
+export function cafeRankingItemListSchema(
+  region: string,
+  ranking: CafeRanking,
+  entries: { entry: CafeRankingItem; cafe: CafeItem }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, cafe }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "CafeOrCoffeeShop",
+        name: cafe.name,
+        url: absoluteUrl(routes.cafeItem(region, cafe.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: entry.score / 20,
+          bestRating: 5,
+          worstRating: 1,
+          ratingCount: 1,
+        },
+      },
+    })),
   };
 }
 

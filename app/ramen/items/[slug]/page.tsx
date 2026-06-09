@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, MapPin, Phone } from "lucide-react";
+import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
@@ -43,7 +44,24 @@ export default async function ItemPage({ params }: PageProps) {
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(item.faqs)} />
       <Breadcrumbs items={breadcrumbs.map((value, index) => ({ label: value.name, href: index === breadcrumbs.length - 1 ? undefined : value.href }))} />
-      <section className="grid gap-6 rounded-lg border border-orange-200 bg-white p-5 shadow-soft lg:grid-cols-[1.1fr_0.9fr]">
+      <section className="overflow-hidden rounded-lg border border-orange-200 bg-white shadow-soft">
+        {item.imageUrl && (
+          <div className="relative h-[260px] w-full sm:h-[320px]">
+            <AttributedImage
+              src={item.imageUrl}
+              alt={item.name}
+              fill
+              className="object-cover"
+              priority
+              sizes="(min-width: 1024px) 60vw, 100vw"
+              credit={resolveCredit(item.imageUrl, item.name, item.officialUrl)}
+              variant="hover"
+              wrapperClassName="absolute inset-0"
+            />
+            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+          </div>
+        )}
+        <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <div className="flex flex-wrap gap-2">
             <Badge>{item.area}</Badge><Badge>{item.genre}</Badge>{item.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
@@ -76,6 +94,7 @@ export default async function ItemPage({ params }: PageProps) {
               </Button>
             ))}
           </div>
+        </div>
         </div>
       </section>
       <section className="mt-8 rounded-lg border border-slate-200 bg-white p-5">

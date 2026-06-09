@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Soup } from "lucide-react";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -47,13 +48,24 @@ export default function RamenIndexPage() {
                 href={routes.ramenRegion(region.slug)}
                 className="group block overflow-hidden rounded-[14px] border border-orange-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-orange-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
               >
-                <div className="relative flex h-36 items-center justify-center overflow-hidden bg-[linear-gradient(135deg,#fff7eb,#fde9c9)]">
-                  <Soup className="h-16 w-16 text-orange-200 transition-transform duration-500 group-hover:scale-110" />
-                  <div className="absolute bottom-3 left-5">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-orange-400">
+                <div className="relative flex h-44 items-end overflow-hidden bg-[linear-gradient(135deg,#fff7eb,#fde9c9)]">
+                  {region.images?.[0]?.url ? (
+                    <Image
+                      src={region.images[0].url}
+                      alt={region.images[0].alt}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="(min-width: 768px) 50vw, 100vw"
+                    />
+                  ) : (
+                    <Soup className="absolute right-5 top-5 h-16 w-16 text-orange-200 transition-transform duration-500 group-hover:scale-110" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                  <div className="relative z-10 p-5">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
                       {region.status === "live" ? "公開中" : "準備中"}
                     </p>
-                    <p className="mt-0.5 text-2xl font-black text-slate-800">{region.name}</p>
+                    <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
                   </div>
                 </div>
                 <div className="p-5">

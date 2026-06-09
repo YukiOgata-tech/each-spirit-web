@@ -32,7 +32,7 @@ export default function AboutPage() {
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               {teamStats.map((stat) => (
                 <div key={stat.label} className="rounded-lg border border-white/80 bg-white/86 p-4 shadow-sm">
-                  <stat.icon className="h-5 w-5 text-[var(--primary)]" />
+                  <stat.icon className="h-5 w-5 text-(--primary)" />
                   <p className="mt-2 text-sm font-bold text-slate-950">{stat.label}</p>
                   <p className="mt-1 text-xs leading-5 text-slate-600">{stat.text}</p>
                 </div>
@@ -74,7 +74,7 @@ export default function AboutPage() {
                   {member.tags.map((tag) => <Badge key={tag} className="bg-slate-50">{tag}</Badge>)}
                 </div>
                 <div className="mt-4 rounded-lg border border-slate-200 bg-white p-3 text-sm leading-7 text-slate-700">
-                  <MessageCircle className="mr-1 inline h-4 w-4 text-[var(--primary)]" />
+                  <MessageCircle className="mr-1 inline h-4 w-4 text-(--primary)" />
                   {member.message}
                 </div>
               </div>
@@ -99,7 +99,7 @@ export default function AboutPage() {
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             {policies.map((policy) => (
               <div key={policy.title} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-                <policy.icon className="h-5 w-5 text-[var(--primary)]" />
+                <policy.icon className="h-5 w-5 text-(--primary)" />
                 <h3 className="mt-2 font-bold text-slate-950">{policy.title}</h3>
                 <p className="mt-1 text-sm leading-7 text-slate-600">{policy.text}</p>
               </div>

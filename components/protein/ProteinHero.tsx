@@ -9,10 +9,10 @@ const container = { hidden: {}, visible: { transition: { staggerChildren: 0.08 }
 const rise = { hidden: { opacity: 0, y: 28 }, visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: "easeOut" as const } } };
 
 const FLOAT_PILLS = [
-  { icon: Zap,      label: "タンパク質 21g",  delay: 0,    x: "6%",  y: "20%" },
+  { icon: Zap,      label: "タンパク質 21g",  delay: 0,    x: "60%",  y: "20%" },
   { icon: Flame,    label: "111 kcal",        delay: 0.6,  x: "72%", y: "10%" },
   { icon: Dumbbell, label: "筋肉維持・増強",  delay: 1.2,  x: "78%", y: "68%" },
-  { icon: Leaf,     label: "植物性オプションあり", delay: 0.3, x: "8%", y: "78%" },
+  { icon: Leaf,     label: "植物性オプションあり", delay: 0.3, x: "58%", y: "78%" },
 ];
 
 const TARGETS = [
@@ -53,7 +53,7 @@ export function ProteinHero({ productCount, rankingCount }: { productCount: numb
       ))}
 
       <div className="mx-auto w-[min(1360px,calc(100%-40px))] py-14 max-sm:w-[min(1360px,calc(100%-24px))]">
-        <motion.div variants={container} initial="hidden" animate="visible" className="max-w-3xl">
+        <motion.div variants={container} initial="hidden" animate="visible" className="max-w-6xl">
           <motion.span
             variants={rise}
             className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-blue-200"
@@ -66,7 +66,7 @@ export function ProteinHero({ productCount, rankingCount }: { productCount: numb
             <span className="protein-shimmer-text">プロテイン完全ガイド。</span>
           </motion.h1>
 
-          <motion.p variants={rise} className="mt-5 max-w-xl text-base leading-8 text-blue-200">
+          <motion.p variants={rise} className="mt-5 max-w-full text-base leading-8 text-blue-200">
             女性・男性・ダイエット・初心者まで目的別に、タンパク質量・カロリー・価格の実データで比較。
             あなたに合った1本を見つける。
           </motion.p>
@@ -76,7 +76,7 @@ export function ProteinHero({ productCount, rankingCount }: { productCount: numb
               <Link
                 key={slug}
                 href={routes.proteinTarget(slug)}
-                className="rounded-full border border-white/20 px-4 py-1.5 text-xs font-bold text-white transition-all hover:bg-white/10"
+                className="rounded-full border border-white/20 px-4 py-1.5 text-xs font-bold text-amber-50 transition-all hover:bg-white/10"
                 style={{ borderColor: color + "60" }}
               >
                 {label}

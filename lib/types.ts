@@ -34,6 +34,7 @@ export type Category = {
     accent: string;
     background: string;
   };
+  images?: CategoryImage[];
 };
 
 export type SearchResult = {
@@ -77,6 +78,7 @@ export type Item = {
   area: string;
   address: string;
   phone?: string;
+  imageUrl?: string;
   genre: string;
   tags: string[];
   recommendedMenu: string;
@@ -103,6 +105,12 @@ export type RankingItem = {
   isPr: boolean;
 };
 
+export type CategoryImage = {
+  key: string;
+  url: string;
+  alt: string;
+};
+
 export type BeautyRegion = {
   slug: string;
   name: string;
@@ -111,6 +119,67 @@ export type BeautyRegion = {
   tagline: string;
   imageUrl: string;
   status: "live" | "planned";
+};
+
+export type HotelStyle =
+  | "温泉旅館"
+  | "古民家宿"
+  | "ゲストハウス"
+  | "民宿"
+  | "ロッジ"
+  | "オーベルジュ"
+  | "湯治宿";
+
+export type MealPlan = "両食" | "朝食のみ" | "素泊まり" | "選択可";
+
+export type Hotel = {
+  slug: string;
+  name: string;
+  description: string;
+  area: string;
+  address: string;
+  phone?: string;
+  style: HotelStyle;
+  tags: string[];
+  highlight: string;
+  pricePerPerson: string;
+  checkIn: string;
+  checkOut: string;
+  meals: MealPlan;
+  onsen: boolean;
+  onsenNote?: string;
+  parking: boolean;
+  parkingNote?: string;
+  officialUrl: string;
+  mapUrl: string;
+  officialLinks: OfficialLink[];
+  editorComment: string;
+  imageUrl: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+  relatedRankingSlugs: string[];
+};
+
+export type TravelRegion = {
+  slug: string;
+  name: string;
+  shortName: string;
+  description: string;
+  tagline: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
+  status: "live" | "planned";
+  headline: string;
+  subtext: string;
+  heroBadge: string;
+  heroCtaSlug: string;
+  heroCtaLabel: string;
+  statsNote: string;
+  onsenAreas: Array<{ name: string; feature: string }>;
+  areas: string[];
+  images: CategoryImage[];
 };
 
 export type RamenRegion = {
@@ -133,6 +202,7 @@ export type RamenRegion = {
   areas: string[];
   featuredSlugs: string[];
   articleTag: string;
+  images?: CategoryImage[];
 };
 
 export type ProteinType = "whey-wpc" | "whey-wpi" | "casein" | "soy" | "pea" | "plant-blend";
@@ -254,6 +324,90 @@ export type Ranking = {
   items: RankingItem[];
   sources: Source[];
   faqs: FAQ[];
+};
+
+export type CafeStyle =
+  | "スペシャルティコーヒー"
+  | "自家焙煎"
+  | "古民家カフェ"
+  | "ブックカフェ"
+  | "コーヒースタンド"
+  | "パティスリーカフェ"
+  | "ガーデンカフェ"
+  | "ロースタリー";
+
+export type CafeItem = {
+  slug: string;
+  name: string;
+  description: string;
+  area: string;
+  address: string;
+  phone?: string;
+  imageUrl?: string;
+  style: CafeStyle;
+  tags: string[];
+  signatureMenu: string;
+  priceRange: string;
+  wifi: boolean;
+  power: boolean;
+  parking: boolean;
+  parkingNote?: string;
+  petFriendly?: boolean;
+  reservation: "required" | "recommended" | "not-needed";
+  businessHours: string;
+  closedDays: string;
+  officialUrl: string;
+  mapUrl: string;
+  instagramUrl?: string;
+  officialLinks: OfficialLink[];
+  editorComment: string;
+  highlight: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+  relatedRankingSlugs: string[];
+};
+
+export type CafeRankingItem = {
+  rank: number;
+  cafeSlug: string;
+  score: number;
+  reason: string;
+  isPr: boolean;
+};
+
+export type CafeRanking = {
+  slug: string;
+  title: string;
+  description: string;
+  criteria: string[];
+  conclusion: string;
+  quickTableLabel: string;
+  lastUpdatedAt: string;
+  items: CafeRankingItem[];
+  sources: Source[];
+  faqs: FAQ[];
+};
+
+export type CafeRegion = {
+  slug: string;
+  name: string;
+  shortName: string;
+  description: string;
+  tagline: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
+  status: "live" | "planned";
+  headline: string;
+  subtext: string;
+  heroBadge: string;
+  heroCtaSlug: string;
+  heroCtaLabel: string;
+  statsNote: string;
+  areas: string[];
+  featuredSlugs: string[];
+  images?: CategoryImage[];
 };
 
 export type LeisureKind = "outdoor" | "indoor" | "hybrid";

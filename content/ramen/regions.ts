@@ -27,6 +27,10 @@ export const ramenRegions: RamenRegion[] = [
     areas: ["新潟市中央区", "古町", "沼垂", "江南区", "西区", "南区", "西蒲区", "燕市"],
     featuredSlugs: ["ishiguro-bentenbashi", "hanasaki-nuttari", "ippongi-konan", "kaisei-kobari"],
     articleTag: "新潟",
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624", alt: "新潟ラーメン" },
+      { key: "region", url: "https://images.unsplash.com/photo-1587151940594-58bd770fdda7", alt: "新潟県" },
+    ],
   },
   {
     slug: "yamagata",
@@ -53,5 +57,9 @@ export const ramenRegions: RamenRegion[] = [
     areas: ["南陽市・赤湯", "山形市", "東根市", "天童市", "酒田市", "鶴岡市・庄内", "米沢市", "大石田町"],
     featuredSlugs: [],
     articleTag: "山形",
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1546954892-64c1c0aed544", alt: "山形県の山岳風景" },
+      { key: "ramen", url: "https://images.unsplash.com/photo-1615341428002-1d4a5f2abb32", alt: "山形ラーメン" },
+    ],
   },
 ];

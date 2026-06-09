@@ -1,9 +1,9 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Car, Clock, MapPin, Users } from "lucide-react";
 import type { Salon, AgeGroup } from "@/lib/types";
 import { routes } from "@/lib/routes";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
+import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 
 const AGE_LABEL: Record<AgeGroup, string> = {
   teens:    "10代",
@@ -17,25 +17,28 @@ export function SalonCard({ salon, region }: { salon: Salon; region: string }) {
   return (
     <Link href={routes.beautySalon(region, salon.slug)} className="beauty-card group block">
       <div className="relative h-44 w-full overflow-hidden">
-        <Image
+        <AttributedImage
           src={salon.imageUrl}
           alt={salon.name}
           fill
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+          credit={resolveCredit(salon.imageUrl, salon.name, salon.officialUrl)}
+          variant="hover"
+          wrapperClassName="absolute inset-0"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-        <div className="absolute bottom-3 left-4 right-4">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+        <div className="pointer-events-none absolute bottom-3 left-4 right-4">
           <p className="text-[11px] font-semibold uppercase tracking-widest text-white/70">{salon.area}</p>
           <p className="mt-0.5 text-lg font-bold leading-tight text-white">{salon.name}</p>
         </div>
         {salon.parking && (
-          <span className="absolute right-3 top-3 flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="pointer-events-none absolute right-3 top-3 flex items-center gap-1 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
             <Car className="h-3 w-3" />P
           </span>
         )}
         {salon.childrenWelcome && (
-          <span className="absolute right-3 top-8 flex items-center gap-1 rounded-full bg-pink-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
+          <span className="pointer-events-none absolute right-3 top-8 flex items-center gap-1 rounded-full bg-pink-500/90 px-2 py-0.5 text-[10px] font-bold text-white">
             <Users className="h-3 w-3" />子連れ
           </span>
         )}

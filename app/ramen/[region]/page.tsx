@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Soup, Trophy } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
@@ -62,8 +63,24 @@ export default async function RamenRegionPage({ params }: PageProps) {
       <JsonLd data={ramenRegionItemListSchema(regionData.name, items)} />
 
       {/* Hero */}
-      <section className="border-b border-orange-100 bg-[linear-gradient(135deg,#fff7eb_0%,#fff_55%,#f8e1c2_100%)]">
-        <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
+      <section className="relative overflow-hidden border-b border-orange-100">
+        {regionData.images?.[0]?.url && (
+          <>
+            <Image
+              src={regionData.images[0].url}
+              alt={regionData.images[0].alt}
+              fill
+              className="object-cover"
+              priority
+              sizes="100vw"
+            />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,247,235,0.94)_0%,rgba(255,255,255,0.9)_55%,rgba(248,225,194,0.88)_100%)]" />
+          </>
+        )}
+        {!regionData.images?.[0]?.url && (
+          <div className="absolute inset-0 bg-[linear-gradient(135deg,#fff7eb_0%,#fff_55%,#f8e1c2_100%)]" />
+        )}
+        <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
             <Breadcrumbs
               items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}

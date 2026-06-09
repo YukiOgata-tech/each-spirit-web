@@ -15,15 +15,23 @@ import { niigataLeisureSpots } from "@/content/leisure/niigata/spots";
 import { niigataLeisureRankings } from "@/content/leisure/niigata/rankings";
 import { beautyRegions } from "@/content/beauty/regions";
 import { ramenRegions } from "@/content/ramen/regions";
+import { travelRegions } from "@/content/travel/regions";
+import { niigataHotels } from "@/content/travel/niigata/hotels";
+import { niigataHotelRankings } from "@/content/travel/niigata/rankings";
 import { beautySalons as niigataBeautySalons } from "@/content/beauty/niigata/salons";
 import { beautyRankings as niigataBeautyRankings } from "@/content/beauty/niigata/rankings";
 import { beautyArticles as niigataBeautyArticles } from "@/content/beauty/niigata/articles";
 import { beautySalons as yamagataBeautySalons } from "@/content/beauty/yamagata/salons";
 import { beautyRankings as yamagataBeautyRankings } from "@/content/beauty/yamagata/rankings";
 import { beautyArticles as yamagataBeautyArticles } from "@/content/beauty/yamagata/articles";
+import { cafeRegions } from "@/content/cafe/regions";
+import { niigataCafeItems } from "@/content/cafe/niigata/items";
+import { niigataCafeRankings } from "@/content/cafe/niigata/rankings";
+import { yamagataCafeItems } from "@/content/cafe/yamagata/items";
+import { yamagataCafeRankings } from "@/content/cafe/yamagata/rankings";
 import { site } from "@/content/site";
 import { routes } from "@/lib/routes";
-import type { Item, LeisureRanking, LeisureSpot, ProteinProduct, ProteinRankingEntry, ProteinTarget, Ranking, RankingItem, Salon, SearchResult } from "@/lib/types";
+import type { CafeItem, CafeRanking, CafeRegion, Hotel, Item, LeisureRanking, LeisureSpot, ProteinProduct, ProteinRankingEntry, ProteinTarget, Ranking, RankingItem, Salon, SearchResult } from "@/lib/types";
 
 const ramenRegistry: Record<string, { items: Item[]; rankings: Ranking[] }> = {
   niigata: { items: ramenItems, rankings: ramenRankings },
@@ -35,8 +43,17 @@ const beautyRegistry: Record<string, { salons: Salon[]; rankings: ReturnType<typ
   yamagata: { salons: yamagataBeautySalons, rankings: yamagataBeautyRankings, articles: yamagataBeautyArticles },
 };
 
+const travelRegistry: Record<string, { hotels: Hotel[]; rankings: ReturnType<typeof niigataHotelRankings.slice> }> = {
+  niigata: { hotels: niigataHotels, rankings: niigataHotelRankings },
+};
+
 const leisureRegistry: Record<string, { spots: LeisureSpot[]; rankings: LeisureRanking[] }> = {
   niigata: { spots: niigataLeisureSpots, rankings: niigataLeisureRankings },
+};
+
+const cafeRegistry: Record<string, { items: CafeItem[]; rankings: CafeRanking[] }> = {
+  niigata:  { items: niigataCafeItems,  rankings: niigataCafeRankings },
+  yamagata: { items: yamagataCafeItems, rankings: yamagataCafeRankings },
 };
 
 export function getSite() {
@@ -299,4 +316,73 @@ export function getBeautyArticleMarkdown(region: string, slug: string) {
   const article = getBeautyArticle(region, slug);
   if (!article) return "";
   return readFileSync(join(process.cwd(), "content", "beauty", region, "articles", article.markdownFile), "utf8");
+}
+
+export function getTravelRegions() {
+  return travelRegions;
+}
+
+export function getTravelRegion(slug: string) {
+  return travelRegions.find((r) => r.slug === slug);
+}
+
+export function getTravelHotels(region: string): Hotel[] {
+  return travelRegistry[region]?.hotels ?? [];
+}
+
+export function getTravelHotel(region: string, slug: string) {
+  return getTravelHotels(region).find((h) => h.slug === slug);
+}
+
+export function getTravelAllHotels(): Hotel[] {
+  return Object.values(travelRegistry).flatMap((r) => r.hotels);
+}
+
+export function getTravelRankings(region: string) {
+  return travelRegistry[region]?.rankings ?? [];
+}
+
+export function getTravelRanking(region: string, slug: string) {
+  return getTravelRankings(region).find((r) => r.slug === slug);
+}
+
+export function getTravelRankingEntries(region: string, slug: string) {
+  const ranking = getTravelRanking(region, slug);
+  if (!ranking) return [];
+  return ranking.items
+    .map((entry) => ({ entry, hotel: getTravelHotel(region, entry.itemSlug) }))
+    .filter((v): v is { entry: RankingItem; hotel: Hotel } => Boolean(v.hotel));
+}
+
+// ── Cafe ──────────────────────────────────────────────
+export function getCafeRegions(): CafeRegion[] {
+  return cafeRegions;
+}
+
+export function getCafeRegion(slug: string): CafeRegion | undefined {
+  return cafeRegions.find((r) => r.slug === slug);
+}
+
+export function getCafeItemsByRegion(region: string): CafeItem[] {
+  return cafeRegistry[region]?.items ?? [];
+}
+
+export function getCafeItem(region: string, slug: string): CafeItem | undefined {
+  return getCafeItemsByRegion(region).find((c) => c.slug === slug);
+}
+
+export function getCafeRankingsByRegion(region: string): CafeRanking[] {
+  return cafeRegistry[region]?.rankings ?? [];
+}
+
+export function getCafeRanking(region: string, slug: string): CafeRanking | undefined {
+  return getCafeRankingsByRegion(region).find((r) => r.slug === slug);
+}
+
+export function getCafeRankingEntries(region: string, slug: string) {
+  const ranking = getCafeRanking(region, slug);
+  if (!ranking) return [];
+  return ranking.items
+    .map((entry) => ({ entry, cafe: getCafeItem(region, entry.cafeSlug) }))
+    .filter((v): v is { entry: (typeof ranking.items)[number]; cafe: CafeItem } => Boolean(v.cafe));
 }

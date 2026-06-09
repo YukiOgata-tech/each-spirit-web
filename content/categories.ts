@@ -12,6 +12,9 @@ export const categories: Category[] = [
     searchFacets: ["目的", "種類", "価格帯", "フレーバー", "国産・海外"],
     plannedTopics: ["EAA・BCAA比較", "プロテインバー", "植物性プロテイン", "プロテイン飲み方", "コンビニで買える"],
     theme: { primary: "#1e3a5f", accent: "#f97316", background: "#eff6ff" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1622818426197-d54f85b88690", alt: "プロテイン・フィットネス" },
+    ],
   },
   {
     slug: "beauty",
@@ -24,6 +27,9 @@ export const categories: Category[] = [
     searchFacets: ["エリア", "年代", "施術", "価格帯", "子連れ", "メンズ"],
     plannedTopics: ["メンズ特化", "縮毛矯正", "頭皮ケア", "ブライダル", "長岡・三条"],
     theme: { primary: "#8b3a7e", accent: "#d4819e", background: "#fef0f6" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1746723378067-83a345ff3160", alt: "美容室・サロン" },
+    ],
   },
   {
     slug: "ramen",
@@ -36,6 +42,9 @@ export const categories: Category[] = [
     searchFacets: ["エリア", "ジャンル", "駐車場", "営業時間", "個店", "夜営業"],
     plannedTopics: ["県内全域", "非チェーン個店", "深夜営業", "子連れ", "駅近", "観光ルート"],
     theme: { primary: "#a64019", accent: "#e5a126", background: "#fff6ea" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1569718212165-3a8278d5f624", alt: "ラーメン" },
+    ],
   },
   {
     slug: "leisure",
@@ -48,18 +57,36 @@ export const categories: Category[] = [
     searchFacets: ["エリア", "屋外", "屋内", "雨の日", "子連れ", "車なし"],
     plannedTopics: ["季節イベント", "温泉", "道の駅", "キャンプ", "半日モデルコース"],
     theme: { primary: "#176b87", accent: "#f4a261", background: "#edf9f8" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1766585464570-abb62d6cf7da", alt: "日本の庭園・レジャー" },
+    ],
   },
   {
     slug: "travel",
     name: "旅行",
-    href: "/#categories",
-    description: "週末旅、宿、観光地、移動手段を比較しながら選ぶためのガイド。",
-    tagline: "宿、交通、観光を旅程単位で比較",
-    status: "planned",
-    contentTypes: ["旅程", "ホテル比較", "スポット一覧"],
-    searchFacets: ["エリア", "日数", "予算", "交通手段", "季節"],
-    plannedTopics: ["新潟週末旅", "温泉宿", "車なし旅行", "家族旅行", "ひとり旅"],
-    theme: { primary: "#176b87", accent: "#64ccc5", background: "#edf9f8" },
+    href: "/travel",
+    description: "新潟・山形など各県の温泉旅館・宿泊施設を泉質・景観・旅スタイルで比較。ランキングと宿カードで整理しています。",
+    tagline: "宿・温泉・旅スタイルで選ぶ旅行ガイド",
+    status: "live",
+    contentTypes: ["宿カード", "ランキング", "温泉エリア"],
+    searchFacets: ["エリア", "温泉", "食事", "駐車場", "旅スタイル", "ひとり旅"],
+    plannedTopics: ["宮城県", "秋田県", "福島県", "岩手県", "青森県"],
+    theme: { primary: "#2d5a3d", accent: "#c8973a", background: "#f5f0e6" },
+  },
+  {
+    slug: "cafe",
+    name: "カフェ",
+    href: "/cafe",
+    description: "新潟・山形のカフェをスタイル・エリア・こだわりで選べるカテゴリ。スペシャルティコーヒー、古民家カフェ、スイーツ、WiFi環境など目的別に整理。",
+    tagline: "コーヒーとスタイルで選ぶカフェガイド",
+    status: "live",
+    contentTypes: ["ランキング", "カフェカード", "ガイド記事"],
+    searchFacets: ["エリア", "スタイル", "コーヒー", "スイーツ", "WiFi", "駐車場"],
+    plannedTopics: ["テイクアウト専門", "モーニング", "読書カフェ", "ワーケーション", "ペット可"],
+    theme: { primary: "#5c3317", accent: "#d4a853", background: "#fdf7ef" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1509042239860-f550ce710b93", alt: "カフェ・コーヒー" },
+    ],
   },
   {
     slug: "gadget",

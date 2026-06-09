@@ -1,9 +1,9 @@
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
-export function Breadcrumbs({ items }: { items: { label: string; href?: string }[] }) {
+export function Breadcrumbs({ items, className }: { items: { label: string; href?: string }[]; className?: string }) {
   return (
-    <nav aria-label="パンくずリスト" className="mb-5 flex flex-wrap items-center gap-1 text-sm text-slate-500">
+    <nav aria-label="パンくずリスト" className={`mb-5 flex flex-wrap items-center gap-1 text-sm text-slate-500 ${className ?? ""}`}>
       {items.map((item, index) => (
         <span key={item.label} className="flex items-center gap-1">
           {item.href ? <Link className="hover:text-slate-900" href={item.href}>{item.label}</Link> : <span className="text-slate-800">{item.label}</span>}

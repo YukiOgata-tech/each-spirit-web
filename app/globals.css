@@ -16,33 +16,41 @@
   --site-max: 1360px;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
 
-html {
-  scroll-behavior: smooth;
-}
+  html {
+    scroll-behavior: smooth;
+  }
 
-body {
-  margin: 0;
-  background:
-    linear-gradient(90deg, rgba(17, 24, 39, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(17, 24, 39, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, #fbfaf7 0%, var(--background) 54%, #eef4f1 100%);
-  background-size: 42px 42px, 42px 42px, auto;
-  color: var(--foreground);
-  font-family: var(--font-geist-sans), Arial, sans-serif;
-}
+  body {
+    margin: 0;
+    background:
+      linear-gradient(90deg, rgba(17, 24, 39, 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, rgba(17, 24, 39, 0.035) 1px, transparent 1px),
+      linear-gradient(180deg, #fbfaf7 0%, var(--background) 54%, #eef4f1 100%);
+    background-size: 42px 42px, 42px 42px, auto;
+    color: var(--foreground);
+    font-family: var(--font-geist-sans), Arial, sans-serif;
+  }
 
-a {
-  color: inherit;
-  text-decoration: none;
-}
+  /* classなしのリンクのみ color:inherit を適用。classがあればTailwindユーティリティが勝つ */
+  a:not([class]) {
+    color: inherit;
+    text-decoration: none;
+  }
 
-::selection {
-  background: #1d4f8f;
-  color: white;
+  /* classありのリンクはtext-decorationだけリセット */
+  a[class] {
+    text-decoration: none;
+  }
+
+  ::selection {
+    background: #1d4f8f;
+    color: white;
+  }
 }
 
 .section-shell {
@@ -326,6 +334,88 @@ a {
 
 @keyframes macro-fill {
   from { width: 0; }
+}
+
+/* ── Cafe theme ───────────────────────────────────── */
+
+.cafe-theme {
+  --primary: #5c3317;
+  --accent: #d4a853;
+  --muted: #fdf7ef;
+  --border: #e6d5bc;
+}
+
+.cafe-hero-bg {
+  background: linear-gradient(135deg, #2c1810 0%, #5c3317 45%, #8b5e3c 75%, #fdf7ef 100%);
+}
+
+.cafe-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.cafe-card {
+  border: 1px solid var(--border, #e6d5bc);
+  background: white;
+  border-radius: 14px;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.cafe-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 64px rgba(92, 51, 23, 0.12);
+}
+
+.cafe-rank-badge {
+  background: linear-gradient(135deg, #5c3317, #d4a853);
+  color: white;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+/* ── Travel theme ─────────────────────────────────── */
+
+.travel-theme {
+  --primary: #2d5a3d;
+  --accent: #c8973a;
+  --muted: #f5f0e6;
+  --border: #d4c09a;
+}
+
+.travel-hero-bg {
+  background: linear-gradient(135deg, #1c3829 0%, #2d5a3d 40%, #4a8c60 75%, #f5ede0 100%);
+}
+
+.travel-glass {
+  background: rgba(255, 255, 255, 0.82);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.6);
+}
+
+.travel-card {
+  border: 1px solid var(--border, #d4c09a);
+  background: white;
+  border-radius: 14px;
+  transition: transform 300ms cubic-bezier(0.4, 0, 0.2, 1), box-shadow 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+}
+
+.travel-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 64px rgba(45, 90, 61, 0.12);
+}
+
+.travel-rank-badge {
+  background: linear-gradient(135deg, #2d5a3d, #c8973a);
+  color: white;
+  border-radius: 999px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
 /* ── Beauty theme ─────────────────────────────────── */

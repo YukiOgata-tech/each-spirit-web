@@ -4,10 +4,10 @@ import type { Ranking } from "@/lib/types";
 import { routes } from "@/lib/routes";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function RankingCard({ ranking }: { ranking: Ranking }) {
+export function RankingCard({ ranking, href }: { ranking: Ranking; href?: string }) {
   return (
     <Link
-      href={routes.ramenRanking(ranking.slug)}
+      href={href ?? routes.ramenRanking(ranking.slug)}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 rounded-[var(--radius)]"
     >
       <Card className="h-full border-[var(--border)] transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-orange-300">

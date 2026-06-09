@@ -35,7 +35,7 @@ export default function ProteinIndexPage() {
       <section className="section-shell">
         <p className="section-kicker" style={{ color: "#1e3a5f" }}>CATEGORIES</p>
         <h2 className="section-heading mt-2">目的から選ぶ</h2>
-        <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-500">
+        <p className="mt-3 max-w-4xl text-sm leading-7 text-slate-500">
           目的に合ったランキングと商品カードで、あなたに最適なプロテインを見つけましょう。
         </p>
         <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -57,7 +57,7 @@ export default function ProteinIndexPage() {
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, 33vw"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                  <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent" />
                   <div className="absolute bottom-3 left-4">
                     <p className="text-lg font-black text-white">{target.name}</p>
                   </div>
@@ -106,7 +106,7 @@ export default function ProteinIndexPage() {
         <p className="section-kicker" style={{ color: "#1e3a5f" }}>COMPARE</p>
         <h2 className="section-heading mt-2">栄養成分・価格 一覧比較</h2>
         <div className="mt-6 overflow-x-auto rounded-2xl border border-blue-100 bg-white shadow-sm">
-          <table className="w-full min-w-[700px] text-sm">
+          <table className="w-full min-w-175 text-sm">
             <thead>
               <tr className="border-b border-blue-100 bg-[#eff6ff] text-xs font-bold uppercase tracking-wide text-[#1e3a5f]">
                 <th className="px-4 py-3 text-left">商品名</th>

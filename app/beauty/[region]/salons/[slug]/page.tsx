@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Car, CheckCircle2, Clock, ExternalLink, Instagram, MapPin, Phone, Users } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
@@ -11,6 +10,7 @@ import { breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getBeautySalon, getBeautySalons, getBeautyRanking, getBeautyRegions } from "@/lib/content";
 import type { AgeGroup } from "@/lib/types";
+import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
@@ -62,9 +62,19 @@ export default async function BeautySalonPage({ params }: PageProps) {
       <JsonLd data={faqSchema(salon.faqs)} />
 
       <div className="relative h-[340px] w-full sm:h-[420px]">
-        <Image src={salon.imageUrl} alt={salon.name} fill className="object-cover" priority sizes="100vw" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-10">
+        <AttributedImage
+          src={salon.imageUrl}
+          alt={salon.name}
+          fill
+          className="object-cover"
+          priority
+          sizes="100vw"
+          credit={resolveCredit(salon.imageUrl, salon.name, salon.officialUrl)}
+          variant="hover"
+          wrapperClassName="absolute inset-0"
+        />
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 sm:p-10">
           <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">{salon.area}</p>
           <h1 className="mt-1 text-3xl font-black text-white sm:text-5xl">{salon.name}</h1>
           <p className="mt-2 max-w-xl text-sm font-semibold text-white/80">{salon.tagline}</p>
