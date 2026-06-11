@@ -7,10 +7,12 @@
 - `app/` はルート、レイアウト、metadata、loading UI、`sitemap.ts`、`robots.ts`、route handler を管理します。
 - `components/` は再利用 UI です。`layout/`、`cards/`、`seo/`、`ui/` に分かれています。
 - `content/` は静的コンテンツです。Markdown 記事は `content/ramen/articles/`、カテゴリ・ランキング・店舗データは型付き TypeScript に置きます。
-- `lib/` は型、ルート定義、SEO 補助、コンテンツ取得関数、共通ユーティリティを置きます。
+- `lib/` は型、ルート定義、SEO 補助、コンテンツ取得関数、共通ユーティリティを置きます。Supabase クライアントは `lib/supabase/`（ブラウザ用 `client.ts` / SSR 用 `server.ts`）と `lib/supabase-server.ts`（service-role、seed 専用）に分かれます。
+- `middleware.ts` は全リクエストで Supabase セッションをリフレッシュします。認証 UI は `app/auth/`、マイページは `app/account/`。
+- `supabase/` は DB マイグレーション（`migrations/*.sql`）と運用ドキュメント（`README.md`）です。`scripts/` は seed・SQL 生成などの一回限りのツール群です。
 - `public/` は静的アセットです。ブランド画像は `public/brand/` にあります。
 
-UI コンポーネントでは raw content を直接 import せず、`lib/content.ts` の取得関数を使ってください。
+UI コンポーネントでは raw content を直接 import せず、`lib/content.ts` の取得関数を使ってください。Supabase は用途に応じて `lib/supabase/` のクライアントを使い、service-role の `lib/supabase-server.ts` は UI から使わないでください。
 
 ## 開発・ビルド・検証コマンド
 
@@ -44,6 +46,8 @@ Pull Request には、変更概要、実行した検証コマンド、関連 iss
 ## セキュリティ・設定
 
 secret やローカル環境ファイルは commit しないでください。`.next/` などの生成物も version control に含めません。構造化コンテンツを変更する場合は、参照元情報と確認日を保持してください。
+
+Supabase の鍵（`SUPABASE_SERVICE_ROLE_KEY` など）は `.env.local` に置き、絶対に commit しないでください。each-spirit 専用テーブルはすべて `es` スキーマに追加し、共有の `public.*` は変更しないでください。DB 変更は `supabase/migrations/` に SQL で記録します。`es` スキーマを API から使うには Supabase Dashboard の Settings → API → Exposed schemas に `es` を追加する手動設定が必要です（詳細は `supabase/README.md`）。
 
 ## エージェント向け注意
 

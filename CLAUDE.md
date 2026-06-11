@@ -6,16 +6,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## アーキテクチャ概要
 
-新潟ラーメンコンテンツを中心とした**静的生成メディアサイト**（Next.js 15 App Router）です。データはすべて TypeScript ファイルに埋め込まれており、データベースや外部 API はありません。
+新潟を中心とした地域情報・比較メディアサイト（Next.js 15 App Router）です。**静的コンテンツ + Supabase 動的レイヤーのハイブリッド構成**です。
 
-### データフロー
+- **静的コンテンツ**（記事・店舗・ランキング等）は TypeScript / Markdown ファイルに埋め込み、ビルド時に静的生成します。
+- **ユーザー機能**（認証・いいね・ブックマーク・ポイント・診断・通知）は Supabase で動的に扱います。
+
+カテゴリは `protein` / `beauty` / `ramen` / `leisure` / `travel` / `cafe` が live、`gadget` / `life` / `tools` が planned です。
+
+### データフロー（静的コンテンツ）
 
 ```
 content/**/*.ts  →  lib/content.ts  →  app/**/page.tsx
 content/**/*.md  →  lib/content.ts (getArticleMarkdown, readFileSync)
 ```
 
-`lib/content.ts` はすべてのコンテンツへの**唯一の import 境界**です。`"server-only"` マークが付いており、UI コンポーネントから `content/` を直接 import してはいけません。
+`lib/content.ts` はすべての静的コンテンツへの**唯一の import 境界**です。`"server-only"` マークが付いており、UI コンポーネントから `content/` を直接 import してはいけません。
 
 ### lib モジュール一覧
 
@@ -26,6 +31,9 @@ content/**/*.md  →  lib/content.ts (getArticleMarkdown, readFileSync)
 | `lib/routes.ts` | 正規ルート文字列と `absoluteUrl()` ヘルパー |
 | `lib/seo.ts` | `pageMetadata()` と JSON-LD スキーマビルダー（`articleSchema`、`restaurantSchema` など） |
 | `lib/utils.ts` | クラス結合用の `cn()` |
+| `lib/supabase/client.ts` | ブラウザ用 Supabase クライアント（anon、`"use client"` から使用） |
+| `lib/supabase/server.ts` | SSR / RSC 用 Supabase クライアント（anon + cookie 連携）。RLS が効くユーザー文脈の操作はこれを使う |
+| `lib/supabase-server.ts` | service-role + `schema: "es"` 固定のクライアント（`"server-only"`）。seed / 管理バッチ専用。**RLS を無視するため UI からは使わない** |
 
 ### コンテンツ構造
 
@@ -54,6 +62,17 @@ export default async function Page({ params }) { /* lib/content 経由で取得�
 構造化データはすべて `<JsonLd data={...} />` (`components/seo/JsonLd.tsx`) で出力します。スキーマビルダーは `lib/seo.ts` にあります。ルートレイアウトが `websiteSchema` と `organizationSchema` をグローバルに注入します。
 
 `lib/seo.ts` の `pageMetadata()` が canonical URL・OG・Twitter カードを一括処理します。`Metadata` オブジェクトを手動構築せず、必ず `generateMetadata` から `pageMetadata()` を呼んでください。
+
+### Supabase（認証・ユーザーデータ）
+
+ユーザー機能は Supabase で扱います。プロジェクトの詳細・テーブル一覧・運用ルールは `supabase/README.md` を参照してください。
+
+- **スキーマ分離**: each-spirit 専用テーブルはすべて `es` スキーマに置きます。`auth.users` と `public.profiles` は別アプリ（飲酒管理アプリ）と共有しているため、**`public.*` への変更は原則禁止**です。新規テーブルは必ず `es` に追加します。
+- **マイグレーション**: すべての DB 変更は `supabase/migrations/` にタイムスタンプ付き SQL で記録します。
+- **クライアントの使い分け**: ブラウザは `lib/supabase/client.ts`、Server Component / Route Handler は `lib/supabase/server.ts`（ユーザー文脈・RLS あり）、seed や管理処理だけ `lib/supabase-server.ts`（service-role）。
+- **セッション**: `middleware.ts` が全リクエストでセッションをリフレッシュします。認証 UI は `app/auth/`（login / signup / callback）、マイページは `app/account/`。
+- **`es` スキーマを API から使うための必須手動設定**: `supabase.schema("es")` を使うには、Supabase Dashboard → **Settings → API → Exposed schemas** に `es` を追加する必要があります（PostgREST はデフォルトで `public` しか公開しないため）。これは SQL マイグレーションでは設定できず、ダッシュボードでの手作業です。未設定だと `es` への全クエリが失敗します。詳細は `supabase/README.md`。
+- **seed**: `npm run db:seed`（`scripts/seed-supabase.ts`）。`SUPABASE_SERVICE_ROLE_KEY` 等の環境変数は `.env.local` に置き、コミットしないこと。
 
 ### 新カテゴリの追加方法
 

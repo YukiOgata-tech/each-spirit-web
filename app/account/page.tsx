@@ -1,12 +1,11 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
-  Heart, Bookmark, MapPin, Bell, Sparkles, ClipboardList,
-  Star, Settings, Coffee, Trophy, ArrowRight, UserCircle,
+  Heart, Bookmark, MapPin, Bell, ClipboardList,
+  Star, Coffee, Trophy,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
-import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/routes";
 import type { Metadata } from "next";
 
@@ -127,13 +126,6 @@ export default async function AccountPage() {
               <p className="mt-0.5 truncate text-sm text-slate-500">{user.email}</p>
               <p className="mt-0.5 text-xs text-slate-400">{memberSince} から利用中</p>
             </div>
-
-            <Button asChild variant="outline" size="sm" className="hidden shrink-0 sm:inline-flex">
-              <Link href="/account/settings">
-                <Settings className="h-4 w-4" />
-                設定
-              </Link>
-            </Button>
           </div>
 
           {/* 下段: 統計ストリップ */}
@@ -221,26 +213,6 @@ export default async function AccountPage() {
             </div>
           </DashboardCard>
 
-          {/* ── 今日の占い ──────────────────────────── */}
-          <DashboardCard title="今日の占い">
-            <div className="flex h-full flex-col justify-between gap-4">
-              <div className="flex items-center justify-center rounded-xl bg-gradient-to-br from-violet-50 to-indigo-50 py-6">
-                <div className="text-center">
-                  <Sparkles className="mx-auto h-8 w-8 text-violet-400" />
-                  <p className="mt-2 text-sm font-semibold text-violet-700">
-                    毎日更新の運勢占い
-                  </p>
-                  <p className="mt-1 text-xs text-violet-500">今日のあなたの運勢は？</p>
-                </div>
-              </div>
-              <Button asChild variant="outline" size="sm" className="w-full">
-                <Link href="/fortune">
-                  今日の占いを見る <ArrowRight className="h-4 w-4" />
-                </Link>
-              </Button>
-            </div>
-          </DashboardCard>
-
           {/* ── 通知 ────────────────────────────────── */}
           <DashboardCard
             title="お知らせ"
@@ -281,10 +253,7 @@ export default async function AccountPage() {
           {/* ── 診断・クイズ履歴 ─────────────────────── */}
           <DashboardCard title="診断・クイズ">
             {quizResults.length === 0 ? (
-              <DashboardCardEmpty
-                message="まだ診断を受けていません。あなたにぴったりのカフェを見つけましょう。"
-                cta={{ label: "カフェ診断を受ける", href: "/quiz/cafe-style" }}
-              />
+              <DashboardCardEmpty message="まだ診断を受けていません。" />
             ) : (
               <ul className="space-y-2">
                 {quizResults.map((q) => (
@@ -320,27 +289,6 @@ export default async function AccountPage() {
                 >
                   <Icon className="h-5 w-5 text-[var(--primary)]" />
                   <span className="text-xs font-semibold text-slate-700">{label}</span>
-                </Link>
-              ))}
-            </div>
-          </DashboardCard>
-
-          {/* ── アカウント設定へのリンク ─────────────── */}
-          <DashboardCard title="アカウント">
-            <div className="space-y-1.5">
-              {[
-                { icon: UserCircle, label: "プロフィール編集",     href: "/account/settings/profile" },
-                { icon: Bell,       label: "通知設定",             href: "/account/settings/notifications" },
-                { icon: Settings,   label: "アカウント設定",       href: "/account/settings" },
-              ].map(({ icon: Icon, label, href }) => (
-                <Link
-                  key={label}
-                  href={href}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-[var(--muted)]"
-                >
-                  <Icon className="h-4 w-4 shrink-0 text-slate-400" />
-                  {label}
-                  <ArrowRight className="ml-auto h-3.5 w-3.5 text-slate-300" />
                 </Link>
               ))}
             </div>

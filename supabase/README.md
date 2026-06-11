@@ -18,6 +18,23 @@ public.*（その他）  ← 飲酒管理アプリ専用（each-spirit は変更
 es.*                ← each-spirit 専用スキーマ
 ```
 
+## 初回セットアップ（手動・必須）
+
+`es` スキーマを `supabase-js` の REST API（`supabase.schema("es")...`）から利用するには、**Supabase Dashboard での手動設定が必須**です。これは SQL マイグレーションでは設定できません。
+
+> **Supabase Dashboard → Settings → API → Exposed schemas に `es` を追加して保存**
+
+理由: Supabase の REST API（PostgREST）はセキュリティ上、デフォルトで `public` と `graphql_public` スキーマしか公開しません。`es` を Exposed schemas に追加しないと、`es` への全クエリが
+`The schema must be one of the following: public, graphql_public` というエラーで失敗します。
+
+未設定の場合、`app/account/page.tsx` は `Promise.allSettled` でエラーを握りつぶすためページは落ちませんが、**いいね・通知・ポイント等がすべて空表示**になります。
+
+| 設定項目 | 値 |
+|----------|-----|
+| 場所 | Dashboard → Settings → API → Exposed schemas |
+| 追加するスキーマ | `es` |
+| 必要環境変数（`.env.local`） | `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
+
 ## マイグレーション一覧
 
 | ファイル | 内容 | 適用日 |
