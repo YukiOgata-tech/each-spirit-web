@@ -1,8 +1,19 @@
 import { getCategories, getLeisureRankings, getLeisureRegions, getLeisureSpots, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
-export function GET() {
+export async function GET() {
   const leisureRegions = getLeisureRegions();
+  const [ramenArticles, ramenRankings, ramenItems, ...leisurePairs] = await Promise.all([
+    getRamenArticles(),
+    getRamenRankings(),
+    getRamenItems(),
+    ...leisureRegions.map(async (region) => ({
+      region,
+      rankings: await getLeisureRankings(region),
+      spots: await getLeisureSpots(region),
+    })),
+  ]);
+
   const lines = [
     "# Each Spirit",
     "",
@@ -17,22 +28,26 @@ export function GET() {
     ...getCategories().map((category) => "- " + category.name + ": " + absoluteUrl(category.href)),
     "",
     "## Ramen articles",
-    ...getRamenArticles().map((article) => "- " + article.title + ": " + absoluteUrl(routes.ramenArticle(article.slug))),
+    ...ramenArticles.map((article) => "- " + article.title + ": " + absoluteUrl(routes.ramenArticle(article.slug))),
     "",
     "## Ramen rankings",
-    ...getRamenRankings().map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.ramenRanking(ranking.slug))),
+    ...ramenRankings.map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.ramenRanking(ranking.slug))),
     "",
     "## Ramen items",
-    ...getRamenItems().map((item) => "- " + item.name + ": " + absoluteUrl(routes.ramenItem(item.slug))),
+    ...ramenItems.map((item) => "- " + item.name + ": " + absoluteUrl(routes.ramenItem(item.slug))),
     "",
     "## Leisure regions",
     ...leisureRegions.map((region) => "- " + region + ": " + absoluteUrl(routes.leisureRegion(region))),
     "",
     "## Leisure rankings",
-    ...leisureRegions.flatMap((region) => getLeisureRankings(region).map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.leisureRanking(region, ranking.slug)))),
+    ...(leisurePairs as Array<{ region: string; rankings: Awaited<ReturnType<typeof getLeisureRankings>>; spots: Awaited<ReturnType<typeof getLeisureSpots>> }>).flatMap(({ region, rankings }) =>
+      rankings.map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.leisureRanking(region, ranking.slug)))
+    ),
     "",
     "## Leisure spots",
-    ...leisureRegions.flatMap((region) => getLeisureSpots(region).map((spot) => "- " + spot.name + ": " + absoluteUrl(routes.leisureSpot(region, spot.slug)))),
+    ...(leisurePairs as Array<{ region: string; rankings: Awaited<ReturnType<typeof getLeisureRankings>>; spots: Awaited<ReturnType<typeof getLeisureSpots>> }>).flatMap(({ region, spots }) =>
+      spots.map((spot) => "- " + spot.name + ": " + absoluteUrl(routes.leisureSpot(region, spot.slug)))
+    ),
   ];
   return new Response(lines.join("\n"), { headers: { "content-type": "text/plain; charset=utf-8" } });
 }

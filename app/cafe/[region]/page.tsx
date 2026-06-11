@@ -36,8 +36,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
   const regionData = getCafeRegion(region);
   if (!regionData) notFound();
 
-  const items = getCafeItemsByRegion(region);
-  const rankings = getCafeRankingsByRegion(region);
+  const [items, rankings] = await Promise.all([getCafeItemsByRegion(region), getCafeRankingsByRegion(region)]);
   const featured = regionData.featuredSlugs
     .map((slug) => items.find((c) => c.slug === slug))
     .filter(Boolean) as typeof items;

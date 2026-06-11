@@ -40,8 +40,7 @@ export default async function TravelRegionPage({ params }: PageProps) {
   const regionData = getTravelRegion(region);
   if (!regionData) notFound();
 
-  const hotels = getTravelHotels(region);
-  const rankings = getTravelRankings(region);
+  const [hotels, rankings] = await Promise.all([getTravelHotels(region), getTravelRankings(region)]);
 
   const breadcrumbs = [
     { name: "トップ", href: routes.home },

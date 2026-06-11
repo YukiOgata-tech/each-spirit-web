@@ -10,15 +10,15 @@ import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getBeautyRegions().flatMap((r) =>
-    getBeautyArticles(r.slug).map((a) => ({ region: r.slug, slug: a.slug }))
-  );
+export async function generateStaticParams() {
+  const regions = getBeautyRegions();
+  const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, articles: await getBeautyArticles(r.slug) })));
+  return pairs.flatMap(({ region, articles }) => articles.map((a) => ({ region, slug: a.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const article = getBeautyArticle(region, slug);
+  const article = await getBeautyArticle(region, slug);
   if (!article) return {};
   return pageMetadata({
     title: article.title,
@@ -33,10 +33,10 @@ const REGION_NAME: Record<string, string> = {
 
 export default async function BeautyArticlePage({ params }: PageProps) {
   const { region, slug } = await params;
-  const article = getBeautyArticle(region, slug);
+  const article = await getBeautyArticle(region, slug);
   if (!article) notFound();
 
-  const markdown = getBeautyArticleMarkdown(region, slug);
+  const markdown = await getBeautyArticleMarkdown(region, slug);
   const regionName = REGION_NAME[region] ?? region;
   const breadcrumbs = [
     { name: "トップ",     href: routes.home },
@@ -47,7 +47,7 @@ export default async function BeautyArticlePage({ params }: PageProps) {
 
   return (
     <article className="beauty-theme section-shell max-w-4xl">
-      <JsonLd data={articleSchema(article)} />
+      <JsonLd data={articleSchema(article, routes.beautyArticle(region, slug))} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(article.faqs)} />
       <Breadcrumbs
@@ -62,8 +62,8 @@ export default async function BeautyArticlePage({ params }: PageProps) {
             <span key={tag} className="rounded-full bg-[#fef0f6] px-2.5 py-1 text-[11px] font-semibold text-[#8b3a7e]">{tag}</span>
           ))}
         </div>
-        <h1 className="mt-5 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">{article.title}</h1>
-        <p className="mt-4 text-base leading-8 text-slate-600">{article.description}</p>
+        <h1 data-speakable="title" className="mt-5 text-3xl font-black leading-tight tracking-tight text-slate-950 sm:text-4xl">{article.title}</h1>
+        <p data-speakable="description" className="mt-4 text-base leading-8 text-slate-600">{article.description}</p>
         <div className="mt-5 grid gap-2 text-sm text-slate-400 sm:grid-cols-2">
           <p>公開日: {article.publishedAt}</p>
           <p>更新日: {article.updatedAt}</p>

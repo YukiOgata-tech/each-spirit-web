@@ -8,21 +8,24 @@ import { SourceList } from "@/components/cards/SourceList";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
-import { breadcrumbSchema, cafeRankingItemListSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, cafeRankingItemListSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { getCafeRanking, getCafeRankingEntries, getCafeRankingsByRegion, getCafeRegions } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getCafeRegions().flatMap((r) =>
-    getCafeRankingsByRegion(r.slug).map((ranking) => ({ region: r.slug, slug: ranking.slug })),
-  );
+export async function generateStaticParams() {
+  return await Promise.all(
+    getCafeRegions().map(async (r) => {
+      const rankings = await getCafeRankingsByRegion(r.slug);
+      return rankings.map((ranking) => ({ region: r.slug, slug: ranking.slug }));
+    })
+  ).then((arr) => arr.flat());
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getCafeRanking(region, slug);
+  const ranking = await getCafeRanking(region, slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -42,10 +45,10 @@ const getMedal = (rank: number) => medalConfig[rank] ?? { bg: "bg-white", border
 
 export default async function CafeRankingPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getCafeRanking(region, slug);
+  const ranking = await getCafeRanking(region, slug);
   if (!ranking) notFound();
 
-  const entries = getCafeRankingEntries(region, slug);
+  const entries = await getCafeRankingEntries(region, slug);
   const regionName = REGION_NAME[region] ?? region;
 
   const breadcrumbs = [
@@ -60,9 +63,10 @@ export default async function CafeRankingPage({ params }: PageProps) {
 
   return (
     <div className="cafe-theme section-shell">
-      <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={cafeRankingItemListSchema(region, ranking, entries)} />
+      <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.cafeRanking(region, slug), ranking.title)} />
 
       <Breadcrumbs
         items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
@@ -77,8 +81,8 @@ export default async function CafeRankingPage({ params }: PageProps) {
             </span>
             <span className="text-[11px] font-bold uppercase tracking-widest text-[var(--primary)]">Ranking</span>
           </div>
-          <h1 className="mt-4 text-2xl font-black leading-tight text-slate-950 sm:text-3xl">{ranking.title}</h1>
-          <p className="mt-3 text-sm leading-7 text-slate-600">{ranking.description}</p>
+          <h1 data-speakable="title" className="mt-4 text-2xl font-black leading-tight text-slate-950 sm:text-3xl">{ranking.title}</h1>
+          <p data-speakable="description" className="mt-3 text-sm leading-7 text-slate-600">{ranking.description}</p>
           <div className="mt-5 rounded-lg bg-white/70 p-4 text-sm leading-7 text-[var(--primary)]">
             <strong>編集部まとめ:</strong> {ranking.conclusion}
           </div>

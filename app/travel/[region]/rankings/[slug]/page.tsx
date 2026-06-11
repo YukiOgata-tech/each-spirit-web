@@ -7,21 +7,24 @@ import { HotelCard } from "@/components/travel/HotelCard";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { breadcrumbSchema, faqSchema, pageMetadata, travelRankingItemListSchema } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema, travelRankingItemListSchema } from "@/lib/seo";
 import { getTravelRanking, getTravelRankingEntries, getTravelRankings, getTravelRegions } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getTravelRegions().flatMap((r) =>
-    getTravelRankings(r.slug).map((ranking) => ({ region: r.slug, slug: ranking.slug })),
-  );
+export async function generateStaticParams() {
+  return await Promise.all(
+    getTravelRegions().map(async (r) => {
+      const rankings = await getTravelRankings(r.slug);
+      return rankings.map((ranking) => ({ region: r.slug, slug: ranking.slug }));
+    })
+  ).then((arr) => arr.flat());
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getTravelRanking(region, slug);
+  const ranking = await getTravelRanking(region, slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -32,10 +35,10 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function TravelRankingPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getTravelRanking(region, slug);
+  const ranking = await getTravelRanking(region, slug);
   if (!ranking) notFound();
 
-  const entries = getTravelRankingEntries(region, slug);
+  const entries = await getTravelRankingEntries(region, slug);
   const regionLabel = region === "niigata" ? "新潟県" : region === "yamagata" ? "山形県" : region;
 
   const breadcrumbs = [
@@ -50,6 +53,7 @@ export default async function TravelRankingPage({ params }: PageProps) {
       <JsonLd data={travelRankingItemListSchema(region, ranking, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.travelRanking(region, slug), ranking.title)} />
 
       <Breadcrumbs
         items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
@@ -57,8 +61,8 @@ export default async function TravelRankingPage({ params }: PageProps) {
 
       <section className="mt-4 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft sm:p-8">
         <Badge className="bg-[var(--muted)] text-[var(--primary)]">Ranking</Badge>
-        <h1 className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-4xl">{ranking.title}</h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>
+        <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-4xl">{ranking.title}</h1>
+        <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>
         <p className="mt-5 rounded-lg bg-[var(--muted)] p-4 text-sm font-semibold leading-7 text-slate-800">
           <strong>結論:</strong> {ranking.conclusion}
         </p>

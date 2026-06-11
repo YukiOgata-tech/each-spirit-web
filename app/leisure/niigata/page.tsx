@@ -22,9 +22,8 @@ export const metadata = pageMetadata({
 const areaFacets = ["新潟市", "北区", "秋葉区", "十日町", "湯沢", "弥彦", "長岡", "寺泊", "柏崎", "上越"];
 const purposeFacets = ["アウトドア", "インドア", "雨の日", "子連れ", "公共系", "車なし", "写真目的", "半日観光"];
 
-export default function NiigataLeisurePage() {
-  const spots = getLeisureSpots(region);
-  const rankings = getLeisureRankings(region);
+export default async function NiigataLeisurePage() {
+  const [spots, rankings] = await Promise.all([getLeisureSpots(region), getLeisureRankings(region)]);
   const outdoorSpots = spots.filter((spot) => spot.kind === "outdoor");
   const indoorSpots = spots.filter((spot) => spot.kind === "indoor");
   const hybridSpots = spots.filter((spot) => spot.kind === "hybrid");

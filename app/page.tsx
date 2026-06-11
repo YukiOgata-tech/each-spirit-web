@@ -24,11 +24,13 @@ const editorialPillars = [
   "公開前カテゴリも設計に含める",
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
   const categories = getCategories();
-  const articles = getLatestArticles(3);
-  const rankings = getPopularRankings(3);
-  const searchResults = getSearchResults();
+  const [articles, rankings, searchResults] = await Promise.all([
+    getLatestArticles(3),
+    getPopularRankings(3),
+    getSearchResults(),
+  ]);
   const liveCategories = categories.filter((category) => category.status === "live");
   const plannedCategories = categories.filter((category) => category.status === "planned");
 

@@ -11,8 +11,16 @@ export const metadata = pageMetadata({
   path: routes.beauty,
 });
 
-export default function BeautyIndexPage() {
+export default async function BeautyIndexPage() {
   const regions = getBeautyRegions();
+  const regionData = await Promise.all(
+    regions.map(async (region) => ({
+      ...region,
+      salons: await getBeautySalons(region.slug),
+      rankings: await getBeautyRankings(region.slug),
+      articles: await getBeautyArticles(region.slug),
+    }))
+  );
 
   return (
     <div className="beauty-theme">
@@ -35,54 +43,49 @@ export default function BeautyIndexPage() {
         <p className="section-kicker" style={{ color: "#8b3a7e" }}>REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {regions.map((region) => {
-            const salons = getBeautySalons(region.slug);
-            const rankings = getBeautyRankings(region.slug);
-            const articles = getBeautyArticles(region.slug);
-            return (
-              <Link
-                key={region.slug}
-                href={routes.beautyRegion(region.slug)}
-                className="beauty-card group overflow-hidden"
-              >
-                <div className="relative h-52 w-full overflow-hidden">
-                  <Image
-                    src={region.imageUrl}
-                    alt={region.name}
-                    fill
-                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    sizes="(max-width: 640px) 100vw, 50vw"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                  <div className="absolute bottom-4 left-5">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
-                      {region.status === "live" ? "公開中" : "準備中"}
-                    </p>
-                    <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
-                  </div>
+          {regionData.map((region) => (
+            <Link
+              key={region.slug}
+              href={routes.beautyRegion(region.slug)}
+              className="beauty-card group overflow-hidden"
+            >
+              <div className="relative h-52 w-full overflow-hidden">
+                <Image
+                  src={region.imageUrl}
+                  alt={region.name}
+                  fill
+                  className="object-cover transition-transform duration-500 group-hover:scale-105"
+                  sizes="(max-width: 640px) 100vw, 50vw"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="absolute bottom-4 left-5">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
+                    {region.status === "live" ? "公開中" : "準備中"}
+                  </p>
+                  <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
                 </div>
-                <div className="p-5">
-                  <p className="text-sm font-semibold text-[#8b3a7e]">{region.tagline}</p>
-                  <p className="mt-2 text-xs leading-6 text-slate-500">{region.description}</p>
-                  <div className="mt-4 flex gap-4 text-center">
-                    {[
-                      { num: salons.length,   label: "サロン" },
-                      { num: rankings.length, label: "ランキング" },
-                      { num: articles.length, label: "記事" },
-                    ].map(({ num, label }) => (
-                      <div key={label} className="flex-1 rounded-xl bg-[#fef0f6] py-2">
-                        <p className="text-lg font-black text-[#8b3a7e]">{num}</p>
-                        <p className="text-[10px] font-semibold text-slate-500">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center justify-end gap-1 text-xs font-bold text-[#8b3a7e]">
-                    詳しく見る <ArrowRight className="h-3.5 w-3.5" />
-                  </div>
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-semibold text-[#8b3a7e]">{region.tagline}</p>
+                <p className="mt-2 text-xs leading-6 text-slate-500">{region.description}</p>
+                <div className="mt-4 flex gap-4 text-center">
+                  {[
+                    { num: region.salons.length,   label: "サロン" },
+                    { num: region.rankings.length, label: "ランキング" },
+                    { num: region.articles.length, label: "記事" },
+                  ].map(({ num, label }) => (
+                    <div key={label} className="flex-1 rounded-xl bg-[#fef0f6] py-2">
+                      <p className="text-lg font-black text-[#8b3a7e]">{num}</p>
+                      <p className="text-[10px] font-semibold text-slate-500">{label}</p>
+                    </div>
+                  ))}
                 </div>
-              </Link>
-            );
-          })}
+                <div className="mt-4 flex items-center justify-end gap-1 text-xs font-bold text-[#8b3a7e]">
+                  詳しく見る <ArrowRight className="h-3.5 w-3.5" />
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <div className="mt-12 rounded-2xl border border-[#f2d5e8] bg-white p-6 text-center">

@@ -8,19 +8,20 @@ import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { breadcrumbSchema, faqSchema, pageMetadata, restaurantSchema } from "@/lib/seo";
-import { getRamenItem, getRamenItems } from "@/lib/content";
+import { breadcrumbSchema, faqSchema, pageMetadata, restaurantSchema, speakableWebPageSchema } from "@/lib/seo";
+import { getRamenItem, getRamenItems, getRamenRankings } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return getRamenItems().map((item) => ({ slug: item.slug }));
+export async function generateStaticParams() {
+  const items = await getRamenItems();
+  return items.map((item) => ({ slug: item.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const item = getRamenItem(slug);
+  const item = await getRamenItem(slug);
   if (!item) return {};
   return pageMetadata({
     title: item.name,
@@ -31,8 +32,14 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ItemPage({ params }: PageProps) {
   const { slug } = await params;
-  const item = getRamenItem(slug);
+  const [item, rankings] = await Promise.all([getRamenItem(slug), getRamenRankings()]);
   if (!item) notFound();
+
+  const editorialScore = rankings
+    .flatMap((r) => r.items)
+    .find((entry) => entry.itemSlug === item.slug)
+    ?.score;
+
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: "ラーメン", href: routes.ramen },
@@ -40,9 +47,10 @@ export default async function ItemPage({ params }: PageProps) {
   ];
   return (
     <div className="ramen-theme section-shell">
-      <JsonLd data={restaurantSchema(item)} />
+      <JsonLd data={restaurantSchema(item, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(item.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.ramenItem(item.slug), item.name)} />
       <Breadcrumbs items={breadcrumbs.map((value, index) => ({ label: value.name, href: index === breadcrumbs.length - 1 ? undefined : value.href }))} />
       <section className="overflow-hidden rounded-lg border border-orange-200 bg-white shadow-soft">
         {item.imageUrl && (
@@ -66,7 +74,7 @@ export default async function ItemPage({ params }: PageProps) {
           <div className="flex flex-wrap gap-2">
             <Badge>{item.area}</Badge><Badge>{item.genre}</Badge>{item.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
           </div>
-          <h1 className="mt-5 text-3xl font-bold tracking-normal sm:text-5xl">{item.name}</h1>
+          <h1 data-speakable="title" className="mt-5 text-3xl font-bold tracking-normal sm:text-5xl">{item.name}</h1>
           <p className="mt-4 text-base leading-8 text-slate-600">{item.description}</p>
           <div className="mt-5 grid gap-3 rounded-lg bg-orange-50 p-4 text-sm leading-7 text-orange-950">
             <p><strong>編集部コメント:</strong> {item.editorComment}</p>

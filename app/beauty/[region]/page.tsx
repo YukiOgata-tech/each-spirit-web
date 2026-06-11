@@ -17,7 +17,7 @@ import {
 
 type PageProps = { params: Promise<{ region: string }> };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return getBeautyRegions().map((r) => ({ region: r.slug }));
 }
 
@@ -45,9 +45,11 @@ export default async function BeautyRegionPage({ params }: PageProps) {
   const regionData = getBeautyRegion(region);
   if (!regionData) notFound();
 
-  const salons = getBeautySalons(region);
-  const rankings = getBeautyRankings(region);
-  const articles = getBeautyArticles(region);
+  const [salons, rankings, articles] = await Promise.all([
+    getBeautySalons(region),
+    getBeautyRankings(region),
+    getBeautyArticles(region),
+  ]);
   const category = getCategory("beauty");
   const firstRankingSlug = rankings[0]?.slug ?? "";
 

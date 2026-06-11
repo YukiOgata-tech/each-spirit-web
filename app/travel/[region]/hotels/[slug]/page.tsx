@@ -7,22 +7,25 @@ import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { breadcrumbSchema, faqSchema, lodgingBusinessSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, lodgingBusinessSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
-import { getTravelHotel, getTravelHotels, getTravelRegions } from "@/lib/content";
+import { getTravelHotel, getTravelHotels, getTravelRankings, getTravelRegions } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getTravelRegions().flatMap((r) =>
-    getTravelHotels(r.slug).map((h) => ({ region: r.slug, slug: h.slug })),
-  );
+export async function generateStaticParams() {
+  return await Promise.all(
+    getTravelRegions().map(async (r) => {
+      const hotels = await getTravelHotels(r.slug);
+      return hotels.map((h) => ({ region: r.slug, slug: h.slug }));
+    })
+  ).then((arr) => arr.flat());
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const hotel = getTravelHotel(region, slug);
+  const hotel = await getTravelHotel(region, slug);
   if (!hotel) return {};
   return pageMetadata({
     title: hotel.name,
@@ -41,8 +44,13 @@ const mealLabel: Record<import("@/lib/types").MealPlan, string> = {
 
 export default async function HotelPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const hotel = getTravelHotel(region, slug);
+  const [hotel, rankings] = await Promise.all([getTravelHotel(region, slug), getTravelRankings(region)]);
   if (!hotel) notFound();
+
+  const editorialScore = rankings
+    .flatMap((r) => r.items)
+    .find((entry) => entry.itemSlug === hotel.slug)
+    ?.score;
 
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
@@ -53,9 +61,10 @@ export default async function HotelPage({ params }: PageProps) {
 
   return (
     <div className="travel-theme section-shell">
-      <JsonLd data={lodgingBusinessSchema(region, hotel)} />
+      <JsonLd data={lodgingBusinessSchema(region, hotel, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(hotel.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.travelHotel(region, slug), hotel.name)} />
 
       <Breadcrumbs
         items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
@@ -95,7 +104,7 @@ export default async function HotelPage({ params }: PageProps) {
             <Badge>{hotel.area}</Badge>
             {hotel.tags.slice(0, 3).map((tag) => <Badge key={tag} className="bg-[var(--muted)] text-[var(--primary)]">{tag}</Badge>)}
           </div>
-          <h1 className="mt-4 text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">{hotel.name}</h1>
+          <h1 data-speakable="title" className="mt-4 text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">{hotel.name}</h1>
           <p className="mt-4 text-base leading-8 text-slate-600">{hotel.description}</p>
 
           <div className="mt-5 rounded-lg bg-[var(--muted)] p-4 text-sm leading-7 text-slate-800">

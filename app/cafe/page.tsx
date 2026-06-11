@@ -13,8 +13,15 @@ export const metadata = pageMetadata({
   keywords: ["カフェ", "コーヒー", "新潟カフェ", "山形カフェ", "スペシャルティコーヒー"],
 });
 
-export default function CafeIndexPage() {
+export default async function CafeIndexPage() {
   const regions = getCafeRegions();
+  const regionStats = await Promise.all(
+    regions.map(async (region) => ({
+      region,
+      items: await getCafeItemsByRegion(region.slug),
+      rankings: await getCafeRankingsByRegion(region.slug),
+    }))
+  );
 
   return (
     <div className="cafe-theme">
@@ -41,9 +48,7 @@ export default function CafeIndexPage() {
         <p className="section-kicker">REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {regions.map((region) => {
-            const items = getCafeItemsByRegion(region.slug);
-            const rankings = getCafeRankingsByRegion(region.slug);
+          {regionStats.map(({ region, items, rankings }) => {
             return (
               <Link
                 key={region.slug}

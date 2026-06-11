@@ -9,9 +9,9 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getLeisureSpot, getLeisureSpots } from "@/lib/content";
+import { getLeisureRankings, getLeisureSpot, getLeisureSpots } from "@/lib/content";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
-import { breadcrumbSchema, faqSchema, pageMetadata, touristAttractionSchema } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema, touristAttractionSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -19,13 +19,14 @@ type PageProps = { params: Promise<{ slug: string }> };
 const region = "niigata";
 const kindLabel = { outdoor: "アウトドア", indoor: "インドア", hybrid: "複合型" };
 
-export function generateStaticParams() {
-  return getLeisureSpots(region).map((spot) => ({ slug: spot.slug }));
+export async function generateStaticParams() {
+  const spots = await getLeisureSpots(region);
+  return spots.map((spot) => ({ slug: spot.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const spot = getLeisureSpot(region, slug);
+  const spot = await getLeisureSpot(region, slug);
   if (!spot) return {};
   return pageMetadata({
     title: spot.name,
@@ -36,8 +37,14 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function LeisureSpotPage({ params }: PageProps) {
   const { slug } = await params;
-  const spot = getLeisureSpot(region, slug);
+  const [spot, rankings] = await Promise.all([getLeisureSpot(region, slug), getLeisureRankings(region)]);
   if (!spot) notFound();
+
+  const editorialScore = rankings
+    .flatMap((r) => r.items)
+    .find((entry) => entry.itemSlug === spot.slug)
+    ?.score;
+
   const visual = getLeisureVisual(spot);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
@@ -48,9 +55,10 @@ export default async function LeisureSpotPage({ params }: PageProps) {
 
   return (
     <div className="leisure-theme section-shell">
-      <JsonLd data={touristAttractionSchema(region, spot)} />
+      <JsonLd data={touristAttractionSchema(region, spot, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(spot.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.leisureSpot(region, spot.slug), spot.name)} />
       <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
       <section className="overflow-hidden rounded-lg border border-cyan-200 bg-white shadow-soft">
         <div className="relative min-h-[260px] sm:min-h-[360px]">
@@ -61,8 +69,8 @@ export default async function LeisureSpotPage({ params }: PageProps) {
               <LeisureIcon iconKey={visual.iconKey} className="h-5 w-5" />
               {spot.genre}
             </div>
-            <h1 className="max-w-4xl text-3xl font-bold tracking-normal sm:text-5xl">{spot.name}</h1>
-            <p className="mt-4 max-w-3xl text-base leading-8 text-white/88">{spot.description}</p>
+            <h1 data-speakable="title" className="max-w-4xl text-3xl font-bold tracking-normal sm:text-5xl">{spot.name}</h1>
+            <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-white/88">{spot.description}</p>
           </div>
         </div>
         <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">

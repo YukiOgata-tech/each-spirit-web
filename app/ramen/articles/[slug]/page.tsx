@@ -11,13 +11,14 @@ import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return getRamenArticles().map((article) => ({ slug: article.slug }));
+export async function generateStaticParams() {
+  const articles = await getRamenArticles();
+  return articles.map((article) => ({ slug: article.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const article = getRamenArticle(slug);
+  const article = await getRamenArticle(slug);
   if (!article) return {};
   return pageMetadata({
     title: article.title,
@@ -28,9 +29,9 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ArticlePage({ params }: PageProps) {
   const { slug } = await params;
-  const article = getRamenArticle(slug);
+  const article = await getRamenArticle(slug);
   if (!article) notFound();
-  const markdown = getArticleMarkdown(article.slug);
+  const markdown = await getArticleMarkdown(article.slug);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: "ラーメン", href: routes.ramen },
@@ -38,7 +39,7 @@ export default async function ArticlePage({ params }: PageProps) {
   ];
   return (
     <article className="ramen-theme section-shell max-w-4xl">
-      <JsonLd data={articleSchema(article)} />
+      <JsonLd data={articleSchema(article, routes.ramenArticle(article.slug))} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(article.faqs)} />
       <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
@@ -47,8 +48,8 @@ export default async function ArticlePage({ params }: PageProps) {
           <Badge>{article.category}</Badge>
           {article.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
         </div>
-        <h1 className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">{article.title}</h1>
-        <p className="mt-4 text-base leading-8 text-slate-600">{article.description}</p>
+        <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">{article.title}</h1>
+        <p data-speakable="description" className="mt-4 text-base leading-8 text-slate-600">{article.description}</p>
         <div className="mt-5 grid gap-2 text-sm text-slate-500 sm:grid-cols-2">
           <p>公開日: {article.publishedAt}</p>
           <p>更新日: {article.updatedAt}</p>

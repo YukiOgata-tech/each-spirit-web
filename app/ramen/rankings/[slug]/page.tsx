@@ -9,19 +9,20 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
-import { breadcrumbSchema, faqSchema, itemListSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, itemListSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { getRankingEntries, getRamenRanking, getRamenRankings } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return getRamenRankings().map((ranking) => ({ slug: ranking.slug }));
+export async function generateStaticParams() {
+  const rankings = await getRamenRankings();
+  return rankings.map((ranking) => ({ slug: ranking.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const ranking = getRamenRanking(slug);
+  const ranking = await getRamenRanking(slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -44,9 +45,9 @@ function getMedal(rank: number) {
 
 export default async function RankingPage({ params }: PageProps) {
   const { slug } = await params;
-  const ranking = getRamenRanking(slug);
+  const ranking = await getRamenRanking(slug);
   if (!ranking) notFound();
-  const entries = getRankingEntries(ranking.slug);
+  const entries = await getRankingEntries(ranking.slug);
 
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
@@ -62,6 +63,7 @@ export default async function RankingPage({ params }: PageProps) {
       <JsonLd data={itemListSchema(ranking, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.ramenRanking(ranking.slug), ranking.title)} />
 
       {/* Hero */}
       <section className="border-b border-[var(--border)] bg-[linear-gradient(135deg,#3d1508_0%,#a64019_45%,#e5a126_100%)]">
@@ -76,10 +78,10 @@ export default async function RankingPage({ params }: PageProps) {
             </span>
             <Badge className="border-white/20 bg-white/15 text-white backdrop-blur-sm">Ranking</Badge>
           </div>
-          <h1 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
+          <h1 data-speakable="title" className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl lg:text-5xl">
             {ranking.title}
           </h1>
-          <p className="mt-4 max-w-3xl text-base leading-8 text-white/80">{ranking.description}</p>
+          <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-white/80">{ranking.description}</p>
           <div className="mt-6 rounded-xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm sm:max-w-xl">
             <p className="text-sm font-bold text-white/70">編集部の結論</p>
             <p className="mt-1 text-sm leading-7 font-semibold text-white">{ranking.conclusion}</p>

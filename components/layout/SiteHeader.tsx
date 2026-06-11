@@ -3,13 +3,14 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { MainNav } from "@/components/layout/MainNav";
 import { MobileHeaderMenu } from "@/components/layout/MobileHeaderMenu";
+import { AuthButton } from "@/components/auth/AuthButton";
 import { Button } from "@/components/ui/button";
 import { getCategories, getSearchResults } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
-export function SiteHeader() {
+export async function SiteHeader() {
   const categories = getCategories();
-  const searchResults = getSearchResults();
+  const searchResults = await getSearchResults();
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -28,6 +29,7 @@ export function SiteHeader() {
             探す
           </Link>
         </Button>
+        <AuthButton />
         <MobileHeaderMenu categories={categories} results={searchResults} />
       </div>
     </header>

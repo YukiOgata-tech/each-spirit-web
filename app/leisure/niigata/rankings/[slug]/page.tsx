@@ -7,7 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLeisureRanking, getLeisureRankingEntries, getLeisureRankings } from "@/lib/content";
-import { breadcrumbSchema, faqSchema, leisureItemListSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, leisureItemListSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -15,13 +15,14 @@ type PageProps = { params: Promise<{ slug: string }> };
 const region = "niigata";
 const kindLabel = { outdoor: "アウトドア", indoor: "インドア", hybrid: "複合型" };
 
-export function generateStaticParams() {
-  return getLeisureRankings(region).map((ranking) => ({ slug: ranking.slug }));
+export async function generateStaticParams() {
+  const rankings = await getLeisureRankings(region);
+  return rankings.map((ranking) => ({ slug: ranking.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const ranking = getLeisureRanking(region, slug);
+  const ranking = await getLeisureRanking(region, slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -32,9 +33,9 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function LeisureRankingPage({ params }: PageProps) {
   const { slug } = await params;
-  const ranking = getLeisureRanking(region, slug);
+  const ranking = await getLeisureRanking(region, slug);
   if (!ranking) notFound();
-  const entries = getLeisureRankingEntries(region, ranking.slug);
+  const entries = await getLeisureRankingEntries(region, ranking.slug);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: "レジャー", href: routes.leisure },
@@ -47,11 +48,12 @@ export default async function LeisureRankingPage({ params }: PageProps) {
       <JsonLd data={leisureItemListSchema(ranking, region, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.leisureRanking(region, ranking.slug), ranking.title)} />
       <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
       <section className="rounded-lg border border-cyan-200 bg-white p-5 shadow-soft sm:p-8">
         <Badge>Ranking</Badge>
-        <h1 className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-5xl">{ranking.title}</h1>
-        <p className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>
+        <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-5xl">{ranking.title}</h1>
+        <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>
         <p className="mt-5 rounded-lg bg-cyan-50 p-4 text-sm font-semibold leading-7 text-cyan-950">結論: {ranking.conclusion}</p>
         <p className="mt-4 text-sm text-slate-500">最終更新日: {ranking.lastUpdatedAt}</p>
       </section>

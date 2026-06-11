@@ -86,7 +86,8 @@
   border-radius: 0.5rem;
   border: 1px solid #cbd5e1;
   background: #ffffff;
-  padding: 0.68rem 0.85rem;
+  padding: 0.75rem 0.85rem; /* 0.75rem×2 + 1.25rem line-height ≒ 44px minimum */
+  font-size: 0.9375rem;
   color: #0f172a;
   outline: none;
   transition: border-color 160ms ease, box-shadow 160ms ease, background 160ms ease;

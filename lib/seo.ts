@@ -1,7 +1,25 @@
 import type { Metadata } from "next";
-import type { Article, CafeItem, CafeRanking, CafeRankingItem, FAQ, Hotel, Item, LeisureRanking, LeisureSpot, Ranking, RankingItem } from "@/lib/types";
+import type {
+  Article,
+  CafeItem,
+  CafeRanking,
+  CafeRankingItem,
+  FAQ,
+  Hotel,
+  Item,
+  LeisureRanking,
+  LeisureSpot,
+  ProteinProduct,
+  ProteinRanking,
+  ProteinRankingEntry,
+  Ranking,
+  RankingItem,
+  Salon,
+} from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
 import { site } from "@/content/site";
+
+// ─── Core metadata ───────────────────────────────────────────────────────────
 
 export function pageMetadata({
   title,
@@ -40,6 +58,8 @@ export function pageMetadata({
   };
 }
 
+// ─── Site-wide schemas ────────────────────────────────────────────────────────
+
 export function websiteSchema() {
   return {
     "@context": "https://schema.org",
@@ -63,9 +83,11 @@ export function organizationSchema() {
     name: "Each Spirit 編集部",
     url: siteUrl,
     logo: absoluteUrl(site.icon),
-    sameAs: [],
+    sameAs: site.sameAs ?? [],
   };
 }
+
+// ─── Navigation ───────────────────────────────────────────────────────────────
 
 export function breadcrumbSchema(items: { name: string; href: string }[]) {
   return {
@@ -80,7 +102,10 @@ export function breadcrumbSchema(items: { name: string; href: string }[]) {
   };
 }
 
+// ─── FAQ ──────────────────────────────────────────────────────────────────────
+
 export function faqSchema(faqs: FAQ[]) {
+  if (!faqs || faqs.length === 0) return null;
   return {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -92,7 +117,51 @@ export function faqSchema(faqs: FAQ[]) {
   };
 }
 
-export function articleSchema(article: Article) {
+// ─── Speakable (AI Overview / Voice search) ───────────────────────────────────
+
+/** Add to ranking and shop pages (non-Article types) */
+export function speakableWebPageSchema(url: string, title: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: title,
+    url: absoluteUrl(url),
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["[data-speakable='title']", "[data-speakable='description']"],
+    },
+  };
+}
+
+// ─── HowTo ────────────────────────────────────────────────────────────────────
+
+export function howToSchema({
+  title,
+  description,
+  steps,
+}: {
+  title: string;
+  description: string;
+  steps: { name: string; text: string }[];
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: title,
+    description,
+    step: steps.map((s, i) => ({
+      "@type": "HowToStep",
+      position: i + 1,
+      name: s.name,
+      text: s.text,
+    })),
+  };
+}
+
+// ─── Articles ─────────────────────────────────────────────────────────────────
+
+/** url: canonical URL for this article (e.g. routes.ramenArticle(slug) or routes.beautyArticle(region,slug)) */
+export function articleSchema(article: Article, url: string) {
   return {
     "@context": "https://schema.org",
     "@type": "Article",
@@ -102,10 +171,16 @@ export function articleSchema(article: Article) {
     dateModified: article.updatedAt,
     author: { "@type": "Organization", name: article.author.name, url: absoluteUrl(routes.about) },
     publisher: organizationSchema(),
-    mainEntityOfPage: absoluteUrl(routes.ramenArticle(article.slug)),
+    mainEntityOfPage: absoluteUrl(url),
     about: article.tags,
+    speakable: {
+      "@type": "SpeakableSpecification",
+      cssSelector: ["[data-speakable='title']", "[data-speakable='description']"],
+    },
   };
 }
+
+// ─── Ramen ────────────────────────────────────────────────────────────────────
 
 export function itemListSchema(ranking: Ranking, entries: { entry: { rank: number; score: number }; item: Item }[]) {
   return {
@@ -124,64 +199,17 @@ export function itemListSchema(ranking: Ranking, entries: { entry: { rank: numbe
         url: absoluteUrl(routes.ramenItem(item.slug)),
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: entry.score / 20,
-          bestRating: 5,
-          worstRating: 1,
-          ratingCount: 1,
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
         },
       },
     })),
   };
 }
 
-export function leisureItemListSchema(ranking: LeisureRanking, region: string, entries: { entry: { rank: number; score: number }; spot: LeisureSpot }[]) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    name: ranking.title,
-    description: ranking.description,
-    itemListOrder: "https://schema.org/ItemListOrderAscending",
-    numberOfItems: entries.length,
-    itemListElement: entries.map(({ entry, spot }) => ({
-      "@type": "ListItem",
-      position: entry.rank,
-      item: {
-        "@type": "TouristAttraction",
-        name: spot.name,
-        url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
-        aggregateRating: {
-          "@type": "AggregateRating",
-          ratingValue: entry.score / 20,
-          bestRating: 5,
-          worstRating: 1,
-          ratingCount: 1,
-        },
-      },
-    })),
-  };
-}
-
-export function touristAttractionSchema(region: string, spot: LeisureSpot) {
-  return {
-    "@context": "https://schema.org",
-    "@type": "TouristAttraction",
-    name: spot.name,
-    description: spot.description,
-    url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
-    sameAs: spot.officialLinks.map((link) => link.url),
-    telephone: spot.phone,
-    address: {
-      "@type": "PostalAddress",
-      streetAddress: spot.address,
-      addressRegion: "新潟県",
-      addressCountry: "JP",
-    },
-    openingHours: spot.businessHours,
-    hasMap: spot.mapUrl,
-  };
-}
-
-export function restaurantSchema(item: Item) {
+export function restaurantSchema(item: Item, editorialScore?: number) {
   const prefectureMatch = item.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
   const addressRegion = prefectureMatch?.[1] ?? "";
   return {
@@ -202,10 +230,103 @@ export function restaurantSchema(item: Item) {
     priceRange: item.priceRange,
     openingHours: item.businessHours,
     hasMap: item.mapUrl,
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
   };
 }
 
-export function lodgingBusinessSchema(region: string, hotel: Hotel) {
+export function ramenRegionItemListSchema(regionName: string, items: Item[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: regionName + "ラーメン 掲載店舗",
+    numberOfItems: items.length,
+    itemListElement: items.map((item, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "Restaurant",
+        name: item.name,
+        url: absoluteUrl(routes.ramenItem(item.slug)),
+        servesCuisine: "Ramen",
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: item.address,
+          addressCountry: "JP",
+        },
+      },
+    })),
+  };
+}
+
+// ─── Leisure ─────────────────────────────────────────────────────────────────
+
+export function leisureItemListSchema(ranking: LeisureRanking, region: string, entries: { entry: { rank: number; score: number }; spot: LeisureSpot }[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, spot }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "TouristAttraction",
+        name: spot.name,
+        url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
+        },
+      },
+    })),
+  };
+}
+
+export function touristAttractionSchema(region: string, spot: LeisureSpot, editorialScore?: number) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "TouristAttraction",
+    name: spot.name,
+    description: spot.description,
+    url: absoluteUrl(routes.leisureSpot(region, spot.slug)),
+    sameAs: spot.officialLinks.map((link) => link.url),
+    telephone: spot.phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: spot.address,
+      addressRegion: "新潟県",
+      addressCountry: "JP",
+    },
+    openingHours: spot.businessHours,
+    hasMap: spot.mapUrl,
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
+  };
+}
+
+// ─── Travel / Hotel ───────────────────────────────────────────────────────────
+
+export function lodgingBusinessSchema(region: string, hotel: Hotel, editorialScore?: number) {
   return {
     "@context": "https://schema.org",
     "@type": "LodgingBusiness",
@@ -223,6 +344,15 @@ export function lodgingBusinessSchema(region: string, hotel: Hotel) {
     amenityFeature: hotel.onsen
       ? [{ "@type": "LocationFeatureSpecification", name: "温泉", value: true }]
       : [],
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
   };
 }
 
@@ -247,10 +377,10 @@ export function travelRankingItemListSchema(
         url: absoluteUrl(routes.travelHotel(region, hotel.slug)),
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: entry.score / 20,
-          bestRating: 5,
-          worstRating: 1,
-          ratingCount: 1,
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
         },
       },
     })),
@@ -280,7 +410,9 @@ export function travelRegionItemListSchema(region: string, regionName: string, h
   };
 }
 
-export function cafeSchema(region: string, cafe: CafeItem) {
+// ─── Cafe ─────────────────────────────────────────────────────────────────────
+
+export function cafeSchema(region: string, cafe: CafeItem, editorialScore?: number) {
   const prefectureMatch = cafe.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
   const addressRegion = prefectureMatch?.[1] ?? "";
   return {
@@ -304,6 +436,15 @@ export function cafeSchema(region: string, cafe: CafeItem) {
       ...(cafe.wifi ? [{ "@type": "LocationFeatureSpecification", name: "WiFi", value: true }] : []),
       ...(cafe.parking ? [{ "@type": "LocationFeatureSpecification", name: "駐車場", value: true }] : []),
     ],
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
   };
 }
 
@@ -351,34 +492,159 @@ export function cafeRankingItemListSchema(
         url: absoluteUrl(routes.cafeItem(region, cafe.slug)),
         aggregateRating: {
           "@type": "AggregateRating",
-          ratingValue: entry.score / 20,
-          bestRating: 5,
-          worstRating: 1,
-          ratingCount: 1,
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
         },
       },
     })),
   };
 }
 
-export function ramenRegionItemListSchema(regionName: string, items: Item[]) {
+// ─── Beauty ───────────────────────────────────────────────────────────────────
+
+export function beautySalonSchema(region: string, salon: Salon, editorialScore?: number) {
+  const prefectureMatch = salon.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
+  const addressRegion = prefectureMatch?.[1] ?? "";
+  return {
+    "@context": "https://schema.org",
+    "@type": "HealthAndBeautyBusiness",
+    name: salon.name,
+    description: salon.description,
+    url: absoluteUrl(routes.beautySalon(region, salon.slug)),
+    sameAs: [
+      ...(salon.officialUrl && salon.officialUrl !== "#" ? [salon.officialUrl] : []),
+      ...(salon.instagram && salon.instagram !== "#" ? [salon.instagram] : []),
+    ],
+    telephone: salon.phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: salon.address,
+      addressRegion,
+      addressCountry: "JP",
+    },
+    openingHours: salon.businessHours,
+    hasMap: salon.mapUrl,
+    makesOffer: salon.treatments.map((t) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Service", name: treatmentLabel(t) },
+    })),
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
+  };
+}
+
+export function beautyRankingItemListSchema(
+  region: string,
+  ranking: Ranking,
+  entries: { entry: RankingItem; salon: Salon }[],
+) {
   return {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    name: regionName + "ラーメン 掲載店舗",
-    numberOfItems: items.length,
-    itemListElement: items.map((item, index) => ({
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, salon }) => ({
       "@type": "ListItem",
-      position: index + 1,
+      position: entry.rank,
       item: {
-        "@type": "Restaurant",
-        name: item.name,
-        url: absoluteUrl(routes.ramenItem(item.slug)),
-        servesCuisine: "Ramen",
-        address: {
-          "@type": "PostalAddress",
-          streetAddress: item.address,
-          addressCountry: "JP",
+        "@type": "HealthAndBeautyBusiness",
+        name: salon.name,
+        url: absoluteUrl(routes.beautySalon(region, salon.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
+        },
+      },
+    })),
+  };
+}
+
+function treatmentLabel(t: string): string {
+  const labels: Record<string, string> = {
+    cut: "カット", color: "カラー", highlight: "ハイライト", perm: "パーマ",
+    straightening: "縮毛矯正", treatment: "トリートメント", headSpa: "ヘッドスパ", hairQuality: "髪質改善",
+  };
+  return labels[t] ?? t;
+}
+
+// ─── Protein / Product ────────────────────────────────────────────────────────
+
+export function productSchema(product: ProteinProduct, editorialScore?: number) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: product.name,
+    description: product.description,
+    brand: { "@type": "Brand", name: product.brand },
+    image: product.imageUrl,
+    url: absoluteUrl(routes.proteinProduct(product.slug)),
+    offers: {
+      "@type": "Offer",
+      price: product.packagePrice.toString(),
+      priceCurrency: "JPY",
+      url: product.officialUrl,
+      availability: "https://schema.org/InStock",
+      seller: { "@type": "Organization", name: product.brand },
+    },
+    nutrition: {
+      "@type": "NutritionInformation",
+      servingSize: `${product.servingSize}g`,
+      calories: `${product.calories} kcal`,
+      proteinContent: `${product.protein} g`,
+      carbohydrateContent: `${product.carbs} g`,
+      fatContent: `${product.fat} g`,
+    },
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
+  };
+}
+
+export function proteinRankingItemListSchema(
+  ranking: ProteinRanking,
+  entries: { entry: ProteinRankingEntry; product: ProteinProduct }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, product }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "Product",
+        name: product.name,
+        brand: { "@type": "Brand", name: product.brand },
+        url: absoluteUrl(routes.proteinProduct(product.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
         },
       },
     })),

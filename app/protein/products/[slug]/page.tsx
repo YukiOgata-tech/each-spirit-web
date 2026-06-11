@@ -8,9 +8,9 @@ import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { MacroBars } from "@/components/protein/MacroBars";
 import { NutritionTypeBadge, MacroChip } from "@/components/protein/NutritionBadge";
-import { breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, pageMetadata, productSchema, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getProteinProduct, getProteinProducts, getProteinTarget } from "@/lib/content";
+import { getProteinProduct, getProteinProducts, getProteinRankings, getProteinTarget } from "@/lib/content";
 import type { ProteinTarget } from "@/lib/types";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -40,6 +40,11 @@ export default async function ProteinProductPage({ params }: PageProps) {
   const product = getProteinProduct(slug);
   if (!product) notFound();
 
+  const editorialScore = getProteinRankings()
+    .flatMap((r) => r.items)
+    .find((entry) => entry.productSlug === product.slug)
+    ?.score;
+
   const breadcrumbs = [
     { name: "トップ",     href: routes.home },
     { name: "プロテイン", href: routes.protein },
@@ -48,8 +53,10 @@ export default async function ProteinProductPage({ params }: PageProps) {
 
   return (
     <div className="protein-theme">
+      <JsonLd data={productSchema(product, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(product.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.proteinProduct(product.slug), `${product.brand} ${product.name}`)} />
 
       {/* hero image */}
       <div className="relative h-[300px] w-full sm:h-[380px]">
@@ -63,7 +70,7 @@ export default async function ProteinProductPage({ params }: PageProps) {
             ))}
           </div>
           <p className="mt-2 text-sm font-bold uppercase tracking-widest text-white/60">{product.brand}</p>
-          <h1 className="mt-1 text-2xl font-black text-white sm:text-4xl">{product.name}</h1>
+          <h1 data-speakable="title" className="mt-1 text-2xl font-black text-white sm:text-4xl">{product.name}</h1>
         </div>
       </div>
 

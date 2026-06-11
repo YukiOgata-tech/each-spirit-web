@@ -7,22 +7,25 @@ import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { breadcrumbSchema, cafeSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, cafeSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
-import { getCafeItem, getCafeItemsByRegion, getCafeRegions } from "@/lib/content";
+import { getCafeItem, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getCafeRegions().flatMap((r) =>
-    getCafeItemsByRegion(r.slug).map((c) => ({ region: r.slug, slug: c.slug })),
-  );
+export async function generateStaticParams() {
+  return await Promise.all(
+    getCafeRegions().map(async (r) => {
+      const items = await getCafeItemsByRegion(r.slug);
+      return items.map((c) => ({ region: r.slug, slug: c.slug }));
+    })
+  ).then((arr) => arr.flat());
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const cafe = getCafeItem(region, slug);
+  const cafe = await getCafeItem(region, slug);
   if (!cafe) return {};
   return pageMetadata({
     title: cafe.name,
@@ -41,8 +44,13 @@ const RESERVATION_LABEL: Record<string, string> = {
 
 export default async function CafeItemPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const cafe = getCafeItem(region, slug);
+  const [cafe, rankings] = await Promise.all([getCafeItem(region, slug), getCafeRankingsByRegion(region)]);
   if (!cafe) notFound();
+
+  const editorialScore = rankings
+    .flatMap((r) => r.items)
+    .find((entry) => entry.cafeSlug === cafe.slug)
+    ?.score;
 
   const regionName = REGION_NAME[region] ?? region;
   const breadcrumbs = [
@@ -54,9 +62,10 @@ export default async function CafeItemPage({ params }: PageProps) {
 
   return (
     <div className="cafe-theme section-shell">
-      <JsonLd data={cafeSchema(region, cafe)} />
+      <JsonLd data={cafeSchema(region, cafe, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(cafe.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.cafeItem(region, slug), cafe.name)} />
 
       <Breadcrumbs
         items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
@@ -96,7 +105,7 @@ export default async function CafeItemPage({ params }: PageProps) {
               <Badge key={tag} className="bg-[var(--muted)] text-[var(--primary)]">{tag}</Badge>
             ))}
           </div>
-          <h1 className="mt-4 text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">{cafe.name}</h1>
+          <h1 data-speakable="title" className="mt-4 text-3xl font-bold tracking-normal text-slate-950 sm:text-4xl">{cafe.name}</h1>
           <p className="mt-4 text-base leading-8 text-slate-600">{cafe.description}</p>
 
           <div className="mt-5 rounded-lg bg-[var(--muted)] p-4 text-sm leading-7 text-slate-800">

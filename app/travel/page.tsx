@@ -12,8 +12,15 @@ export const metadata = pageMetadata({
   path: routes.travel,
 });
 
-export default function TravelIndexPage() {
+export default async function TravelIndexPage() {
   const regions = getTravelRegions();
+  const regionStats = await Promise.all(
+    regions.map(async (region) => ({
+      region,
+      hotels: await getTravelHotels(region.slug),
+      rankings: await getTravelRankings(region.slug),
+    }))
+  );
 
   return (
     <div className="travel-theme">
@@ -37,9 +44,7 @@ export default function TravelIndexPage() {
         <p className="section-kicker" style={{ color: "var(--primary)" }}>REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {regions.map((region) => {
-            const hotels = getTravelHotels(region.slug);
-            const rankings = getTravelRankings(region.slug);
+          {regionStats.map(({ region, hotels, rankings }) => {
             return (
               <Link
                 key={region.slug}

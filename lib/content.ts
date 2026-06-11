@@ -1,83 +1,435 @@
 import "server-only";
 
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
+import { createServerClient } from "@/lib/supabase-server";
 import { categories } from "@/content/categories";
-import { ramenArticles } from "@/content/ramen/articles";
-import { ramenItems } from "@/content/ramen/items";
-import { ramenRankings } from "@/content/ramen/rankings";
-import { yamagataRamenItems } from "@/content/ramen/yamagata/items";
-import { yamagataRamenRankings } from "@/content/ramen/yamagata/rankings";
+import { ramenRegions } from "@/content/ramen/regions";
+import { beautyRegions } from "@/content/beauty/regions";
+import { travelRegions } from "@/content/travel/regions";
+import { cafeRegions } from "@/content/cafe/regions";
 import { proteinTargets } from "@/content/protein/targets";
 import { proteinProducts } from "@/content/protein/products";
 import { proteinRankings } from "@/content/protein/rankings";
-import { niigataLeisureSpots } from "@/content/leisure/niigata/spots";
-import { niigataLeisureRankings } from "@/content/leisure/niigata/rankings";
-import { beautyRegions } from "@/content/beauty/regions";
-import { ramenRegions } from "@/content/ramen/regions";
-import { travelRegions } from "@/content/travel/regions";
-import { niigataHotels } from "@/content/travel/niigata/hotels";
-import { niigataHotelRankings } from "@/content/travel/niigata/rankings";
-import { beautySalons as niigataBeautySalons } from "@/content/beauty/niigata/salons";
-import { beautyRankings as niigataBeautyRankings } from "@/content/beauty/niigata/rankings";
-import { beautyArticles as niigataBeautyArticles } from "@/content/beauty/niigata/articles";
-import { beautySalons as yamagataBeautySalons } from "@/content/beauty/yamagata/salons";
-import { beautyRankings as yamagataBeautyRankings } from "@/content/beauty/yamagata/rankings";
-import { beautyArticles as yamagataBeautyArticles } from "@/content/beauty/yamagata/articles";
-import { cafeRegions } from "@/content/cafe/regions";
-import { niigataCafeItems } from "@/content/cafe/niigata/items";
-import { niigataCafeRankings } from "@/content/cafe/niigata/rankings";
-import { yamagataCafeItems } from "@/content/cafe/yamagata/items";
-import { yamagataCafeRankings } from "@/content/cafe/yamagata/rankings";
 import { site } from "@/content/site";
 import { routes } from "@/lib/routes";
-import type { CafeItem, CafeRanking, CafeRegion, Hotel, Item, LeisureRanking, LeisureSpot, ProteinProduct, ProteinRankingEntry, ProteinTarget, Ranking, RankingItem, Salon, SearchResult } from "@/lib/types";
+import type {
+  Article,
+  CafeItem,
+  CafeRanking,
+  CafeRankingItem,
+  CafeRegion,
+  Hotel,
+  Item,
+  LeisureRanking,
+  LeisureSpot,
+  OfficialLink,
+  ProteinProduct,
+  ProteinRanking,
+  ProteinRankingEntry,
+  ProteinTarget,
+  Ranking,
+  RankingItem,
+  Salon,
+  SearchResult,
+  Source,
+  FAQ,
+} from "@/lib/types";
 
-const ramenRegistry: Record<string, { items: Item[]; rankings: Ranking[] }> = {
-  niigata: { items: ramenItems, rankings: ramenRankings },
-  yamagata: { items: yamagataRamenItems, rankings: yamagataRamenRankings },
-};
+// ── Helpers ──────────────────────────────────────────────────────────────────
 
-const beautyRegistry: Record<string, { salons: Salon[]; rankings: ReturnType<typeof niigataBeautyRankings.slice>; articles: ReturnType<typeof niigataBeautyArticles.slice> }> = {
-  niigata:  { salons: niigataBeautySalons,  rankings: niigataBeautyRankings,  articles: niigataBeautyArticles },
-  yamagata: { salons: yamagataBeautySalons, rankings: yamagataBeautyRankings, articles: yamagataBeautyArticles },
-};
-
-const travelRegistry: Record<string, { hotels: Hotel[]; rankings: ReturnType<typeof niigataHotelRankings.slice> }> = {
-  niigata: { hotels: niigataHotels, rankings: niigataHotelRankings },
-};
-
-const leisureRegistry: Record<string, { spots: LeisureSpot[]; rankings: LeisureRanking[] }> = {
-  niigata: { spots: niigataLeisureSpots, rankings: niigataLeisureRankings },
-};
-
-const cafeRegistry: Record<string, { items: CafeItem[]; rankings: CafeRanking[] }> = {
-  niigata:  { items: niigataCafeItems,  rankings: niigataCafeRankings },
-  yamagata: { items: yamagataCafeItems, rankings: yamagataCafeRankings },
-};
-
-export function getSite() {
-  return site;
+function toDateStr(v: string | null | undefined): string {
+  if (!v) return "";
+  return v.slice(0, 10);
 }
 
-export function getCategories() {
-  return categories;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRamenItem(row: any): Item {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    imageUrl: row.image_url ?? undefined,
+    genre: m.genre ?? "",
+    tags: row.tags ?? [],
+    recommendedMenu: m.recommended_menu ?? "",
+    priceRange: row.price_range ?? "",
+    parking: m.parking ?? false,
+    parkingNote: m.parking_note ?? undefined,
+    businessHours: m.business_hours ?? "",
+    closedDays: m.closed_days ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
 }
 
-export function getCategory(slug: string) {
-  return categories.find((category) => category.slug === slug);
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapCafeItem(row: any): CafeItem {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    imageUrl: row.image_url ?? undefined,
+    style: m.style ?? "スペシャルティコーヒー",
+    tags: row.tags ?? [],
+    signatureMenu: m.signature_menu ?? "",
+    priceRange: row.price_range ?? "",
+    wifi: m.wifi ?? false,
+    power: m.power ?? false,
+    parking: m.parking ?? false,
+    parkingNote: m.parking_note ?? undefined,
+    petFriendly: m.pet_friendly ?? undefined,
+    reservation: m.reservation ?? "not-needed",
+    businessHours: m.business_hours ?? "",
+    closedDays: m.closed_days ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    instagramUrl: m.instagram_url ?? undefined,
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    highlight: m.highlight ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
 }
 
-export function getLatestArticles(limit?: number) {
-  const sorted = [...ramenArticles].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
-  return typeof limit === "number" ? sorted.slice(0, limit) : sorted;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapHotelItem(row: any): Hotel {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    style: m.style ?? "温泉旅館",
+    tags: row.tags ?? [],
+    highlight: m.highlight ?? "",
+    pricePerPerson: row.price_range ?? "",
+    checkIn: m.check_in ?? "",
+    checkOut: m.check_out ?? "",
+    meals: m.meals ?? "素泊まり",
+    onsen: m.onsen ?? false,
+    onsenNote: m.onsen_note ?? undefined,
+    parking: m.parking ?? false,
+    parkingNote: m.parking_note ?? undefined,
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    imageUrl: row.image_url ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
 }
 
-export function getPopularRankings(limit?: number) {
-  return typeof limit === "number" ? ramenRankings.slice(0, limit) : ramenRankings;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapLeisureItem(row: any): LeisureSpot {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    region: row.region ?? "",
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    kind: m.kind ?? "outdoor",
+    genre: m.genre ?? "",
+    tags: row.tags ?? [],
+    bestFor: (m.best_for ?? []) as string[],
+    highlight: m.highlight ?? "",
+    priceRange: row.price_range ?? "",
+    parking: m.parking ?? false,
+    parkingNote: m.parking_note ?? undefined,
+    businessHours: m.business_hours ?? "",
+    closedDays: m.closed_days ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
 }
 
-export function getSearchResults(): SearchResult[] {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapSalonItem(row: any): Salon {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    tagline: m.tagline ?? "",
+    description: row.description,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    access: m.access ?? "",
+    treatments: (m.treatments ?? []) as Salon["treatments"],
+    ageGroups: (m.age_groups ?? []) as Salon["ageGroups"],
+    priceRange: row.price_range ?? "",
+    cutPrice: m.cut_price ?? "",
+    colorPrice: m.color_price ?? undefined,
+    parking: m.parking ?? false,
+    parkingNote: m.parking_note ?? undefined,
+    childrenWelcome: m.children_welcome ?? false,
+    menWelcome: m.men_welcome ?? false,
+    businessHours: m.business_hours ?? "",
+    closedDays: m.closed_days ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    instagram: m.instagram ?? undefined,
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+    imageUrl: row.image_url ?? "",
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRanking(row: any, items: any[]): Ranking {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    criteria: (row.criteria ?? []) as string[],
+    conclusion: row.conclusion ?? "",
+    quickTableLabel: row.quick_table_label ?? "",
+    lastUpdatedAt: toDateStr(row.last_updated_at),
+    items: items
+      .sort((a, b) => a.rank - b.rank)
+      .map((ri): RankingItem => ({
+        rank: ri.rank,
+        itemSlug: ri.item_slug,
+        score: Number(ri.score ?? 0),
+        reason: ri.reason ?? "",
+        isPr: ri.is_pr ?? false,
+      })),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapCafeRanking(row: any, items: any[]): CafeRanking {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    criteria: (row.criteria ?? []) as string[],
+    conclusion: row.conclusion ?? "",
+    quickTableLabel: row.quick_table_label ?? "",
+    lastUpdatedAt: toDateStr(row.last_updated_at),
+    items: items
+      .sort((a, b) => a.rank - b.rank)
+      .map((ri): CafeRankingItem => ({
+        rank: ri.rank,
+        cafeSlug: ri.item_slug,
+        score: Number(ri.score ?? 0),
+        reason: ri.reason ?? "",
+        isPr: ri.is_pr ?? false,
+      })),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapArticle(row: any): Article {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    title: row.title,
+    description: row.description,
+    category: row.category,
+    tags: (row.tags ?? []) as string[],
+    publishedAt: toDateStr(row.published_at),
+    updatedAt: toDateStr(row.updated_at),
+    author: m.author ?? { name: row.author_name ?? "", role: "", url: "" },
+    summary: (m.summary ?? []) as string[],
+    whatYouLearn: (m.what_you_learn ?? []) as string[],
+    markdownFile: "",
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedSlugs: (m.related_slugs ?? []) as string[],
+  };
+}
+
+// ── Static (no DB) ─────────────────────────────────────────────────────────
+
+export function getSite() { return site; }
+export function getCategories() { return categories; }
+export function getCategory(slug: string) { return categories.find((c) => c.slug === slug); }
+export function getRamenRegions() { return ramenRegions; }
+export function getRamenRegion(slug: string) { return ramenRegions.find((r) => r.slug === slug); }
+export function getLeisureRegions() { return ["niigata"]; }
+export function getBeautyRegions() { return beautyRegions; }
+export function getBeautyRegion(slug: string) { return beautyRegions.find((r) => r.slug === slug); }
+export function getTravelRegions() { return travelRegions; }
+export function getTravelRegion(slug: string) { return travelRegions.find((r) => r.slug === slug); }
+export function getCafeRegions(): CafeRegion[] { return cafeRegions; }
+export function getCafeRegion(slug: string): CafeRegion | undefined { return cafeRegions.find((r) => r.slug === slug); }
+export function getProteinTargets() { return proteinTargets; }
+export function getProteinTarget(slug: ProteinTarget) { return proteinTargets.find((t) => t.slug === slug); }
+export function getProteinProducts() { return proteinProducts; }
+export function getProteinProduct(slug: string) { return proteinProducts.find((p) => p.slug === slug); }
+export function getProteinProductsByTarget(target: ProteinTarget) { return proteinProducts.filter((p) => p.targets.includes(target)); }
+export function getProteinRankings() { return proteinRankings; }
+export function getProteinRankingsByTarget(target: ProteinTarget) { return proteinRankings.filter((r) => r.target === target); }
+export function getProteinRanking(slug: string) { return proteinRankings.find((r) => r.slug === slug); }
+export function getProteinRankingEntries(slug: string) {
+  const ranking = getProteinRanking(slug);
+  if (!ranking) return [];
+  return ranking.items
+    .map((entry) => ({ entry, product: getProteinProduct(entry.productSlug) }))
+    .filter((v): v is { entry: ProteinRankingEntry; product: ProteinProduct } => Boolean(v.product));
+}
+
+// ── Articles ────────────────────────────────────────────────────────────────
+
+export async function getRamenArticles(): Promise<Article[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("category", "ramen").order("updated_at", { ascending: false });
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getRamenArticle(slug: string): Promise<Article | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "ramen").maybeSingle();
+  return data ? mapArticle(data) : undefined;
+}
+
+export async function getArticleMarkdown(slug: string): Promise<string> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).maybeSingle();
+  return data?.body_md ?? "";
+}
+
+export async function getLatestArticles(limit?: number): Promise<Article[]> {
+  const sb = createServerClient();
+  let q = sb.from("articles").select("*").eq("category", "ramen").order("updated_at", { ascending: false });
+  if (typeof limit === "number") q = q.limit(limit);
+  const { data } = await q;
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getBeautyArticles(region: string): Promise<Article[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("category", "beauty").eq("region", region);
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getBeautyArticle(region: string, slug: string): Promise<Article | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "beauty").eq("region", region).maybeSingle();
+  return data ? mapArticle(data) : undefined;
+}
+
+export async function getBeautyArticleMarkdown(region: string, slug: string): Promise<string> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "beauty").eq("region", region).maybeSingle();
+  return data?.body_md ?? "";
+}
+
+// ── Ramen items ──────────────────────────────────────────────────────────────
+
+export async function getRamenItems(): Promise<Item[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "ramen_item");
+  return (data ?? []).map(mapRamenItem);
+}
+
+export async function getRamenItemsByRegion(region: string): Promise<Item[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "ramen_item").eq("region", region);
+  return (data ?? []).map(mapRamenItem);
+}
+
+export async function getRamenItem(slug: string): Promise<Item | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "ramen_item").eq("slug", slug).maybeSingle();
+  return data ? mapRamenItem(data) : undefined;
+}
+
+// ── Ramen rankings ───────────────────────────────────────────────────────────
+
+async function fetchRankingsWithItems(query: ReturnType<ReturnType<typeof createServerClient>["from"]>) {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: rankings } = await (query as any).select("*, ranking_items(*)");
+  if (!rankings) return [];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return rankings as any[];
+}
+
+export async function getRamenRankings(): Promise<Ranking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "ramen");
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
+}
+
+export async function getRamenRankingsByRegion(region: string): Promise<Ranking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "ramen").eq("region", region);
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
+}
+
+export async function getRamenRanking(slug: string): Promise<Ranking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("slug", slug).maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
+}
+
+export async function getRankingEntries(slug: string) {
+  const [ranking, items] = await Promise.all([getRamenRanking(slug), getRamenItems()]);
+  if (!ranking) return [];
+  return ranking.items
+    .map((entry) => ({ entry, item: items.find((i) => i.slug === entry.itemSlug) }))
+    .filter((v): v is { entry: RankingItem; item: Item } => Boolean(v.item));
+}
+
+export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
+  const sb = createServerClient();
+  let q = sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "ramen");
+  if (typeof limit === "number") q = q.limit(limit);
+  const { data } = await q;
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
+}
+
+// ── Search ───────────────────────────────────────────────────────────────────
+
+export async function getSearchResults(): Promise<SearchResult[]> {
+  const [articles, rankings, items, leisureRankings, leisureSpots] = await Promise.all([
+    getRamenArticles(),
+    getRamenRankings(),
+    getRamenItems(),
+    getLeisureRankings("niigata"),
+    getLeisureSpots("niigata"),
+  ]);
+
   const categoryResults: SearchResult[] = categories.map((category) => ({
     id: "category-" + category.slug,
     type: "category",
@@ -88,7 +440,7 @@ export function getSearchResults(): SearchResult[] {
     tags: [...category.searchFacets, ...category.contentTypes, category.status === "live" ? "公開中" : "準備中"],
   }));
 
-  const articleResults: SearchResult[] = ramenArticles.map((article) => ({
+  const articleResults: SearchResult[] = articles.map((article) => ({
     id: "article-" + article.slug,
     type: "article",
     title: article.title,
@@ -99,7 +451,7 @@ export function getSearchResults(): SearchResult[] {
     updatedAt: article.updatedAt,
   }));
 
-  const rankingResults: SearchResult[] = ramenRankings.map((ranking) => ({
+  const rankingResults: SearchResult[] = rankings.map((ranking) => ({
     id: "ranking-" + ranking.slug,
     type: "ranking",
     title: ranking.title,
@@ -110,7 +462,7 @@ export function getSearchResults(): SearchResult[] {
     updatedAt: ranking.lastUpdatedAt,
   }));
 
-  const itemResults: SearchResult[] = ramenItems.map((item) => ({
+  const itemResults: SearchResult[] = items.map((item) => ({
     id: "item-" + item.slug,
     type: "item",
     title: item.name,
@@ -121,268 +473,169 @@ export function getSearchResults(): SearchResult[] {
     updatedAt: item.lastVerifiedAt,
   }));
 
-  const leisureRankingResults: SearchResult[] = Object.entries(leisureRegistry).flatMap(([region, registry]) =>
-    registry.rankings.map((ranking) => ({
-      id: "leisure-ranking-" + region + "-" + ranking.slug,
-      type: "ranking",
-      title: ranking.title,
-      description: ranking.description,
-      category: "レジャー",
-      href: routes.leisureRanking(region, ranking.slug),
-      tags: ranking.criteria,
-      updatedAt: ranking.lastUpdatedAt,
-    })),
-  );
+  const leisureRankingResults: SearchResult[] = leisureRankings.map((ranking) => ({
+    id: "leisure-ranking-niigata-" + ranking.slug,
+    type: "ranking",
+    title: ranking.title,
+    description: ranking.description,
+    category: "レジャー",
+    href: routes.leisureRanking("niigata", ranking.slug),
+    tags: ranking.criteria,
+    updatedAt: ranking.lastUpdatedAt,
+  }));
 
-  const leisureSpotResults: SearchResult[] = Object.entries(leisureRegistry).flatMap(([region, registry]) =>
-    registry.spots.map((spot) => ({
-      id: "leisure-spot-" + region + "-" + spot.slug,
-      type: "item",
-      title: spot.name,
-      description: spot.description,
-      category: "レジャー",
-      href: routes.leisureSpot(region, spot.slug),
-      tags: [spot.area, spot.genre, ...spot.tags, spot.parking ? "駐車場あり" : "駐車場要確認"],
-      updatedAt: spot.lastVerifiedAt,
-    })),
-  );
+  const leisureSpotResults: SearchResult[] = leisureSpots.map((spot) => ({
+    id: "leisure-spot-niigata-" + spot.slug,
+    type: "item",
+    title: spot.name,
+    description: spot.description,
+    category: "レジャー",
+    href: routes.leisureSpot("niigata", spot.slug),
+    tags: [spot.area, spot.genre, ...spot.tags, spot.parking ? "駐車場あり" : "駐車場要確認"],
+    updatedAt: spot.lastVerifiedAt,
+  }));
 
   return [...categoryResults, ...articleResults, ...rankingResults, ...itemResults, ...leisureRankingResults, ...leisureSpotResults];
 }
 
-export function getRamenArticles() {
-  return ramenArticles;
+// ── Leisure ──────────────────────────────────────────────────────────────────
+
+export async function getLeisureSpots(region: string): Promise<LeisureSpot[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "leisure_spot").eq("region", region);
+  return (data ?? []).map(mapLeisureItem);
 }
 
-export function getRamenArticle(slug: string) {
-  return ramenArticles.find((article) => article.slug === slug);
+export async function getLeisureSpot(region: string, slug: string): Promise<LeisureSpot | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "leisure_spot").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapLeisureItem(data) : undefined;
 }
 
-export function getArticleMarkdown(articleSlug: string) {
-  const article = getRamenArticle(articleSlug);
-  if (!article) return "";
-  return readFileSync(join(process.cwd(), "content", "ramen", "articles", article.markdownFile), "utf8");
+export async function getLeisureRankings(region: string): Promise<LeisureRanking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "leisure").eq("region", region);
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
-export function getRamenRegions() {
-  return ramenRegions;
+export async function getLeisureRanking(region: string, slug: string): Promise<LeisureRanking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "leisure").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
-export function getRamenRegion(slug: string) {
-  return ramenRegions.find((r) => r.slug === slug);
-}
-
-export function getRamenItems() {
-  return Object.values(ramenRegistry).flatMap((r) => r.items);
-}
-
-export function getRamenItemsByRegion(region: string): Item[] {
-  return ramenRegistry[region]?.items ?? [];
-}
-
-export function getRamenItem(slug: string) {
-  return getRamenItems().find((item) => item.slug === slug);
-}
-
-export function getRamenRankings() {
-  return Object.values(ramenRegistry).flatMap((r) => r.rankings);
-}
-
-export function getRamenRankingsByRegion(region: string): Ranking[] {
-  return ramenRegistry[region]?.rankings ?? [];
-}
-
-export function getRamenRanking(slug: string) {
-  return getRamenRankings().find((ranking) => ranking.slug === slug);
-}
-
-export function getRankingEntries(slug: string) {
-  const ranking = getRamenRanking(slug);
+export async function getLeisureRankingEntries(region: string, slug: string) {
+  const [ranking, spots] = await Promise.all([getLeisureRanking(region, slug), getLeisureSpots(region)]);
   if (!ranking) return [];
   return ranking.items
-    .map((entry) => ({ entry, item: getRamenItem(entry.itemSlug) }))
-    .filter((value): value is { entry: NonNullable<typeof value.entry>; item: NonNullable<typeof value.item> } => Boolean(value.item));
+    .map((entry) => ({ entry, spot: spots.find((s) => s.slug === entry.itemSlug) }))
+    .filter((v): v is { entry: RankingItem; spot: LeisureSpot } => Boolean(v.spot));
 }
 
-export function getLeisureRegions() {
-  return Object.keys(leisureRegistry);
+// ── Beauty ───────────────────────────────────────────────────────────────────
+
+export async function getBeautySalons(region: string): Promise<Salon[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "beauty_salon").eq("region", region);
+  return (data ?? []).map(mapSalonItem);
 }
 
-export function getLeisureSpots(region: string) {
-  return leisureRegistry[region]?.spots ?? [];
+export async function getBeautySalon(region: string, slug: string): Promise<Salon | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "beauty_salon").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapSalonItem(data) : undefined;
 }
 
-export function getLeisureSpot(region: string, slug: string) {
-  return getLeisureSpots(region).find((spot) => spot.slug === slug);
+export async function getBeautyRankings(region: string): Promise<Ranking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "beauty").eq("region", region);
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
-export function getLeisureRankings(region: string) {
-  return leisureRegistry[region]?.rankings ?? [];
+export async function getBeautyRanking(region: string, slug: string): Promise<Ranking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "beauty").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
-export function getLeisureRanking(region: string, slug: string) {
-  return getLeisureRankings(region).find((ranking) => ranking.slug === slug);
-}
-
-export function getLeisureRankingEntries(region: string, slug: string) {
-  const ranking = getLeisureRanking(region, slug);
+export async function getBeautyRankingEntries(region: string, slug: string) {
+  const [ranking, salons] = await Promise.all([getBeautyRanking(region, slug), getBeautySalons(region)]);
   if (!ranking) return [];
   return ranking.items
-    .map((entry) => ({ entry, spot: getLeisureSpot(region, entry.itemSlug) }))
-    .filter((value): value is { entry: RankingItem; spot: LeisureSpot } => Boolean(value.spot));
+    .map((entry) => ({ entry, salon: salons.find((s) => s.slug === entry.itemSlug) }))
+    .filter((v): v is { entry: RankingItem; salon: Salon } => Boolean(v.salon));
 }
 
-export function getBeautyRegions() {
-  return beautyRegions;
+// ── Travel ───────────────────────────────────────────────────────────────────
+
+export async function getTravelHotels(region: string): Promise<Hotel[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "hotel").eq("region", region);
+  return (data ?? []).map(mapHotelItem);
 }
 
-export function getBeautyRegion(slug: string) {
-  return beautyRegions.find((r) => r.slug === slug);
+export async function getTravelHotel(region: string, slug: string): Promise<Hotel | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "hotel").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapHotelItem(data) : undefined;
 }
 
-export function getBeautySalons(region: string): Salon[] {
-  return beautyRegistry[region]?.salons ?? [];
+export async function getTravelAllHotels(): Promise<Hotel[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "hotel");
+  return (data ?? []).map(mapHotelItem);
 }
 
-export function getBeautySalon(region: string, slug: string) {
-  return getBeautySalons(region).find((salon) => salon.slug === slug);
+export async function getTravelRankings(region: string): Promise<Ranking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "hotel").eq("region", region);
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
-export function getBeautyRankings(region: string) {
-  return beautyRegistry[region]?.rankings ?? [];
+export async function getTravelRanking(region: string, slug: string): Promise<Ranking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "hotel").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
-export function getBeautyRanking(region: string, slug: string) {
-  return getBeautyRankings(region).find((ranking) => ranking.slug === slug);
-}
-
-export function getBeautyRankingEntries(region: string, slug: string) {
-  const ranking = getBeautyRanking(region, slug);
+export async function getTravelRankingEntries(region: string, slug: string) {
+  const [ranking, hotels] = await Promise.all([getTravelRanking(region, slug), getTravelHotels(region)]);
   if (!ranking) return [];
   return ranking.items
-    .map((entry) => ({ entry, salon: getBeautySalon(region, entry.itemSlug) }))
-    .filter((value): value is { entry: RankingItem; salon: Salon } => Boolean(value.salon));
-}
-
-export function getProteinTargets() {
-  return proteinTargets;
-}
-
-export function getProteinTarget(slug: ProteinTarget) {
-  return proteinTargets.find((t) => t.slug === slug);
-}
-
-export function getProteinProducts() {
-  return proteinProducts;
-}
-
-export function getProteinProduct(slug: string) {
-  return proteinProducts.find((p) => p.slug === slug);
-}
-
-export function getProteinProductsByTarget(target: ProteinTarget) {
-  return proteinProducts.filter((p) => p.targets.includes(target));
-}
-
-export function getProteinRankings() {
-  return proteinRankings;
-}
-
-export function getProteinRankingsByTarget(target: ProteinTarget) {
-  return proteinRankings.filter((r) => r.target === target);
-}
-
-export function getProteinRanking(slug: string) {
-  return proteinRankings.find((r) => r.slug === slug);
-}
-
-export function getProteinRankingEntries(slug: string) {
-  const ranking = getProteinRanking(slug);
-  if (!ranking) return [];
-  return ranking.items
-    .map((entry) => ({ entry, product: getProteinProduct(entry.productSlug) }))
-    .filter((value): value is { entry: ProteinRankingEntry; product: ProteinProduct } => Boolean(value.product));
-}
-
-export function getBeautyArticles(region: string) {
-  return beautyRegistry[region]?.articles ?? [];
-}
-
-export function getBeautyArticle(region: string, slug: string) {
-  return getBeautyArticles(region).find((article) => article.slug === slug);
-}
-
-export function getBeautyArticleMarkdown(region: string, slug: string) {
-  const article = getBeautyArticle(region, slug);
-  if (!article) return "";
-  return readFileSync(join(process.cwd(), "content", "beauty", region, "articles", article.markdownFile), "utf8");
-}
-
-export function getTravelRegions() {
-  return travelRegions;
-}
-
-export function getTravelRegion(slug: string) {
-  return travelRegions.find((r) => r.slug === slug);
-}
-
-export function getTravelHotels(region: string): Hotel[] {
-  return travelRegistry[region]?.hotels ?? [];
-}
-
-export function getTravelHotel(region: string, slug: string) {
-  return getTravelHotels(region).find((h) => h.slug === slug);
-}
-
-export function getTravelAllHotels(): Hotel[] {
-  return Object.values(travelRegistry).flatMap((r) => r.hotels);
-}
-
-export function getTravelRankings(region: string) {
-  return travelRegistry[region]?.rankings ?? [];
-}
-
-export function getTravelRanking(region: string, slug: string) {
-  return getTravelRankings(region).find((r) => r.slug === slug);
-}
-
-export function getTravelRankingEntries(region: string, slug: string) {
-  const ranking = getTravelRanking(region, slug);
-  if (!ranking) return [];
-  return ranking.items
-    .map((entry) => ({ entry, hotel: getTravelHotel(region, entry.itemSlug) }))
+    .map((entry) => ({ entry, hotel: hotels.find((h) => h.slug === entry.itemSlug) }))
     .filter((v): v is { entry: RankingItem; hotel: Hotel } => Boolean(v.hotel));
 }
 
-// ── Cafe ──────────────────────────────────────────────
-export function getCafeRegions(): CafeRegion[] {
-  return cafeRegions;
+// ── Cafe ─────────────────────────────────────────────────────────────────────
+
+export async function getCafeItemsByRegion(region: string): Promise<CafeItem[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "cafe").eq("region", region);
+  return (data ?? []).map(mapCafeItem);
 }
 
-export function getCafeRegion(slug: string): CafeRegion | undefined {
-  return cafeRegions.find((r) => r.slug === slug);
+export async function getCafeItem(region: string, slug: string): Promise<CafeItem | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "cafe").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapCafeItem(data) : undefined;
 }
 
-export function getCafeItemsByRegion(region: string): CafeItem[] {
-  return cafeRegistry[region]?.items ?? [];
+export async function getCafeRankingsByRegion(region: string): Promise<CafeRanking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "cafe").eq("region", region);
+  return (data ?? []).map((r) => mapCafeRanking(r, r.ranking_items ?? []));
 }
 
-export function getCafeItem(region: string, slug: string): CafeItem | undefined {
-  return getCafeItemsByRegion(region).find((c) => c.slug === slug);
+export async function getCafeRanking(region: string, slug: string): Promise<CafeRanking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "cafe").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapCafeRanking(data, data.ranking_items ?? []) : undefined;
 }
 
-export function getCafeRankingsByRegion(region: string): CafeRanking[] {
-  return cafeRegistry[region]?.rankings ?? [];
-}
-
-export function getCafeRanking(region: string, slug: string): CafeRanking | undefined {
-  return getCafeRankingsByRegion(region).find((r) => r.slug === slug);
-}
-
-export function getCafeRankingEntries(region: string, slug: string) {
-  const ranking = getCafeRanking(region, slug);
+export async function getCafeRankingEntries(region: string, slug: string) {
+  const [ranking, cafes] = await Promise.all([getCafeRanking(region, slug), getCafeItemsByRegion(region)]);
   if (!ranking) return [];
   return ranking.items
-    .map((entry) => ({ entry, cafe: getCafeItem(region, entry.cafeSlug) }))
-    .filter((v): v is { entry: (typeof ranking.items)[number]; cafe: CafeItem } => Boolean(v.cafe));
+    .map((entry) => ({ entry, cafe: cafes.find((c) => c.slug === entry.cafeSlug) }))
+    .filter((v): v is { entry: CafeRankingItem; cafe: CafeItem } => Boolean(v.cafe));
 }

@@ -7,21 +7,21 @@ import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
 import { BeautyRankingEntriesClient } from "@/components/beauty/BeautyRankingEntriesClient";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { beautyRankingItemListSchema, breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getBeautyRanking, getBeautyRankingEntries, getBeautyRegions, getBeautyRankings } from "@/lib/content";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getBeautyRegions().flatMap((r) =>
-    getBeautyRankings(r.slug).map((ranking) => ({ region: r.slug, slug: ranking.slug }))
-  );
+export async function generateStaticParams() {
+  const regions = getBeautyRegions();
+  const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, rankings: await getBeautyRankings(r.slug) })));
+  return pairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ region, slug: r.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getBeautyRanking(region, slug);
+  const ranking = await getBeautyRanking(region, slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -34,10 +34,10 @@ const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default async function BeautyRankingPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const ranking = getBeautyRanking(region, slug);
+  const ranking = await getBeautyRanking(region, slug);
   if (!ranking) notFound();
 
-  const entries = getBeautyRankingEntries(region, slug);
+  const entries = await getBeautyRankingEntries(region, slug);
   const breadcrumbs = [
     { name: "トップ",   href: routes.home },
     { name: "美容室",   href: routes.beauty },
@@ -47,8 +47,10 @@ export default async function BeautyRankingPage({ params }: PageProps) {
 
   return (
     <div className="beauty-theme">
+      <JsonLd data={beautyRankingItemListSchema(region, ranking, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.beautyRanking(region, slug), ranking.title)} />
 
       <div className="border-b border-[#f2d5e8] beauty-hero-bg px-4 py-10">
         <div className="mx-auto max-w-4xl">
@@ -62,8 +64,8 @@ export default async function BeautyRankingPage({ params }: PageProps) {
             <span className="inline-block rounded-full border border-[#f2d5e8] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#8b3a7e]">
               Ranking
             </span>
-            <h1 className="mt-4 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{ranking.title}</h1>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-slate-600">{ranking.description}</p>
+            <h1 data-speakable="title" className="mt-4 text-3xl font-black leading-tight text-slate-950 sm:text-4xl">{ranking.title}</h1>
+            <p data-speakable="description" className="mt-4 max-w-2xl text-base leading-8 text-slate-600">{ranking.description}</p>
             <div className="mt-5 rounded-xl border border-[#f2d5e8] bg-white/80 p-4 text-sm font-semibold leading-7 text-[#8b3a7e]">
               編集部結論: {ranking.conclusion}
             </div>

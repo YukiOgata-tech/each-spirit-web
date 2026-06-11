@@ -25,6 +25,8 @@ export const site = {
   ],
   ogImage: "/opengraph-image",
   icon: "/brand/each-spirit-mark.png",
+  // SNS / external profiles for Organization.sameAs (E-E-A-T signal)
+  sameAs: [] as string[],
 };
 
 export const editorAuthor: Author = {

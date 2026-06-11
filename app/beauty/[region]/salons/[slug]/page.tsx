@@ -6,23 +6,23 @@ import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { beautySalonSchema, breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getBeautySalon, getBeautySalons, getBeautyRanking, getBeautyRegions } from "@/lib/content";
+import { getBeautySalon, getBeautySalons, getBeautyRanking, getBeautyRankingEntries, getBeautyRegions } from "@/lib/content";
 import type { AgeGroup } from "@/lib/types";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
-export function generateStaticParams() {
-  return getBeautyRegions().flatMap((r) =>
-    getBeautySalons(r.slug).map((salon) => ({ region: r.slug, slug: salon.slug }))
-  );
+export async function generateStaticParams() {
+  const regions = getBeautyRegions();
+  const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, salons: await getBeautySalons(r.slug) })));
+  return pairs.flatMap(({ region, salons }) => salons.map((salon) => ({ region, slug: salon.slug })));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region, slug } = await params;
-  const salon = getBeautySalon(region, slug);
+  const salon = await getBeautySalon(region, slug);
   if (!salon) return {};
   return pageMetadata({
     title: salon.name,
@@ -41,12 +41,18 @@ const REGION_NAME: Record<string, string> = {
 
 export default async function BeautySalonPage({ params }: PageProps) {
   const { region, slug } = await params;
-  const salon = getBeautySalon(region, slug);
+  const salon = await getBeautySalon(region, slug);
   if (!salon) notFound();
 
-  const relatedRankings = salon.relatedRankingSlugs
-    .map((s) => getBeautyRanking(region, s))
-    .filter(Boolean);
+  const [relatedRankings, allRankingEntries] = await Promise.all([
+    Promise.all(salon.relatedRankingSlugs.map((s) => getBeautyRanking(region, s))).then((r) => r.filter(Boolean)),
+    Promise.all(salon.relatedRankingSlugs.map((rankingSlug) => getBeautyRankingEntries(region, rankingSlug))),
+  ]);
+
+  const editorialScore = allRankingEntries
+    .flat()
+    .find(({ salon: s }) => s.slug === slug)
+    ?.entry.score;
 
   const regionName = REGION_NAME[region] ?? region;
   const breadcrumbs = [
@@ -58,8 +64,10 @@ export default async function BeautySalonPage({ params }: PageProps) {
 
   return (
     <div className="beauty-theme">
+      <JsonLd data={beautySalonSchema(region, salon, editorialScore)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(salon.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.beautySalon(region, slug), salon.name)} />
 
       <div className="relative h-[340px] w-full sm:h-[420px]">
         <AttributedImage
@@ -76,8 +84,8 @@ export default async function BeautySalonPage({ params }: PageProps) {
         <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 p-6 sm:p-10">
           <p className="text-[11px] font-bold uppercase tracking-widest text-white/60">{salon.area}</p>
-          <h1 className="mt-1 text-3xl font-black text-white sm:text-5xl">{salon.name}</h1>
-          <p className="mt-2 max-w-xl text-sm font-semibold text-white/80">{salon.tagline}</p>
+          <h1 data-speakable="title" className="mt-1 text-3xl font-black text-white sm:text-5xl">{salon.name}</h1>
+          <p data-speakable="description" className="mt-2 max-w-xl text-sm font-semibold text-white/80">{salon.tagline}</p>
         </div>
       </div>
 

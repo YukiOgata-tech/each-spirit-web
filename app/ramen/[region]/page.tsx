@@ -22,7 +22,7 @@ import type { Item } from "@/lib/types";
 
 type PageProps = { params: Promise<{ region: string }> };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
   return getRamenRegions().map((r) => ({ region: r.slug }));
 }
 
@@ -43,9 +43,12 @@ export default async function RamenRegionPage({ params }: PageProps) {
   const regionData = getRamenRegion(region);
   if (!regionData) notFound();
 
-  const items = getRamenItemsByRegion(region);
-  const rankings = getRamenRankingsByRegion(region);
-  const articles = getRamenArticles().filter((a) => a.tags.includes(regionData.articleTag));
+  const [items, rankings, allArticles] = await Promise.all([
+    getRamenItemsByRegion(region),
+    getRamenRankingsByRegion(region),
+    getRamenArticles(),
+  ]);
+  const articles = allArticles.filter((a) => a.tags.includes(regionData.articleTag));
 
   const featured = regionData.featuredSlugs
     .map((slug) => items.find((item) => item.slug === slug))

@@ -6,7 +6,7 @@ import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { ProteinRankingEntriesClient } from "@/components/protein/ProteinRankingEntriesClient";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, pageMetadata, proteinRankingItemListSchema, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import {
   getProteinRanking, getProteinRankingEntries,
@@ -58,8 +58,10 @@ export default async function ProteinRankingPage({ params }: PageProps) {
 
   return (
     <div className="protein-theme">
+      <JsonLd data={proteinRankingItemListSchema(ranking, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
+      <JsonLd data={speakableWebPageSchema(routes.proteinRanking(target, slug), ranking.title)} />
 
       {/* hero */}
       <div className="protein-hero-bg border-b border-blue-900 px-4 py-10">
@@ -74,8 +76,8 @@ export default async function ProteinRankingPage({ params }: PageProps) {
             <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-blue-200">
               Ranking
             </span>
-            <h1 className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">{ranking.title}</h1>
-            <p className="mt-4 max-w-2xl text-base leading-8 text-blue-200">{ranking.description}</p>
+            <h1 data-speakable="title" className="mt-4 text-3xl font-black leading-tight text-white sm:text-4xl">{ranking.title}</h1>
+            <p data-speakable="description" className="mt-4 max-w-2xl text-base leading-8 text-blue-200">{ranking.description}</p>
             <div className="mt-5 rounded-xl border border-white/10 bg-white/10 p-4 text-sm font-semibold leading-7 text-orange-200">
               編集部結論: {ranking.conclusion}
             </div>

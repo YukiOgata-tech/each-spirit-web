@@ -32,6 +32,10 @@ export const routes = {
   proteinTarget: (target: string) => "/protein/" + target,
   proteinProduct: (slug: string) => "/protein/products/" + slug,
   proteinRanking: (target: string, slug: string) => "/protein/" + target + "/rankings/" + slug,
+  authLogin: "/auth/login",
+  authSignup: "/auth/signup",
+  authCallback: "/auth/callback",
+  account: "/account",
 };
 
 export function absoluteUrl(path: string) {

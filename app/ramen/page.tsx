@@ -12,9 +12,17 @@ export const metadata = pageMetadata({
   path: routes.ramen,
 });
 
-export default function RamenIndexPage() {
+export default async function RamenIndexPage() {
   const regions = getRamenRegions();
-  const allArticles = getRamenArticles();
+  const allArticles = await getRamenArticles();
+  const regionData = await Promise.all(
+    regions.map(async (region) => ({
+      ...region,
+      items: await getRamenItemsByRegion(region.slug),
+      rankings: await getRamenRankingsByRegion(region.slug),
+      articles: allArticles.filter((a) => a.tags.includes(region.articleTag)),
+    }))
+  );
 
   return (
     <div className="ramen-theme">
@@ -38,58 +46,53 @@ export default function RamenIndexPage() {
         <p className="section-kicker">REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">
-          {regions.map((region) => {
-            const items = getRamenItemsByRegion(region.slug);
-            const rankings = getRamenRankingsByRegion(region.slug);
-            const articles = allArticles.filter((a) => a.tags.includes(region.articleTag));
-            return (
-              <Link
-                key={region.slug}
-                href={routes.ramenRegion(region.slug)}
-                className="group block overflow-hidden rounded-[14px] border border-orange-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-orange-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
-              >
-                <div className="relative flex h-44 items-end overflow-hidden bg-[linear-gradient(135deg,#fff7eb,#fde9c9)]">
-                  {region.images?.[0]?.url ? (
-                    <Image
-                      src={region.images[0].url}
-                      alt={region.images[0].alt}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="(min-width: 768px) 50vw, 100vw"
-                    />
-                  ) : (
-                    <Soup className="absolute right-5 top-5 h-16 w-16 text-orange-200 transition-transform duration-500 group-hover:scale-110" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-                  <div className="relative z-10 p-5">
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
-                      {region.status === "live" ? "公開中" : "準備中"}
-                    </p>
-                    <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
-                  </div>
+          {regionData.map((region) => (
+            <Link
+              key={region.slug}
+              href={routes.ramenRegion(region.slug)}
+              className="group block overflow-hidden rounded-[14px] border border-orange-200 bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:border-orange-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+            >
+              <div className="relative flex h-44 items-end overflow-hidden bg-[linear-gradient(135deg,#fff7eb,#fde9c9)]">
+                {region.images?.[0]?.url ? (
+                  <Image
+                    src={region.images[0].url}
+                    alt={region.images[0].alt}
+                    fill
+                    className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    sizes="(min-width: 768px) 50vw, 100vw"
+                  />
+                ) : (
+                  <Soup className="absolute right-5 top-5 h-16 w-16 text-orange-200 transition-transform duration-500 group-hover:scale-110" />
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="relative z-10 p-5">
+                  <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
+                    {region.status === "live" ? "公開中" : "準備中"}
+                  </p>
+                  <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
                 </div>
-                <div className="p-5">
-                  <p className="text-sm font-semibold text-[var(--primary)]">{region.tagline}</p>
-                  <p className="mt-2 text-xs leading-6 text-slate-500">{region.description}</p>
-                  <div className="mt-4 grid grid-cols-3 gap-2 text-center">
-                    {[
-                      { num: items.length, label: "店舗" },
-                      { num: rankings.length, label: "ランキング" },
-                      { num: articles.length, label: "記事" },
-                    ].map(({ num, label }) => (
-                      <div key={label} className="flex-1 rounded-xl bg-orange-50 py-2">
-                        <p className="text-lg font-black text-[var(--primary)]">{num}</p>
-                        <p className="text-[10px] font-semibold text-slate-500">{label}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-4 flex items-center justify-end gap-1 text-xs font-bold text-[var(--primary)]">
-                    詳しく見る <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-                  </div>
+              </div>
+              <div className="p-5">
+                <p className="text-sm font-semibold text-[var(--primary)]">{region.tagline}</p>
+                <p className="mt-2 text-xs leading-6 text-slate-500">{region.description}</p>
+                <div className="mt-4 grid grid-cols-3 gap-2 text-center">
+                  {[
+                    { num: region.items.length, label: "店舗" },
+                    { num: region.rankings.length, label: "ランキング" },
+                    { num: region.articles.length, label: "記事" },
+                  ].map(({ num, label }) => (
+                    <div key={label} className="flex-1 rounded-xl bg-orange-50 py-2">
+                      <p className="text-lg font-black text-[var(--primary)]">{num}</p>
+                      <p className="text-[10px] font-semibold text-slate-500">{label}</p>
+                    </div>
+                  ))}
                 </div>
-              </Link>
-            );
-          })}
+                <div className="mt-4 flex items-center justify-end gap-1 text-xs font-bold text-[var(--primary)]">
+                  詳しく見る <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                </div>
+              </div>
+            </Link>
+          ))}
         </div>
 
         <div className="mt-12 rounded-2xl border border-orange-100 bg-white p-6 text-center">
