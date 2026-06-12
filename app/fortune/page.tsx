@@ -37,6 +37,8 @@ export default async function FortunePage() {
   const isGuest = !user;
 
   let result: FortuneResult;
+  let renderMode: "2d" | "3d" = "2d";
+  let awardedPoints: number | null = null;
 
   if (user) {
     // 当日・本人の結果があれば再利用、なければ生成して保存（同日は固定）
@@ -60,10 +62,26 @@ export default async function FortunePage() {
         result,
       });
     }
+
+    // 占い演出設定（2D / 3D）— user_prefs.metadata.fortune_anim
+    const { data: prefs } = await supabase
+      .schema("es")
+      .from("user_prefs")
+      .select("metadata")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const anim = (prefs?.metadata as { fortune_anim?: string } | null)?.fortune_anim;
+    renderMode = anim === "3d" ? "3d" : "2d";
+
+    // デイリーボーナス（サーバー制御RPC・1日1回・金額はサーバー固定）
+    const { data: awarded } = await supabase
+      .schema("es")
+      .rpc("claim_daily_bonus", { p_reason: "daily_fortune", p_reference: date });
+    if (typeof awarded === "number" && awarded > 0) awardedPoints = awarded;
   } else {
     // 未ログイン: 保存なしの当日共通フォーチュン（テスト・お試し用）
     result = generateDailyFortune({ seed: `guest|${date}`, date, items });
   }
 
-  return <FortuneReveal result={result} isGuest={isGuest} />;
+  return <FortuneReveal result={result} isGuest={isGuest} renderMode={renderMode} awardedPoints={awardedPoints} />;
 }

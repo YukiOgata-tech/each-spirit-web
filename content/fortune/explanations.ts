@@ -1,15 +1,46 @@
-import type { FortuneExplanations, FortuneBandPool } from "@/lib/fortune";
+import type { FortuneExplanations, FortuneBandPool, FortuneCategoryKey } from "@/lib/fortune";
+import overallData from "./data/overall.json";
+import loveData from "./data/love.json";
+import moneyData from "./data/money.json";
+import workData from "./data/work.json";
+import healthData from "./data/health.json";
+import socialData from "./data/social.json";
+import outingData from "./data/outing.json";
 
 /**
  * 運勢カテゴリ × スコア帯(band) ごとの解説文プール。
  *
- * ⚠️ 現在は開発用の **ダミーデータ**（各バンド3本・カテゴリ共通の汎用文）。
- *    本番プール（別AIで生成。各バンド50〜100本・カテゴリ固有）を受領したら差し替える。
- *    生成方法・出力フォーマットは docs/fortune-explanation-prompt.md を参照。
- *    占いエンジンは band ごとにこのプールからランダムに1本選ぶので、
- *    本数を増やすほどバリエーションが増える（構造は同じまま差し替え可）。
+ * 本番データは `content/fortune/data/<category>.json`（別AIで生成。各バンド100本）。
+ * 出力フォーマットは docs/fortune-explanation-prompt.md を参照。
+ * 受領済みカテゴリは本番 JSON を使い、未受領カテゴリは下の dummy にフォールバックする。
+ * → 新カテゴリを追加するには JSON を data/ に置き、下の REAL に1行足すだけ。
  */
-function mk(label: string): FortuneBandPool {
+
+type RawCategory = { category?: string; label?: string; bands: Record<string, string[]> };
+
+// ▼ 受領済みカテゴリをここに登録（届いたら import + 1行追加）
+const REAL: Partial<Record<FortuneCategoryKey, RawCategory>> = {
+  overall: overallData as RawCategory,
+  love: loveData as RawCategory,
+  money: moneyData as RawCategory,
+  work: workData as RawCategory,
+  health: healthData as RawCategory,
+  social: socialData as RawCategory,
+  outing: outingData as RawCategory,
+};
+
+const LABEL: Record<FortuneCategoryKey, string> = {
+  overall: "総合運",
+  love: "恋愛運",
+  money: "金運",
+  work: "仕事・学業運",
+  health: "健康運",
+  social: "対人運",
+  outing: "おでかけ・グルメ運",
+};
+
+// ── ダミー（未受領カテゴリ用フォールバック） ────────────────────────────────
+function dummy(label: string): FortuneBandPool {
   return {
     "1": [
       `${label}は少し重め。今日は無理をせず、足元を整えることに集中して。`,
@@ -39,12 +70,26 @@ function mk(label: string): FortuneBandPool {
   };
 }
 
+// 本番 JSON を FortuneBandPool に正規化（欠けたバンドは dummy で補完）
+function resolve(key: FortuneCategoryKey): FortuneBandPool {
+  const label = LABEL[key];
+  const real = REAL[key];
+  if (!real?.bands) return dummy(label);
+  const fallback = dummy(label);
+  const out = {} as FortuneBandPool;
+  for (const b of ["1", "2", "3", "4", "5"] as const) {
+    const arr = real.bands[b];
+    out[b] = Array.isArray(arr) && arr.length > 0 ? arr : fallback[b];
+  }
+  return out;
+}
+
 export const fortuneExplanations: FortuneExplanations = {
-  overall: { label: "総合運", bands: mk("今日の運") },
-  love: { label: "恋愛運", bands: mk("恋愛運") },
-  money: { label: "金運", bands: mk("金運") },
-  work: { label: "仕事・学業運", bands: mk("仕事・学業運") },
-  health: { label: "健康運", bands: mk("健康運") },
-  social: { label: "対人運", bands: mk("対人運") },
-  outing: { label: "おでかけ・グルメ運", bands: mk("おでかけ・グルメ運") },
+  overall: { label: LABEL.overall, bands: resolve("overall") },
+  love: { label: LABEL.love, bands: resolve("love") },
+  money: { label: LABEL.money, bands: resolve("money") },
+  work: { label: LABEL.work, bands: resolve("work") },
+  health: { label: LABEL.health, bands: resolve("health") },
+  social: { label: LABEL.social, bands: resolve("social") },
+  outing: { label: LABEL.outing, bands: resolve("outing") },
 };
