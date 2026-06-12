@@ -15,9 +15,10 @@ import {
 
 type PageProps = { params: Promise<{ target: string; slug: string }> };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const rankings = await getProteinRankings();
   return getProteinTargets().flatMap((t) =>
-    getProteinRankings()
+    rankings
       .filter((r) => r.target === t.slug)
       .map((r) => ({ target: t.slug, slug: r.slug }))
   );
@@ -25,7 +26,7 @@ export function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const ranking = getProteinRanking(slug);
+  const ranking = await getProteinRanking(slug);
   if (!ranking) return {};
   return pageMetadata({
     title: ranking.title,
@@ -43,10 +44,10 @@ const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default async function ProteinRankingPage({ params }: PageProps) {
   const { target, slug } = await params;
-  const ranking = getProteinRanking(slug);
+  const ranking = await getProteinRanking(slug);
   if (!ranking) notFound();
 
-  const entries = getProteinRankingEntries(slug);
+  const entries = await getProteinRankingEntries(slug);
   const targetLabel = TARGET_LABEL[target] ?? target;
 
   const breadcrumbs = [

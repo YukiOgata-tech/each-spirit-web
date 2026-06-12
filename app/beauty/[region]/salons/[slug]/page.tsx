@@ -7,6 +7,7 @@ import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { beautySalonSchema, breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 import { getBeautySalon, getBeautySalons, getBeautyRanking, getBeautyRankingEntries, getBeautyRegions } from "@/lib/content";
 import type { AgeGroup } from "@/lib/types";
@@ -202,6 +203,9 @@ export default async function BeautySalonPage({ params }: PageProps) {
                   </a>
                 )}
               </div>
+
+              <LikeButton contentType="beauty_salon" contentId={salon.slug} regionSlug={region} className="mt-5 justify-center" />
+
               <p className="mt-4 text-[10px] leading-5 text-slate-400">最終確認日: {salon.lastVerifiedAt}。情報は変更される場合があります。</p>
             </div>
           </div>

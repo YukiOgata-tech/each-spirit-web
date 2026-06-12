@@ -263,7 +263,7 @@ async function migrateItems() {
     slug:             p.slug,
     content_type:     "protein",
     region:           null,
-    name:             `${p.brand} ${p.name}`,
+    name:             p.name,
     description:      p.description,
     image_url:        p.imageUrl,
     price_range:      `¥${p.packagePrice.toLocaleString("ja-JP")}`,
@@ -272,7 +272,8 @@ async function migrateItems() {
     last_verified_at: p.lastVerifiedAt,
     editor_comment:   p.editorNote,
     metadata: {
-      brand: p.brand, protein_type: p.proteinType, targets: p.targets,
+      brand: p.brand, package_price: p.packagePrice,
+      protein_type: p.proteinType, targets: p.targets,
       serving_size: p.servingSize, protein: p.protein, calories: p.calories,
       carbs: p.carbs, fat: p.fat, package_weight: p.packageWeight,
       price_per_kg: p.pricePerKg, flavors: p.flavors,
@@ -294,6 +295,7 @@ async function migrateRankings() {
   type RankingInput = {
     content_type: string
     region: string | null
+    target: string | null
     item_content_type: string
     slug: string
     title: string
@@ -334,7 +336,7 @@ async function migrateRankings() {
         criteria:          r.criteria,
         last_updated_at:   r.last_updated_at,
         status:            "published",
-        metadata:          { sources: r.sources, faqs: r.faqs },
+        metadata:          { sources: r.sources, faqs: r.faqs, target: r.target },
       }, { onConflict: "content_type,slug" })
       .select("id")
       .single()
@@ -423,10 +425,10 @@ function salonToRow(s: (typeof niigataBeautySalons)[number], region: string) {
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+/* eslint-disable @typescript-eslint/no-explicit-any */
 function normalizeRanking(r: any, content_type: string, item_content_type: string, region: string | null) {
   return {
-    slug: r.slug, content_type, region, item_content_type,
+    slug: r.slug, content_type, region, target: null as string | null, item_content_type,
     title: r.title, description: r.description,
     conclusion: r.conclusion ?? "", quick_table_label: r.quickTableLabel ?? "",
     criteria: r.criteria ?? [], last_updated_at: r.lastUpdatedAt,
@@ -438,7 +440,6 @@ function normalizeRanking(r: any, content_type: string, item_content_type: strin
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeCafeRanking(r: any, content_type: string, item_content_type: string, region: string) {
   return {
     ...normalizeRanking(r, content_type, item_content_type, region),
@@ -450,10 +451,9 @@ function normalizeCafeRanking(r: any, content_type: string, item_content_type: s
   }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function normalizeProteinRanking(r: any) {
   return {
-    slug: r.slug, content_type: "protein", region: null,
+    slug: r.slug, content_type: "protein", region: null, target: r.target,
     item_content_type: "protein",
     title: r.title, description: r.description,
     conclusion: r.conclusion ?? "", quick_table_label: r.quickTableLabel ?? "",
@@ -465,10 +465,35 @@ function normalizeProteinRanking(r: any) {
     })),
   }
 }
+/* eslint-enable @typescript-eslint/no-explicit-any */
 
 // ─────────────────────────────────────────────────────────
 // エントリーポイント
 // ─────────────────────────────────────────────────────────
+
+/**
+ * On-demand ISR 再検証を叩く（任意）。
+ * SITE_REVALIDATE_URL（例: https://each-spirit.com/api/revalidate）と
+ * REVALIDATE_SECRET が両方設定されている場合のみ実行。ローカル dev では不要。
+ */
+async function triggerRevalidation() {
+  const revalUrl = process.env.SITE_REVALIDATE_URL
+  const secret   = process.env.REVALIDATE_SECRET
+  if (!revalUrl || !secret) {
+    console.log("\nℹ️  SITE_REVALIDATE_URL / REVALIDATE_SECRET 未設定のため再検証はスキップ")
+    return
+  }
+  try {
+    const res = await fetch(revalUrl, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${secret}`, "Content-Type": "application/json" },
+      body: "{}",
+    })
+    console.log(`\n♻️  再検証リクエスト送信: ${res.status} ${res.ok ? "OK" : "NG"}`)
+  } catch (e) {
+    console.error("\n⚠️  再検証リクエスト失敗:", e)
+  }
+}
 
 async function main() {
   console.log("🚀 Supabase データ移行を開始します...")
@@ -479,6 +504,8 @@ async function main() {
   await migrateRankings()
 
   console.log("\n✅ 移行完了")
+
+  await triggerRevalidation()
 }
 
 main().catch(e => {

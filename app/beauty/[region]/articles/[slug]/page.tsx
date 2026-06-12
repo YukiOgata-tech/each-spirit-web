@@ -6,6 +6,7 @@ import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articleSchema, breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
 import { getBeautyArticle, getBeautyArticleMarkdown, getBeautyArticles, getBeautyRegions } from "@/lib/content";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
@@ -70,6 +71,7 @@ export default async function BeautyArticlePage({ params }: PageProps) {
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {article.category}</p>
         </div>
+        <LikeButton contentType="article" contentId={article.slug} regionSlug={region} className="mt-5" />
       </div>
       <section className="mt-6 rounded-2xl border border-[#f2d5e8] bg-[#fef0f6] p-5">
         <h2 className="text-base font-bold text-[#8b3a7e]">要点まとめ</h2>

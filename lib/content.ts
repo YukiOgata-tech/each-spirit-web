@@ -7,8 +7,6 @@ import { beautyRegions } from "@/content/beauty/regions";
 import { travelRegions } from "@/content/travel/regions";
 import { cafeRegions } from "@/content/cafe/regions";
 import { proteinTargets } from "@/content/protein/targets";
-import { proteinProducts } from "@/content/protein/products";
-import { proteinRankings } from "@/content/protein/rankings";
 import { site } from "@/content/site";
 import { routes } from "@/lib/routes";
 import type {
@@ -279,6 +277,62 @@ function mapArticle(row: any): Article {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProteinProduct(row: any): ProteinProduct {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    brand: m.brand ?? "",
+    name: row.name,
+    description: row.description,
+    proteinType: m.protein_type ?? "whey-wpc",
+    targets: (m.targets ?? []) as ProteinTarget[],
+    servingSize: Number(m.serving_size ?? 0),
+    protein: Number(m.protein ?? 0),
+    calories: Number(m.calories ?? 0),
+    carbs: Number(m.carbs ?? 0),
+    fat: Number(m.fat ?? 0),
+    packageWeight: Number(m.package_weight ?? 0),
+    packagePrice: Number(m.package_price ?? 0),
+    pricePerKg: Number(m.price_per_kg ?? 0),
+    flavors: (m.flavors ?? []) as string[],
+    features: (row.tags ?? []) as string[],
+    pros: (m.pros ?? []) as string[],
+    cons: (m.cons ?? []) as string[],
+    officialUrl: row.official_url ?? "",
+    imageUrl: row.image_url ?? "",
+    editorNote: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapProteinRanking(row: any, items: any[]): ProteinRanking {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    target: (m.target ?? "beginner") as ProteinTarget,
+    title: row.title,
+    description: row.description,
+    criteria: (row.criteria ?? []) as string[],
+    conclusion: row.conclusion ?? "",
+    quickTableLabel: row.quick_table_label ?? "",
+    lastUpdatedAt: toDateStr(row.last_updated_at),
+    items: items
+      .sort((a, b) => a.rank - b.rank)
+      .map((ri): ProteinRankingEntry => ({
+        rank: ri.rank,
+        productSlug: ri.item_slug,
+        score: Number(ri.score ?? 0),
+        reason: ri.reason ?? "",
+      })),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+  };
+}
+
 // ── Static (no DB) ─────────────────────────────────────────────────────────
 
 export function getSite() { return site; }
@@ -295,17 +349,46 @@ export function getCafeRegions(): CafeRegion[] { return cafeRegions; }
 export function getCafeRegion(slug: string): CafeRegion | undefined { return cafeRegions.find((r) => r.slug === slug); }
 export function getProteinTargets() { return proteinTargets; }
 export function getProteinTarget(slug: ProteinTarget) { return proteinTargets.find((t) => t.slug === slug); }
-export function getProteinProducts() { return proteinProducts; }
-export function getProteinProduct(slug: string) { return proteinProducts.find((p) => p.slug === slug); }
-export function getProteinProductsByTarget(target: ProteinTarget) { return proteinProducts.filter((p) => p.targets.includes(target)); }
-export function getProteinRankings() { return proteinRankings; }
-export function getProteinRankingsByTarget(target: ProteinTarget) { return proteinRankings.filter((r) => r.target === target); }
-export function getProteinRanking(slug: string) { return proteinRankings.find((r) => r.slug === slug); }
-export function getProteinRankingEntries(slug: string) {
-  const ranking = getProteinRanking(slug);
+
+export async function getProteinProducts(): Promise<ProteinProduct[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "protein");
+  return (data ?? []).map(mapProteinProduct);
+}
+
+export async function getProteinProduct(slug: string): Promise<ProteinProduct | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "protein").eq("slug", slug).maybeSingle();
+  return data ? mapProteinProduct(data) : undefined;
+}
+
+export async function getProteinProductsByTarget(target: ProteinTarget): Promise<ProteinProduct[]> {
+  const products = await getProteinProducts();
+  return products.filter((p) => p.targets.includes(target));
+}
+
+export async function getProteinRankings(): Promise<ProteinRanking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "protein");
+  return (data ?? []).map((r) => mapProteinRanking(r, r.ranking_items ?? []));
+}
+
+export async function getProteinRankingsByTarget(target: ProteinTarget): Promise<ProteinRanking[]> {
+  const rankings = await getProteinRankings();
+  return rankings.filter((r) => r.target === target);
+}
+
+export async function getProteinRanking(slug: string): Promise<ProteinRanking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "protein").eq("slug", slug).maybeSingle();
+  return data ? mapProteinRanking(data, data.ranking_items ?? []) : undefined;
+}
+
+export async function getProteinRankingEntries(slug: string) {
+  const [ranking, products] = await Promise.all([getProteinRanking(slug), getProteinProducts()]);
   if (!ranking) return [];
   return ranking.items
-    .map((entry) => ({ entry, product: getProteinProduct(entry.productSlug) }))
+    .map((entry) => ({ entry, product: products.find((p) => p.slug === entry.productSlug) }))
     .filter((v): v is { entry: ProteinRankingEntry; product: ProteinProduct } => Boolean(v.product));
 }
 
@@ -376,14 +459,6 @@ export async function getRamenItem(slug: string): Promise<Item | undefined> {
 }
 
 // ── Ramen rankings ───────────────────────────────────────────────────────────
-
-async function fetchRankingsWithItems(query: ReturnType<ReturnType<typeof createServerClient>["from"]>) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data: rankings } = await (query as any).select("*, ranking_items(*)");
-  if (!rankings) return [];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return rankings as any[];
-}
 
 export async function getRamenRankings(): Promise<Ranking[]> {
   const sb = createServerClient();

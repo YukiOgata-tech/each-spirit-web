@@ -22,10 +22,9 @@ const TARGET_COLORS: Record<string, { bg: string; text: string; border: string }
   beginner:{ bg: "#ecfeff", text: "#0e7490", border: "#a5f3fc" },
 };
 
-export default function ProteinIndexPage() {
+export default async function ProteinIndexPage() {
   const targets = getProteinTargets();
-  const products = getProteinProducts();
-  const rankings = getProteinRankings();
+  const [products, rankings] = await Promise.all([getProteinProducts(), getProteinRankings()]);
 
   return (
     <div className="protein-theme">

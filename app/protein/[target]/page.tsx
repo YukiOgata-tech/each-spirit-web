@@ -34,8 +34,10 @@ export default async function ProteinTargetPage({ params }: PageProps) {
   const info = getProteinTarget(target as ProteinTarget);
   if (!info) notFound();
 
-  const products = getProteinProductsByTarget(target as ProteinTarget);
-  const rankings = getProteinRankingsByTarget(target as ProteinTarget);
+  const [products, rankings] = await Promise.all([
+    getProteinProductsByTarget(target as ProteinTarget),
+    getProteinRankingsByTarget(target as ProteinTarget),
+  ]);
 
   return (
     <div className="protein-theme">

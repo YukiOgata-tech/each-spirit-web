@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
@@ -8,8 +9,34 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/routes";
 
-export function AuthButtonClient({ user }: { user: User | null }) {
+/**
+ * ヘッダーの認証ボタン。
+ *
+ * ユーザー判定はクライアント側で行う（`cookies()` を使うサーバーコンポーネントを
+ * root layout に置くと全ページが動的レンダリングになり ISR が効かなくなるため）。
+ * 初期表示は未ログイン状態 → マウント後に getUser で更新、onAuthStateChange で追従。
+ */
+export function AuthButtonClient() {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) setUser(data.user);
+    });
+
+    const { data: sub } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, []);
 
   async function handleSignOut() {
     const supabase = createClient();

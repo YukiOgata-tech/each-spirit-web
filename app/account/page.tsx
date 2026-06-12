@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy,
+  Star, Coffee, Trophy, Sparkles, ArrowRight,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
@@ -210,6 +210,25 @@ export default async function AccountPage() {
                   ))}
                 </ul>
               </div>
+            </div>
+          </DashboardCard>
+
+          {/* ── 今日の占い ──────────────────────────── */}
+          <DashboardCard title="今日の占い">
+            <div className="flex h-full flex-col justify-between gap-4">
+              <div className="flex items-center justify-center rounded-xl bg-gradient-to-br from-violet-50 to-indigo-50 py-6">
+                <div className="text-center">
+                  <Sparkles className="mx-auto h-8 w-8 text-violet-400" />
+                  <p className="mt-2 text-sm font-semibold text-violet-700">7つの運勢を毎日チェック</p>
+                  <p className="mt-1 text-xs text-violet-500">総合運・恋愛運・金運ほか</p>
+                </div>
+              </div>
+              <Link
+                href={routes.fortune}
+                className="inline-flex h-9 w-full items-center justify-center gap-1 rounded-lg border border-violet-200 bg-white text-sm font-semibold text-violet-700 transition hover:bg-violet-50"
+              >
+                今日の運勢を占う <ArrowRight className="h-4 w-4" />
+              </Link>
             </div>
           </DashboardCard>
 

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Search } from "lucide-react";
 import { MainNav } from "@/components/layout/MainNav";
 import { MobileHeaderMenu } from "@/components/layout/MobileHeaderMenu";
-import { AuthButton } from "@/components/auth/AuthButton";
+import { AuthButtonClient } from "@/components/auth/AuthButtonClient";
 import { Button } from "@/components/ui/button";
 import { getCategories, getSearchResults } from "@/lib/content";
 import { routes } from "@/lib/routes";
@@ -29,7 +29,7 @@ export async function SiteHeader() {
             探す
           </Link>
         </Button>
-        <AuthButton />
+        <AuthButtonClient />
         <MobileHeaderMenu categories={categories} results={searchResults} />
       </div>
     </header>

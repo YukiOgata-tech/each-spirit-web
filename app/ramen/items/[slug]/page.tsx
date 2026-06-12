@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, faqSchema, pageMetadata, restaurantSchema, speakableWebPageSchema } from "@/lib/seo";
 import { getRamenItem, getRamenItems, getRamenRankings } from "@/lib/content";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -80,6 +81,7 @@ export default async function ItemPage({ params }: PageProps) {
             <p><strong>編集部コメント:</strong> {item.editorComment}</p>
             <p><strong>おすすめメニュー:</strong> {item.recommendedMenu}</p>
           </div>
+          <LikeButton contentType="ramen_item" contentId={item.slug} className="mt-5" />
         </div>
         <div className="rounded-lg bg-slate-50 p-4">
           <h2 className="font-semibold">店舗基本情報</h2>

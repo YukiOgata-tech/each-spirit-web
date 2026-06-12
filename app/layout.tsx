@@ -11,6 +11,10 @@ import { site } from "@/content/site";
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
 
+// ISR: 全ルートのデフォルト再生成間隔（1時間）。content/** を seed したら最大1時間で
+// 本番に反映される。cookies を使う動的ページ（/account など）は自動的に動的のまま。
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {

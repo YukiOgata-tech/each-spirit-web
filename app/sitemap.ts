@@ -1,13 +1,15 @@
 import type { MetadataRoute } from "next";
 
 export const revalidate = 3600;
-import { getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getLeisureRankings, getLeisureRegions, getLeisureSpots, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelHotels, getTravelRankings, getTravelRegions } from "@/lib/content";
+import { getBeautyArticles, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelHotels, getTravelRankings, getTravelRegions } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const leisureRegions = getLeisureRegions();
   const travelRegions = getTravelRegions().filter((r) => r.status === "live");
   const cafeRegions = getCafeRegions().filter((r) => r.status === "live");
+  const beautyRegions = getBeautyRegions().filter((r) => r.status === "live");
+  const proteinTargets = getProteinTargets().filter((t) => t.status === "live");
 
   const [ramenArticles, ramenRankings, ramenItems] = await Promise.all([
     getRamenArticles(),
@@ -39,7 +41,21 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
-  const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.cafe];
+  const beautyPairs = await Promise.all(
+    beautyRegions.map(async (r) => ({
+      region: r.slug,
+      salons: await getBeautySalons(r.slug),
+      articles: await getBeautyArticles(r.slug),
+      rankings: await getBeautyRankings(r.slug),
+    }))
+  );
+
+  const [proteinProducts, proteinRankings] = await Promise.all([
+    getProteinProducts(),
+    getProteinRankings(),
+  ]);
+
+  const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.cafe, routes.beauty, routes.protein];
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
@@ -56,5 +72,12 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...cafePairs.map(({ region }) => ({ url: absoluteUrl(routes.cafeRegion(region)), lastModified: new Date("2026-06-09") })),
     ...cafePairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ url: absoluteUrl(routes.cafeRanking(region, r.slug)), lastModified: new Date(r.lastUpdatedAt) }))),
     ...cafePairs.flatMap(({ region, items }) => items.map((c) => ({ url: absoluteUrl(routes.cafeItem(region, c.slug)), lastModified: new Date(c.lastVerifiedAt) }))),
+    ...beautyPairs.map(({ region }) => ({ url: absoluteUrl(routes.beautyRegion(region)), lastModified: new Date("2026-06-09") })),
+    ...beautyPairs.flatMap(({ region, salons }) => salons.map((s) => ({ url: absoluteUrl(routes.beautySalon(region, s.slug)), lastModified: new Date(s.lastVerifiedAt) }))),
+    ...beautyPairs.flatMap(({ region, articles }) => articles.map((a) => ({ url: absoluteUrl(routes.beautyArticle(region, a.slug)), lastModified: new Date(a.updatedAt) }))),
+    ...beautyPairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ url: absoluteUrl(routes.beautyRanking(region, r.slug)), lastModified: new Date(r.lastUpdatedAt) }))),
+    ...proteinTargets.map((t) => ({ url: absoluteUrl(routes.proteinTarget(t.slug)), lastModified: new Date("2026-06-09") })),
+    ...proteinProducts.map((p) => ({ url: absoluteUrl(routes.proteinProduct(p.slug)), lastModified: new Date(p.lastVerifiedAt) })),
+    ...proteinRankings.map((r) => ({ url: absoluteUrl(routes.proteinRanking(r.target, r.slug)), lastModified: new Date(r.lastUpdatedAt) })),
   ];
 }

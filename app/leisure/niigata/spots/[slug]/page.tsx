@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { getLeisureRankings, getLeisureSpot, getLeisureSpots } from "@/lib/content";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
 import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema, touristAttractionSchema } from "@/lib/seo";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -86,6 +87,7 @@ export default async function LeisureSpotPage({ params }: PageProps) {
             <p><strong>編集部コメント:</strong> {spot.editorComment}</p>
             <p><strong>向いている人:</strong> {spot.bestFor.join(" / ")}</p>
           </div>
+          <LikeButton contentType="leisure_spot" contentId={spot.slug} regionSlug={region} className="mt-5" />
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
           <h2 className="font-semibold">スポット基本情報</h2>

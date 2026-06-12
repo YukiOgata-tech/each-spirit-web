@@ -32,6 +32,7 @@ export const routes = {
   proteinTarget: (target: string) => "/protein/" + target,
   proteinProduct: (slug: string) => "/protein/products/" + slug,
   proteinRanking: (target: string, slug: string) => "/protein/" + target + "/rankings/" + slug,
+  fortune: "/fortune",
   authLogin: "/auth/login",
   authSignup: "/auth/signup",
   authCallback: "/auth/callback",

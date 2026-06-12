@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, faqSchema, lodgingBusinessSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { getTravelHotel, getTravelHotels, getTravelRankings, getTravelRegions } from "@/lib/content";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
@@ -121,6 +122,8 @@ export default async function HotelPage({ params }: PageProps) {
               </Button>
             ))}
           </div>
+
+          <LikeButton contentType="hotel" contentId={hotel.slug} regionSlug={region} className="mt-5" />
         </div>
       </section>
 

@@ -15,13 +15,13 @@ import type { ProteinTarget } from "@/lib/types";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return getProteinProducts().map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  return (await getProteinProducts()).map((p) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProteinProduct(slug);
+  const product = await getProteinProduct(slug);
   if (!product) return {};
   return pageMetadata({
     title: `${product.brand} ${product.name.split("（")[0]}`,
@@ -37,10 +37,10 @@ const TARGET_LABEL: Record<ProteinTarget, string> = {
 
 export default async function ProteinProductPage({ params }: PageProps) {
   const { slug } = await params;
-  const product = getProteinProduct(slug);
+  const product = await getProteinProduct(slug);
   if (!product) notFound();
 
-  const editorialScore = getProteinRankings()
+  const editorialScore = (await getProteinRankings())
     .flatMap((r) => r.items)
     .find((entry) => entry.productSlug === product.slug)
     ?.score;

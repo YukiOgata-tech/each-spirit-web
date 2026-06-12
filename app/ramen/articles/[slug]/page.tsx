@@ -7,6 +7,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { articleSchema, breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
 import { getArticleMarkdown, getRamenArticle, getRamenArticles } from "@/lib/content";
+import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ slug: string }> };
@@ -56,6 +57,7 @@ export default async function ArticlePage({ params }: PageProps) {
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {article.category}</p>
         </div>
+        <LikeButton contentType="article" contentId={article.slug} className="mt-5" />
       </div>
       <section className="mt-6 rounded-lg border border-orange-200 bg-orange-50 p-5">
         <h2 className="text-lg font-semibold">要点まとめ</h2>

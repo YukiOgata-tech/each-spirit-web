@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { routes } from "@/lib/routes";
 
 export function SignupForm() {
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -27,7 +28,12 @@ export function SignupForm() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${location.origin}${routes.authCallback}` },
+      options: {
+        emailRedirectTo: `${location.origin}${routes.authCallback}`,
+        // public.handle_new_user トリガーが raw_user_meta_data.display_name を
+        // profiles.display_name に使う。未指定だと既定値「ユーザー」になるため必ず渡す。
+        data: { display_name: displayName.trim() },
+      },
     });
     if (error) {
       setFormError(
@@ -70,6 +76,23 @@ export function SignupForm() {
         {formError && (
           <p role="alert" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</p>
         )}
+        <div className="space-y-1.5">
+          <label htmlFor="displayName" className="block text-sm font-semibold text-slate-700">
+            表示名
+          </label>
+          <input
+            id="displayName"
+            type="text"
+            autoComplete="name"
+            required
+            maxLength={30}
+            value={displayName}
+            onChange={(e) => setDisplayName(e.target.value)}
+            className="form-input"
+            placeholder="ニックネーム可"
+          />
+        </div>
+
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
             メールアドレス

@@ -6,7 +6,7 @@
 
 - `app/` はルート、レイアウト、metadata、loading UI、`sitemap.ts`、`robots.ts`、route handler を管理します。
 - `components/` は再利用 UI です。`layout/`、`cards/`、`seo/`、`ui/` に分かれています。
-- `content/` は静的コンテンツです。Markdown 記事は `content/ramen/articles/`、カテゴリ・ランキング・店舗データは型付き TypeScript に置きます。
+- `content/` はコンテンツの**入力ソース**です。Markdown 記事は `content/ramen/articles/`、カテゴリ・ランキング・店舗データは型付き TypeScript に置きます。記事・店舗・ランキングは `npm run db:seed` で Supabase `es` スキーマへ反映し、配信時は `lib/content.ts` が Supabase から読み取ります（protein 含め全カテゴリ移行済み。`content/**` の設定系ファイルのみ直接配信）。執筆は dev で `content/**` を編集 → seed の流れ。コンテンツページは ISR（`app/layout.tsx` の `revalidate = 3600`）。root layout 配下で `cookies()`/`headers()` を使うと ISR が無効化されるので注意。
 - `lib/` は型、ルート定義、SEO 補助、コンテンツ取得関数、共通ユーティリティを置きます。Supabase クライアントは `lib/supabase/`（ブラウザ用 `client.ts` / SSR 用 `server.ts`）と `lib/supabase-server.ts`（service-role、seed 専用）に分かれます。
 - `middleware.ts` は全リクエストで Supabase セッションをリフレッシュします。認証 UI は `app/auth/`、マイページは `app/account/`。
 - `supabase/` は DB マイグレーション（`migrations/*.sql`）と運用ドキュメント（`README.md`）です。`scripts/` は seed・SQL 生成などの一回限りのツール群です。
