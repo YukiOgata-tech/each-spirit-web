@@ -20,6 +20,62 @@ const LEVEL: Record<number, { label: string; color: string }> = {
 type Phase = "idle" | "loading" | "result";
 type RenderMode = "2d" | "3d";
 
+// 星の位置を決定論生成（SSR/CSRで一致させハイドレーション差異を防ぐ）
+const STARS = (() => {
+  let a = 20260613;
+  const rnd = () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+  return Array.from({ length: 72 }, () => ({
+    top: +(rnd() * 100).toFixed(2),
+    left: +(rnd() * 100).toFixed(2),
+    size: +(1 + rnd() * 2.2).toFixed(2),
+    dur: +(2.2 + rnd() * 3.6).toFixed(2),
+    delay: +(rnd() * 4).toFixed(2),
+    op: +(0.25 + rnd() * 0.6).toFixed(2),
+  }));
+})();
+
+/** 占い画面のコズミック背景（星空＋漂うネビュラ＋ビネット） */
+function FortuneBackdrop() {
+  return (
+    <div className="pointer-events-none absolute inset-0 overflow-hidden">
+      <motion.div
+        className="absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-fuchsia-600/20 blur-[100px]"
+        animate={{ x: [0, 40, 0], y: [0, 30, 0], scale: [1, 1.12, 1] }}
+        transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute right-[-10rem] top-24 h-[26rem] w-[26rem] rounded-full bg-indigo-500/25 blur-[100px]"
+        animate={{ x: [0, -30, 0], y: [0, 40, 0], scale: [1.1, 1, 1.1] }}
+        transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-violet-500/15 blur-[110px]"
+        animate={{ x: [0, 30, 0], scale: [1, 1.15, 1] }}
+        transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
+      />
+      {STARS.map((s, i) => (
+        <motion.span
+          key={i}
+          className="absolute rounded-full bg-white"
+          style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.size, height: s.size }}
+          animate={{ opacity: [s.op * 0.3, s.op, s.op * 0.3] }}
+          transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+      <div
+        className="absolute inset-0"
+        style={{ background: "radial-gradient(ellipse at 50% 0%, transparent 42%, rgba(7,7,25,0.55) 100%)" }}
+      />
+    </div>
+  );
+}
+
 export function FortuneReveal({
   result,
   isGuest,
@@ -39,9 +95,16 @@ export function FortuneReveal({
   }
 
   return (
-    <div className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-gradient-to-b from-[#1e1b4b] via-[#312e81] to-[#0f172a] text-white">
-      <div className="pointer-events-none absolute -left-24 top-10 h-72 w-72 rounded-full bg-violet-500/20 blur-3xl" />
-      <div className="pointer-events-none absolute -right-24 top-40 h-72 w-72 rounded-full bg-indigo-500/20 blur-3xl" />
+    <div
+      className="relative min-h-[calc(100vh-4rem)] overflow-hidden text-white"
+      style={{
+        background:
+          "radial-gradient(1100px 600px at 72% -8%, #3b1d6e 0%, transparent 58%)," +
+          "radial-gradient(900px 520px at 8% 18%, rgba(30,58,138,0.45) 0%, transparent 55%)," +
+          "linear-gradient(180deg, #15102e 0%, #1e1b4b 42%, #0b1026 100%)",
+      }}
+    >
+      <FortuneBackdrop />
 
       <div className="relative mx-auto w-[min(720px,calc(100%-32px))] py-10 sm:py-14">
         <AnimatePresence mode="wait">

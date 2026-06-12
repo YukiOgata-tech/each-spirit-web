@@ -23,6 +23,8 @@
 
   html {
     scroll-behavior: smooth;
+    /* sticky ヘッダー(h-16=4rem)分のオフセット。アンカー先が隠れないように。 */
+    scroll-padding-top: 5rem;
   }
 
   body {
@@ -505,4 +507,35 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
   }
+}
+
+/* ── コントラスト強化 ─────────────────────────────────────────────
+   薄い境界線・淡い文字をサイト全体で一段濃く。
+   （unlayered 宣言なので Tailwind のユーティリティより優先される）
+   ※ slate-300 など暗背景で使う淡色文字は contrast を下げないため対象外。 */
+:root {
+  --border: #c5cfd6;
+  --muted-foreground: #4b5563;
+}
+
+.form-input {
+  border-color: #aab6c2;
+}
+
+.border-slate-100 {
+  border-color: #d5dde4;
+}
+.border-slate-200 {
+  border-color: #bfc9d4;
+}
+.border-slate-300 {
+  border-color: #9aa7b5;
+}
+
+/* 明背景で使われる淡いグレー文字を一段濃く */
+.text-slate-400 {
+  color: #5d6774;
+}
+.text-slate-500 {
+  color: #475569;
 }

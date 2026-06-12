@@ -4,6 +4,7 @@ import "./globals.css";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { GlobalRouteLoader } from "@/components/layout/GlobalRouteLoader";
+import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationSchema, websiteSchema } from "@/lib/seo";
 import { site } from "@/content/site";
@@ -72,6 +73,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <JsonLd data={websiteSchema()} />
         <JsonLd data={organizationSchema()} />
         <GlobalRouteLoader />
+        <SmoothScroll />
         <SiteHeader />
         <main>{children}</main>
         <SiteFooter />

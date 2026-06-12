@@ -48,7 +48,7 @@ export function AuthButtonClient() {
   if (!user) {
     return (
       <Button asChild variant="outline" size="sm">
-        <Link href={routes.authLogin}>
+        <Link href={`${routes.authLogin}?next=${routes.account}`}>
           <LogIn className="h-4 w-4" />
           <span className="hidden sm:inline">ログイン</span>
         </Link>

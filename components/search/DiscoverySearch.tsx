@@ -1,13 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Search, SlidersHorizontal } from "lucide-react";
 import type { Category, SearchResult } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
 
 const typeLabels: Record<SearchResult["type"], string> = {
   article: "記事",
@@ -41,6 +40,20 @@ export function DiscoverySearch({
       })
       .slice(0, 8);
   }, [category, query, results, type]);
+
+  // カテゴリ名 → 背景画像・テーマ色（カテゴリデータの実URLを利用）
+  const catVisual = useMemo(() => {
+    const m = new Map<string, { image?: string; color: string }>();
+    for (const c of categories) m.set(c.name, { image: c.images?.[0]?.url, color: c.theme.primary });
+    return m;
+  }, [categories]);
+
+  function visualFor(name: string): { image?: string; color: string } {
+    const exact = catVisual.get(name);
+    if (exact) return exact;
+    for (const [key, v] of catVisual) if (name.includes(key) || key.includes(name)) return v;
+    return { color: "#1d4f8f" };
+  }
 
   return (
     <div className="media-card overflow-hidden" id="search">
@@ -91,40 +104,62 @@ export function DiscoverySearch({
           </span>
           <span>カテゴリ追加後も同じ検索UIに統合</span>
         </div>
-        <div className="grid gap-3 lg:grid-cols-2">
-          {filtered.map((result, index) => (
-            <motion.div
-              key={result.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.035, duration: 0.28 }}
-              whileHover={{ y: -3 }}
-            >
-              <Link
-                href={result.href}
-                className={cn(
-                  "group block rounded-md border border-slate-200 bg-white p-4 transition hover:border-slate-300 hover:shadow-md",
-                )}
+        <div className="grid gap-3 sm:grid-cols-2">
+          {filtered.map((result, index) => {
+            const v = visualFor(result.category);
+            return (
+              <motion.div
+                key={result.id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.035, duration: 0.28 }}
+                whileHover={{ y: -3 }}
               >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex flex-wrap gap-2">
-                    <Badge>{result.category}</Badge>
-                    <Badge className="bg-slate-950 text-white">{typeLabels[result.type]}</Badge>
+                <Link
+                  href={result.href}
+                  className="group relative flex min-h-[150px] flex-col justify-end overflow-hidden rounded-xl border border-slate-300 shadow-sm transition hover:shadow-lg"
+                >
+                  {/* 背景: カテゴリ画像 or テーマ色 */}
+                  {v.image ? (
+                    <Image
+                      src={v.image}
+                      alt=""
+                      fill
+                      sizes="(min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${v.color}, ${v.color}bb)` }} />
+                  )}
+                  {/* 可読性のための暗オーバーレイ（どんな画像でも文字が読める） */}
+                  <div
+                    className="absolute inset-0"
+                    style={{ background: "linear-gradient(180deg, rgba(2,6,23,0.12) 0%, rgba(2,6,23,0.55) 52%, rgba(2,6,23,0.88) 100%)" }}
+                  />
+                  <ArrowUpRight className="absolute right-3 top-3 z-10 h-4 w-4 text-white/85 transition group-hover:scale-110" />
+
+                  {/* コンテンツ */}
+                  <div className="relative z-10 p-4 text-white max-sm:text-center">
+                    <div className="flex flex-wrap items-center gap-1.5 max-sm:justify-center">
+                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-slate-900">{result.category}</span>
+                      <span className="rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white ring-1 ring-white/25">
+                        {typeLabels[result.type]}
+                      </span>
+                    </div>
+                    <h3 className="mt-2 text-base font-bold leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] sm:text-lg">{result.title}</h3>
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-white/90 max-sm:hidden">{result.description}</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5 max-sm:justify-center">
+                      {result.tags.slice(0, 3).map((tag) => (
+                        <span key={tag} className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <ArrowUpRight className="h-4 w-4 text-slate-400 transition group-hover:text-[var(--primary)]" />
-                </div>
-                <h3 className="mt-3 text-base font-bold leading-6 text-slate-950">{result.title}</h3>
-                <p className="mt-2 line-clamp-2 text-sm leading-6 text-slate-600">{result.description}</p>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {result.tags.slice(0, 4).map((tag) => (
-                    <span key={tag} className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </Link>
-            </motion.div>
-          ))}
+                </Link>
+              </motion.div>
+            );
+          })}
         </div>
         {filtered.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">

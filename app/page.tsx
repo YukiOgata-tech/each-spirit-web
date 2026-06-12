@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, CheckCircle2, Compass, Layers3, Newspaper, Sparkles, TrendingUp } from "lucide-react";
+import { ArrowRight, CheckCircle2, Newspaper, TrendingUp } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { HomeVisualStory } from "@/components/home/HomeVisualStory";
@@ -31,7 +31,6 @@ export default async function HomePage() {
     getPopularRankings(3),
     getSearchResults(),
   ]);
-  const liveCategories = categories.filter((category) => category.status === "live");
   const plannedCategories = categories.filter((category) => category.status === "planned");
 
   return (
@@ -95,20 +94,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section id="categories" className="section-shell">
-        <div className="mb-6 flex items-end justify-between gap-4">
-          <div>
-            <p className="section-kicker">Categories</p>
-            <h2 className="section-heading mt-2">公開中と拡張予定</h2>
-          </div>
-          <Compass className="hidden h-9 w-9 text-slate-400 sm:block" />
-        </div>
-        <div className="grid gap-4 lg:grid-cols-[0.9fr_1.1fr]">
-          <CategoryLane title="公開中" categories={liveCategories} />
-          <CategoryLane title="拡張予定" categories={plannedCategories} />
-        </div>
-      </section>
-
       <section className="section-shell grid gap-8 lg:grid-cols-[1.25fr_0.85fr]">
         <div>
           <div className="mb-6 flex items-center gap-3">
@@ -150,38 +135,6 @@ export default async function HomePage() {
         </div>
       </section>
     </>
-  );
-}
-
-function CategoryLane({ title, categories }: { title: string; categories: ReturnType<typeof getCategories> }) {
-  return (
-    <div className="rounded-lg border border-slate-200 bg-white p-4">
-      <div className="mb-4 flex items-center gap-2">
-        <Layers3 className="h-5 w-5 text-[var(--primary)]" />
-        <h3 className="font-bold text-slate-950">{title}</h3>
-      </div>
-      <div className="grid gap-3">
-        {categories.map((category) => (
-          <Link key={category.slug} href={category.href} className="rounded-md border border-slate-200 p-4 transition hover:bg-slate-50">
-            <div className="flex flex-wrap items-center gap-2">
-              <Sparkles className="h-4 w-4" style={{ color: category.theme.primary }} />
-              <span className="font-bold text-slate-950">{category.name}</span>
-              {category.contentTypes.map((type) => (
-                <Badge key={type} className="bg-slate-50">{type}</Badge>
-              ))}
-            </div>
-            <p className="mt-2 text-sm leading-6 text-slate-600">{category.description}</p>
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {category.searchFacets.map((facet) => (
-                <span key={facet} className="rounded-full bg-slate-100 px-2 py-1 text-[11px] font-semibold text-slate-600">
-                  {facet}
-                </span>
-              ))}
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
   );
 }
 
