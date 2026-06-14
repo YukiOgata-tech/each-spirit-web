@@ -1,12 +1,13 @@
 import type { MetadataRoute } from "next";
 
-export const revalidate = 3600;
-import { getBeautyArticles, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelHotels, getTravelRankings, getTravelRegions } from "@/lib/content";
+export const revalidate = 2592000;
+import { getBeautyArticles, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const leisureRegions = getLeisureRegions();
   const travelRegions = getTravelRegions().filter((r) => r.status === "live");
+  const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
   const cafeRegions = getCafeRegions().filter((r) => r.status === "live");
   const beautyRegions = getBeautyRegions().filter((r) => r.status === "live");
   const proteinTargets = getProteinTargets().filter((t) => t.status === "live");
@@ -33,6 +34,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }))
   );
 
+  const travelServicePairs = await Promise.all(
+    travelServiceRegions.map(async (r) => ({
+      region: r.slug,
+      rankings: await getTravelServiceRankings(r.slug),
+      agencies: await getTravelAgencies(r.slug),
+    }))
+  );
+
   const cafePairs = await Promise.all(
     cafeRegions.map(async (r) => ({
       region: r.slug,
@@ -55,7 +64,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getProteinRankings(),
   ]);
 
-  const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.cafe, routes.beauty, routes.protein];
+  const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein];
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
@@ -69,6 +78,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...travelPairs.map(({ region }) => ({ url: absoluteUrl(routes.travelRegion(region)), lastModified: new Date("2026-06-08") })),
     ...travelPairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ url: absoluteUrl(routes.travelRanking(region, r.slug)), lastModified: new Date(r.lastUpdatedAt) }))),
     ...travelPairs.flatMap(({ region, hotels }) => hotels.map((h) => ({ url: absoluteUrl(routes.travelHotel(region, h.slug)), lastModified: new Date(h.lastVerifiedAt) }))),
+    ...travelServicePairs.map(({ region }) => ({ url: absoluteUrl(routes.travelServicesRegion(region)), lastModified: new Date("2026-06-14") })),
+    ...travelServicePairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ url: absoluteUrl(routes.travelServicesRanking(region, r.slug)), lastModified: new Date(r.lastUpdatedAt) }))),
+    ...travelServicePairs.flatMap(({ region, agencies }) => agencies.map((a) => ({ url: absoluteUrl(routes.travelAgency(region, a.slug)), lastModified: new Date(a.lastVerifiedAt) }))),
     ...cafePairs.map(({ region }) => ({ url: absoluteUrl(routes.cafeRegion(region)), lastModified: new Date("2026-06-09") })),
     ...cafePairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ url: absoluteUrl(routes.cafeRanking(region, r.slug)), lastModified: new Date(r.lastUpdatedAt) }))),
     ...cafePairs.flatMap(({ region, items }) => items.map((c) => ({ url: absoluteUrl(routes.cafeItem(region, c.slug)), lastModified: new Date(c.lastVerifiedAt) }))),

@@ -92,6 +92,7 @@ export default async function AccountPage() {
   const displayName  = profile?.display_name ?? user.email?.split("@")[0] ?? "ゲスト";
   const memberSince  = new Date(user.created_at).toLocaleDateString("ja-JP", { year: "numeric", month: "long" });
   const initials     = displayName.slice(0, 2).toUpperCase();
+  const linkedGoogle = user.identities?.some((i) => i.provider === "google") ?? false;
 
   return (
     <div className="bg-[var(--background)] pb-16">
@@ -125,15 +126,22 @@ export default async function AccountPage() {
                 {displayName}
               </h1>
               <p className="mt-0.5 truncate text-sm text-slate-500">{user.email}</p>
-              <p className="mt-0.5 text-xs text-slate-400">{memberSince} から利用中</p>
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="text-xs text-slate-400">{memberSince} から利用中</p>
+                {linkedGoogle && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                    <GoogleGlyph /> Google 連携済み
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
           {/* 下段: 統計ストリップ */}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:grid-cols-4">
-            <StatPill icon={Heart} iconClass="text-rose-500" label="いいね" value={likeCount} />
-            <StatPill icon={Bookmark} iconClass="text-blue-500" label="ブックマーク" value={bookmarkCount} />
-            <StatPill icon={MapPin} iconClass="text-amber-500" label="行きたい" value={wantToVisitCount} />
+            <StatPill icon={Heart} iconClass="text-rose-500" label="いいね" value={likeCount} href={`${routes.account}/likes?type=like`} />
+            <StatPill icon={Bookmark} iconClass="text-blue-500" label="ブックマーク" value={bookmarkCount} href={`${routes.account}/likes?type=bookmark`} />
+            <StatPill icon={MapPin} iconClass="text-amber-500" label="行きたい" value={wantToVisitCount} href={`${routes.account}/likes?type=want_to_visit`} />
             <StatPill icon={Star} iconClass="text-yellow-500" label="ポイント" value={points?.balance ?? 0} />
           </div>
         </div>
@@ -153,6 +161,7 @@ export default async function AccountPage() {
           <DashboardCard
             title="最近のアクティビティ"
             badge={likes.length > 0 ? likes.length : undefined}
+            action={likes.length > 0 ? { label: "すべて見る", href: `${routes.account}/likes` } : undefined}
             className="md:col-span-2"
           >
             {recentLikes.length === 0 ? (
@@ -327,14 +336,16 @@ function StatPill({
   iconClass,
   label,
   value,
+  href,
 }: {
   icon: React.ElementType;
   iconClass: string;
   label: string;
   value: number;
+  href?: string;
 }) {
-  return (
-    <div className="flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-white px-3 py-2.5">
+  const content = (
+    <>
       <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} />
       <div className="min-w-0">
         <p className="text-[1.125rem] font-black tabular-nums leading-none text-slate-900">
@@ -342,6 +353,25 @@ function StatPill({
         </p>
         <p className="mt-0.5 text-[11px] font-semibold text-slate-500">{label}</p>
       </div>
-    </div>
+    </>
+  );
+  const base = "flex items-center gap-2.5 rounded-xl border border-[var(--border)] bg-white px-3 py-2.5";
+  return href ? (
+    <Link href={href} className={`${base} transition hover:border-[var(--primary)]/40 hover:bg-[var(--primary)]/5`}>
+      {content}
+    </Link>
+  ) : (
+    <div className={base}>{content}</div>
+  );
+}
+
+function GoogleGlyph() {
+  return (
+    <svg className="h-3 w-3 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
+      <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.76h3.56c2.08-1.92 3.28-4.74 3.28-8.09Z" />
+      <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.56-2.76c-.98.66-2.23 1.06-3.72 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23Z" />
+      <path fill="#FBBC05" d="M5.84 14.11a6.6 6.6 0 0 1 0-4.22V7.05H2.18a11 11 0 0 0 0 9.9l3.66-2.84Z" />
+      <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1A11 11 0 0 0 2.18 7.05l3.66 2.84C6.71 7.3 9.14 5.38 12 5.38Z" />
+    </svg>
   );
 }

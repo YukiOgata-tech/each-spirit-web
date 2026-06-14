@@ -74,6 +74,21 @@ export const categories: Category[] = [
     theme: { primary: "#2d5a3d", accent: "#c8973a", background: "#f5f0e6" },
   },
   {
+    slug: "travel-services",
+    name: "旅行アプリ・旅行会社",
+    href: "/travel-services",
+    description: "旅行計画に使えるアプリと、県ごとの地域密着型旅行会社を比較。大手だけでは拾いにくい地元発着ツアー、団体手配、着地型の相談先を整理します。",
+    tagline: "旅の計画、移動、手配先を実用目線で選ぶ",
+    status: "live",
+    contentTypes: ["アプリ比較", "旅行会社カード", "地域別ランキング", "調査ガイド"],
+    searchFacets: ["旅行計画", "乗換", "予約", "地元旅行会社", "着地型ツアー", "団体旅行"],
+    plannedTopics: ["新潟県の旅行会社", "旅行アプリ比較", "県別ローカル旅行会社", "バスツアー", "旅程管理"],
+    theme: { primary: "#285a6f", accent: "#e08f3e", background: "#eef7f6" },
+    images: [
+      { key: "hero", url: "https://images.unsplash.com/photo-1488646953014-85cb44e25828", alt: "旅行計画とスマートフォン" },
+    ],
+  },
+  {
     slug: "cafe",
     name: "カフェ",
     href: "/cafe",

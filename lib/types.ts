@@ -182,6 +182,85 @@ export type TravelRegion = {
   images: CategoryImage[];
 };
 
+export type TravelServiceRegion = {
+  slug: string;
+  name: string;
+  shortName: string;
+  description: string;
+  tagline: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string[];
+  status: "live" | "planned";
+  headline: string;
+  subtext: string;
+  heroBadge: string;
+  heroCtaSlug: string;
+  heroCtaLabel: string;
+  statsNote: string;
+  areas: string[];
+  featuredSlugs: string[];
+  images?: CategoryImage[];
+};
+
+export type TravelAgencyService =
+  | "国内旅行"
+  | "海外旅行"
+  | "バスツアー"
+  | "団体旅行"
+  | "貸切バス"
+  | "宿泊手配"
+  | "航空券"
+  | "JR券"
+  | "着地型ツアー"
+  | "佐渡旅行";
+
+export type TravelAgency = {
+  slug: string;
+  name: string;
+  tagline: string;
+  description: string;
+  area: string;
+  address: string;
+  phone?: string;
+  services: TravelAgencyService[];
+  bestFor: string[];
+  tags: string[];
+  priceRange: string;
+  consultationStyle: string;
+  businessHours: string;
+  closedDays: string;
+  registeredTravelAgency: string;
+  officialUrl: string;
+  mapUrl: string;
+  officialLinks: OfficialLink[];
+  editorComment: string;
+  highlight: string;
+  imageUrl: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+  relatedRankingSlugs: string[];
+};
+
+export type TravelApp = {
+  slug: string;
+  name: string;
+  brand: string;
+  description: string;
+  useCase: string;
+  platforms: string[];
+  priceRange: string;
+  features: string[];
+  bestFor: string[];
+  officialUrl: string;
+  imageUrl: string;
+  editorComment: string;
+  lastVerifiedAt: string;
+  sources: Source[];
+  faqs: FAQ[];
+};
+
 export type RamenRegion = {
   slug: string;
   name: string;

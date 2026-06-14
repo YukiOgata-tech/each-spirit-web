@@ -15,6 +15,8 @@ import type {
   Ranking,
   RankingItem,
   Salon,
+  TravelAgency,
+  TravelApp,
 } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
 import { site } from "@/content/site";
@@ -405,6 +407,125 @@ export function travelRegionItemListSchema(region: string, regionName: string, h
           streetAddress: hotel.address,
           addressCountry: "JP",
         },
+      },
+    })),
+  };
+}
+
+// ─── Travel Services / Agencies ──────────────────────────────────────────────
+
+export function travelAgencySchema(region: string, agency: TravelAgency, editorialScore?: number) {
+  const prefectureMatch = agency.address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
+  const addressRegion = prefectureMatch?.[1] ?? "";
+  return {
+    "@context": "https://schema.org",
+    "@type": "TravelAgency",
+    name: agency.name,
+    description: agency.description,
+    url: absoluteUrl(routes.travelAgency(region, agency.slug)),
+    sameAs: agency.officialLinks.map((link) => link.url),
+    telephone: agency.phone,
+    address: {
+      "@type": "PostalAddress",
+      streetAddress: agency.address,
+      addressRegion,
+      addressCountry: "JP",
+    },
+    priceRange: agency.priceRange,
+    openingHours: agency.businessHours,
+    hasMap: agency.mapUrl,
+    makesOffer: agency.services.map((service) => ({
+      "@type": "Offer",
+      itemOffered: { "@type": "Service", name: service },
+    })),
+    ...(editorialScore !== undefined && {
+      aggregateRating: {
+        "@type": "AggregateRating",
+        ratingValue: (editorialScore / 20).toFixed(1),
+        bestRating: "5",
+        worstRating: "1",
+        ratingCount: "1",
+      },
+    }),
+  };
+}
+
+export function travelAgencyRegionItemListSchema(region: string, regionName: string, agencies: TravelAgency[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: regionName + " 掲載旅行会社",
+    numberOfItems: agencies.length,
+    itemListElement: agencies.map((agency, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "TravelAgency",
+        name: agency.name,
+        url: absoluteUrl(routes.travelAgency(region, agency.slug)),
+        address: {
+          "@type": "PostalAddress",
+          streetAddress: agency.address,
+          addressCountry: "JP",
+        },
+      },
+    })),
+  };
+}
+
+export function travelAgencyRankingItemListSchema(
+  region: string,
+  ranking: Ranking,
+  entries: { entry: RankingItem; agency: TravelAgency }[],
+) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: ranking.title,
+    description: ranking.description,
+    itemListOrder: "https://schema.org/ItemListOrderAscending",
+    numberOfItems: entries.length,
+    itemListElement: entries.map(({ entry, agency }) => ({
+      "@type": "ListItem",
+      position: entry.rank,
+      item: {
+        "@type": "TravelAgency",
+        name: agency.name,
+        url: absoluteUrl(routes.travelAgency(region, agency.slug)),
+        aggregateRating: {
+          "@type": "AggregateRating",
+          ratingValue: (entry.score / 20).toFixed(1),
+          bestRating: "5",
+          worstRating: "1",
+          ratingCount: "1",
+        },
+      },
+    })),
+  };
+}
+
+export function travelAppItemListSchema(apps: TravelApp[]) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "おすすめ旅行アプリ",
+    numberOfItems: apps.length,
+    itemListElement: apps.map((app, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      item: {
+        "@type": "SoftwareApplication",
+        name: app.name,
+        applicationCategory: "TravelApplication",
+        operatingSystem: app.platforms.join(", "),
+        description: app.description,
+        url: app.officialUrl,
+        offers: {
+          "@type": "Offer",
+          priceCurrency: "JPY",
+          price: app.priceRange,
+        },
+        publisher: { "@type": "Organization", name: app.brand },
       },
     })),
   };

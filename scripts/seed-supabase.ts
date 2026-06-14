@@ -36,6 +36,13 @@ import { toyamaCafeItems }       from "@/content/cafe/toyama/items"
 import { toyamaCafeRankings }    from "@/content/cafe/toyama/rankings"
 import { niigataHotels }         from "@/content/travel/niigata/hotels"
 import { niigataHotelRankings }  from "@/content/travel/niigata/rankings"
+import { niigataTravelAgencies } from "@/content/travel-services/niigata/agencies"
+import { niigataTravelAgencyRankings } from "@/content/travel-services/niigata/rankings"
+import { shizuokaTravelAgencies } from "@/content/travel-services/shizuoka/agencies"
+import { shizuokaTravelAgencyRankings } from "@/content/travel-services/shizuoka/rankings"
+import { yamagataTravelAgencies } from "@/content/travel-services/yamagata/agencies"
+import { yamagataTravelAgencyRankings } from "@/content/travel-services/yamagata/rankings"
+import { travelApps }            from "@/content/travel-services/apps"
 import { niigataLeisureSpots }   from "@/content/leisure/niigata/spots"
 import { niigataLeisureRankings } from "@/content/leisure/niigata/rankings"
 import { beautySalons as niigataBeautySalons }   from "@/content/beauty/niigata/salons"
@@ -221,6 +228,42 @@ async function migrateItems() {
     .upsert(hotelRows, { onConflict: "content_type,slug", count: "exact" })
   if (e3) err("hotel items", e3); else ok("hotel items", c3 ?? hotelRows.length)
 
+  // 旅行会社
+  const travelAgencyRows = [
+    ...niigataTravelAgencies.map(a => travelAgencyToRow(a, "niigata")),
+    ...shizuokaTravelAgencies.map(a => travelAgencyToRow(a, "shizuoka")),
+    ...yamagataTravelAgencies.map(a => travelAgencyToRow(a, "yamagata")),
+  ]
+  const { error: eTravelAgency, count: cTravelAgency } = await es.from("items")
+    .upsert(travelAgencyRows, { onConflict: "content_type,slug", count: "exact" })
+  if (eTravelAgency) err("travel agency items", eTravelAgency); else ok("travel agency items", cTravelAgency ?? travelAgencyRows.length)
+
+  // 旅行アプリ（地域なし）
+  const travelAppRows = travelApps.map(a => ({
+    slug:             a.slug,
+    content_type:     "travel_app",
+    region:           null,
+    name:             a.name,
+    description:      a.description,
+    image_url:        a.imageUrl,
+    area:             a.useCase,
+    price_range:      a.priceRange,
+    official_url:     a.officialUrl,
+    tags:             a.features,
+    last_verified_at: a.lastVerifiedAt,
+    editor_comment:   a.editorComment,
+    metadata: {
+      brand: a.brand,
+      platforms: a.platforms,
+      best_for: a.bestFor,
+      sources: a.sources,
+      faqs: a.faqs,
+    },
+  }))
+  const { error: eTravelApp, count: cTravelApp } = await es.from("items")
+    .upsert(travelAppRows, { onConflict: "content_type,slug", count: "exact" })
+  if (eTravelApp) err("travel app items", eTravelApp); else ok("travel app items", cTravelApp ?? travelAppRows.length)
+
   // 美容サロン
   const salonRows = [
     ...niigataBeautySalons.map(s  => salonToRow(s, "niigata")),
@@ -316,6 +359,9 @@ async function migrateRankings() {
     ...yamagataCafeRankings.map(r  => normalizeCafeRanking(r,           "cafe",          "cafe",          "yamagata")),
     ...toyamaCafeRankings.map(r    => normalizeCafeRanking(r,           "cafe",          "cafe",          "toyama")),
     ...niigataHotelRankings.map(r  => normalizeRanking(r,               "hotel",         "hotel",         "niigata")),
+    ...niigataTravelAgencyRankings.map(r => normalizeRanking(r,          "travel_agency", "travel_agency", "niigata")),
+    ...shizuokaTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "travel_agency", "shizuoka")),
+    ...yamagataTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "travel_agency", "yamagata")),
     ...niigataLeisureRankings.map(r => normalizeRanking(r,              "leisure",       "leisure_spot",  "niigata")),
     ...niigataBeautyRankings.map(r => normalizeRanking(r,               "beauty",        "beauty_salon",  "niigata")),
     ...yamagataBeautyRankings.map(r => normalizeRanking(r,              "beauty",        "beauty_salon",  "yamagata")),
@@ -421,6 +467,40 @@ function salonToRow(s: (typeof niigataBeautySalons)[number], region: string) {
       instagram: s.instagram, official_links: s.officialLinks,
       sources: s.sources, faqs: s.faqs,
       related_ranking_slugs: s.relatedRankingSlugs,
+    },
+  }
+}
+
+function travelAgencyToRow(a: (typeof niigataTravelAgencies)[number], region: string) {
+  return {
+    slug:             a.slug,
+    content_type:     "travel_agency",
+    region,
+    name:             a.name,
+    description:      a.description,
+    image_url:        a.imageUrl,
+    address:          a.address,
+    area:             a.area,
+    phone:            a.phone ?? null,
+    price_range:      a.priceRange,
+    official_url:     a.officialUrl,
+    map_url:          a.mapUrl,
+    tags:             a.tags,
+    last_verified_at: a.lastVerifiedAt,
+    editor_comment:   a.editorComment,
+    metadata: {
+      tagline: a.tagline,
+      services: a.services,
+      best_for: a.bestFor,
+      consultation_style: a.consultationStyle,
+      business_hours: a.businessHours,
+      closed_days: a.closedDays,
+      registered_travel_agency: a.registeredTravelAgency,
+      official_links: a.officialLinks,
+      highlight: a.highlight,
+      sources: a.sources,
+      faqs: a.faqs,
+      related_ranking_slugs: a.relatedRankingSlugs,
     },
   }
 }

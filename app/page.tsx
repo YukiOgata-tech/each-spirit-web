@@ -36,16 +36,16 @@ export default async function HomePage() {
   return (
     <>
       <section className="hero-surface border-b border-slate-200">
-        <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
+        <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-6 py-8 max-sm:w-[min(1360px,calc(100%-24px))] sm:gap-8 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
           <div className="animate-rise flex flex-col justify-center">
             <Badge className="w-fit border-slate-300 bg-white text-slate-700">Each Spirit 編集部</Badge>
-            <h1 className="mt-5 max-w-3xl text-4xl font-bold leading-[1.05] tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+            <h1 className="mt-4 max-w-3xl text-3xl font-bold leading-[1.12] tracking-normal text-slate-950 sm:text-5xl sm:leading-[1.05] lg:text-6xl">
               無限に増えるカテゴリを、比較と検索で迷わず選べるメディアへ。
             </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+            <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 sm:text-lg sm:leading-8">
               ラーメンから始め、旅行、ガジェット、暮らし、業務ツールへ拡張します。記事、ランキング、店舗・商品カードを同じ検索体験に集約し、選ぶ前の判断材料を整理します。
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-6 flex flex-wrap gap-2.5 sm:gap-3">
               <Button asChild size="lg">
                 <Link href="#search">横断検索を使う<SearchArrow /></Link>
               </Button>
@@ -62,12 +62,12 @@ export default async function HomePage() {
       <section className="section-shell">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_320px]">
           <div>
-            <div className="mb-6 grid gap-3 lg:grid-cols-[0.75fr_1.25fr] lg:items-end">
+            <div className="mb-4 grid gap-2 sm:mb-6 lg:grid-cols-[0.75fr_1.25fr] lg:items-end lg:gap-3">
               <div>
                 <p className="section-kicker">Search</p>
-                <h2 className="section-heading mt-2">カテゴリ横断で探す</h2>
+                <h2 className="section-heading mt-1.5">カテゴリ横断で探す</h2>
               </div>
-              <p className="text-sm leading-7 text-slate-600">
+              <p className="text-sm leading-6 text-slate-600 sm:leading-7">
                 今後カテゴリが増えても、検索対象は同じUIへ追加します。キーワード、カテゴリ、コンテンツ種別で絞り込み、記事・ランキング・店舗カード・準備中カテゴリを横断できます。
               </p>
             </div>
@@ -94,41 +94,41 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="section-shell grid gap-8 lg:grid-cols-[1.25fr_0.85fr]">
+      <section className="section-shell grid gap-6 sm:gap-8 lg:grid-cols-[1.25fr_0.85fr]">
         <div>
-          <div className="mb-6 flex items-center gap-3">
-            <Newspaper className="h-6 w-6 text-[var(--primary)]" />
+          <div className="mb-4 flex items-center gap-2.5 sm:mb-6">
+            <Newspaper className="h-6 w-6 shrink-0 text-[var(--primary)]" />
             <h2 className="section-heading">最新記事</h2>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
             {articles.map((article) => <ArticleCard key={article.slug} article={article} />)}
           </div>
         </div>
         <div>
-          <div className="mb-6 flex items-center gap-3">
-            <TrendingUp className="h-6 w-6 text-[var(--accent)]" />
+          <div className="mb-4 flex items-center gap-2.5 sm:mb-6">
+            <TrendingUp className="h-6 w-6 shrink-0 text-[var(--accent)]" />
             <h2 className="section-heading">ランキング</h2>
           </div>
-          <div className="grid gap-4">
+          <div className="grid gap-3 sm:gap-4">
             {rankings.map((ranking) => <RankingCard key={ranking.slug} ranking={ranking} />)}
           </div>
         </div>
       </section>
 
       <section className="section-shell">
-        <div className="grid gap-6 rounded-lg bg-slate-950 p-6 text-white sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="grid gap-5 rounded-lg bg-slate-950 p-5 text-white sm:gap-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-[0.14em] text-cyan-200">Editorial System</p>
-            <h2 className="mt-3 text-2xl font-semibold tracking-normal sm:text-3xl">薄い情報を増やさず、判断できる形にする</h2>
-            <p className="mt-4 text-sm leading-7 text-slate-300">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-cyan-200 sm:text-sm">Editorial System</p>
+            <h2 className="mt-2 text-2xl font-semibold tracking-normal sm:mt-3 sm:text-3xl">薄い情報を増やさず、判断できる形にする</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-300 sm:mt-4 sm:leading-7">
               各カテゴリは、記事だけでなく比較軸、検索項目、カード型データ、更新ルールを先に決めてから拡張します。
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-3">
             {editorialPillars.map((item) => (
-              <div key={item} className="flex gap-3 rounded-lg bg-white/8 p-4">
-                <CheckCircle2 className="mt-0.5 h-5 w-5 text-cyan-200" />
-                <span className="text-sm font-semibold leading-6">{item}</span>
+              <div key={item} className="flex items-center gap-2.5 rounded-lg bg-white/8 px-4 py-3">
+                <CheckCircle2 className="h-5 w-5 shrink-0 text-cyan-200" />
+                <span className="text-sm font-semibold leading-snug">{item}</span>
               </div>
             ))}
           </div>

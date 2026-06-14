@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { LogIn, LogOut, UserCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { routes } from "@/lib/routes";
 
 /**
@@ -19,6 +20,7 @@ import { routes } from "@/lib/routes";
 export function AuthButtonClient() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -64,10 +66,24 @@ export function AuthButtonClient() {
           マイページ
         </Link>
       </Button>
-      <Button variant="ghost" size="sm" onClick={handleSignOut}>
+      <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)}>
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline">ログアウト</span>
       </Button>
+
+      <ConfirmDialog
+        open={confirmOpen}
+        title="ログアウトしますか？"
+        description="再度ご利用にはログインが必要です。"
+        confirmLabel="ログアウト"
+        cancelLabel="キャンセル"
+        tone="danger"
+        onConfirm={() => {
+          setConfirmOpen(false);
+          handleSignOut();
+        }}
+        onCancel={() => setConfirmOpen(false)}
+      />
     </div>
   );
 }

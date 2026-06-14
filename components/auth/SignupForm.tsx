@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { routes } from "@/lib/routes";
 
 export function SignupForm() {
@@ -72,7 +73,16 @@ export function SignupForm() {
         <p className="text-sm text-slate-500">Each Spirit のアカウントを作成します</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+      <div className="mt-7">
+        <GoogleAuthButton next={routes.account} label="Google で登録" />
+      </div>
+      <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" />
+        または
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         {formError && (
           <p role="alert" className="rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">{formError}</p>
         )}

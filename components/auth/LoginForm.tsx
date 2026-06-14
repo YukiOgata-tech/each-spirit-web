@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
+import { GoogleAuthButton } from "@/components/auth/GoogleAuthButton";
 import { routes } from "@/lib/routes";
 
 export function LoginForm({
@@ -44,7 +45,16 @@ export function LoginForm({
         <p className="text-sm text-slate-500">Each Spirit にログインしてください</p>
       </div>
 
-      <form onSubmit={handleSubmit} className="mt-7 space-y-4">
+      <div className="mt-7">
+        <GoogleAuthButton next={params.next} label="Google でログイン" />
+      </div>
+      <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
+        <span className="h-px flex-1 bg-slate-200" />
+        または
+        <span className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <label htmlFor="email" className="block text-sm font-semibold text-slate-700">
             メールアドレス

@@ -5,6 +5,7 @@ import { categories } from "@/content/categories";
 import { ramenRegions } from "@/content/ramen/regions";
 import { beautyRegions } from "@/content/beauty/regions";
 import { travelRegions } from "@/content/travel/regions";
+import { travelServiceRegions } from "@/content/travel-services/regions";
 import { cafeRegions } from "@/content/cafe/regions";
 import { proteinTargets } from "@/content/protein/targets";
 import { site } from "@/content/site";
@@ -30,6 +31,9 @@ import type {
   SearchResult,
   Source,
   FAQ,
+  TravelAgency,
+  TravelApp,
+  TravelServiceRegion,
 } from "@/lib/types";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -135,6 +139,60 @@ function mapHotelItem(row: any): Hotel {
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTravelAgencyItem(row: any): TravelAgency {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    tagline: m.tagline ?? "",
+    description: row.description,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    services: (m.services ?? []) as TravelAgency["services"],
+    bestFor: (m.best_for ?? []) as string[],
+    tags: row.tags ?? [],
+    priceRange: row.price_range ?? "",
+    consultationStyle: m.consultation_style ?? "",
+    businessHours: m.business_hours ?? "",
+    closedDays: m.closed_days ?? "",
+    registeredTravelAgency: m.registered_travel_agency ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    officialLinks: (m.official_links ?? []) as OfficialLink[],
+    editorComment: row.editor_comment ?? "",
+    highlight: m.highlight ?? "",
+    imageUrl: row.image_url ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
+    relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapTravelAppItem(row: any): TravelApp {
+  const m = row.metadata ?? {};
+  return {
+    slug: row.slug,
+    name: row.name,
+    brand: m.brand ?? "",
+    description: row.description,
+    useCase: row.area ?? "",
+    platforms: (m.platforms ?? []) as string[],
+    priceRange: row.price_range ?? "",
+    features: row.tags ?? [],
+    bestFor: (m.best_for ?? []) as string[],
+    officialUrl: row.official_url ?? "",
+    imageUrl: row.image_url ?? "",
+    editorComment: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
   };
 }
 
@@ -345,6 +403,8 @@ export function getBeautyRegions() { return beautyRegions; }
 export function getBeautyRegion(slug: string) { return beautyRegions.find((r) => r.slug === slug); }
 export function getTravelRegions() { return travelRegions; }
 export function getTravelRegion(slug: string) { return travelRegions.find((r) => r.slug === slug); }
+export function getTravelServiceRegions(): TravelServiceRegion[] { return travelServiceRegions; }
+export function getTravelServiceRegion(slug: string): TravelServiceRegion | undefined { return travelServiceRegions.find((r) => r.slug === slug); }
 export function getCafeRegions(): CafeRegion[] { return cafeRegions; }
 export function getCafeRegion(slug: string): CafeRegion | undefined { return cafeRegions.find((r) => r.slug === slug); }
 export function getProteinTargets() { return proteinTargets; }
@@ -497,12 +557,21 @@ export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
 // ── Search ───────────────────────────────────────────────────────────────────
 
 export async function getSearchResults(): Promise<SearchResult[]> {
-  const [articles, rankings, items, leisureRankings, leisureSpots] = await Promise.all([
+  const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
+  const [articles, rankings, items, leisureRankings, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
     getRamenArticles(),
     getRamenRankings(),
     getRamenItems(),
     getLeisureRankings("niigata"),
     getLeisureSpots("niigata"),
+    Promise.all(
+      travelServiceRegions.map(async (region) => ({
+        region: region.slug,
+        agencies: await getTravelAgencies(region.slug),
+        rankings: await getTravelServiceRankings(region.slug),
+      }))
+    ),
+    getTravelApps(),
   ]);
 
   const categoryResults: SearchResult[] = categories.map((category) => ({
@@ -570,7 +639,50 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     updatedAt: spot.lastVerifiedAt,
   }));
 
-  return [...categoryResults, ...articleResults, ...rankingResults, ...itemResults, ...leisureRankingResults, ...leisureSpotResults];
+  const travelAgencyResults: SearchResult[] = travelServicePairs.flatMap(({ region, agencies }) => agencies.map((agency) => ({
+    id: "travel-agency-" + region + "-" + agency.slug,
+    type: "item",
+    title: agency.name,
+    description: agency.description,
+    category: "旅行アプリ・旅行会社",
+    href: routes.travelAgency(region, agency.slug),
+    tags: [agency.area, ...agency.services, ...agency.tags],
+    updatedAt: agency.lastVerifiedAt,
+  })));
+
+  const travelServiceRankingResults: SearchResult[] = travelServicePairs.flatMap(({ region, rankings }) => rankings.map((ranking) => ({
+    id: "travel-service-ranking-" + region + "-" + ranking.slug,
+    type: "ranking",
+    title: ranking.title,
+    description: ranking.description,
+    category: "旅行アプリ・旅行会社",
+    href: routes.travelServicesRanking(region, ranking.slug),
+    tags: ranking.criteria,
+    updatedAt: ranking.lastUpdatedAt,
+  })));
+
+  const travelAppResults: SearchResult[] = travelApps.map((app) => ({
+    id: "travel-app-" + app.slug,
+    type: "item",
+    title: app.name,
+    description: app.description,
+    category: "旅行アプリ・旅行会社",
+    href: routes.travelApps,
+    tags: [app.useCase, ...app.platforms, ...app.features],
+    updatedAt: app.lastVerifiedAt,
+  }));
+
+  return [
+    ...categoryResults,
+    ...articleResults,
+    ...rankingResults,
+    ...itemResults,
+    ...leisureRankingResults,
+    ...leisureSpotResults,
+    ...travelAgencyResults,
+    ...travelServiceRankingResults,
+    ...travelAppResults,
+  ];
 }
 
 // ── Leisure ──────────────────────────────────────────────────────────────────
@@ -679,6 +791,46 @@ export async function getTravelRankingEntries(region: string, slug: string) {
   return ranking.items
     .map((entry) => ({ entry, hotel: hotels.find((h) => h.slug === entry.itemSlug) }))
     .filter((v): v is { entry: RankingItem; hotel: Hotel } => Boolean(v.hotel));
+}
+
+// ── Travel Services ─────────────────────────────────────────────────────────
+
+export async function getTravelAgencies(region: string): Promise<TravelAgency[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "travel_agency").eq("region", region);
+  return (data ?? []).map(mapTravelAgencyItem);
+}
+
+export async function getTravelAgency(region: string, slug: string): Promise<TravelAgency | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "travel_agency").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapTravelAgencyItem(data) : undefined;
+}
+
+export async function getTravelServiceRankings(region: string): Promise<Ranking[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "travel_agency").eq("region", region);
+  return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
+}
+
+export async function getTravelServiceRanking(region: string, slug: string): Promise<Ranking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "travel_agency").eq("region", region).eq("slug", slug).maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
+}
+
+export async function getTravelServiceRankingEntries(region: string, slug: string) {
+  const [ranking, agencies] = await Promise.all([getTravelServiceRanking(region, slug), getTravelAgencies(region)]);
+  if (!ranking) return [];
+  return ranking.items
+    .map((entry) => ({ entry, agency: agencies.find((a) => a.slug === entry.itemSlug) }))
+    .filter((v): v is { entry: RankingItem; agency: TravelAgency } => Boolean(v.agency));
+}
+
+export async function getTravelApps(): Promise<TravelApp[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("items").select("*").eq("content_type", "travel_app");
+  return (data ?? []).map(mapTravelAppItem);
 }
 
 // ── Cafe ─────────────────────────────────────────────────────────────────────
