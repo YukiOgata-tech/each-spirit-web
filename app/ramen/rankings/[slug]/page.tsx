@@ -14,6 +14,7 @@ import { breadcrumbSchema, faqSchema, itemListSchema, pageMetadata, speakableWeb
 import { getRankingEntries, getRamenRanking, getRamenRankings } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { getRamenImageUrl } from "@/lib/ramen-images";
+import { RamenImagePlaceholder } from "@/components/ramen/RamenImagePlaceholder";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -105,6 +106,7 @@ export default async function RankingPage({ params }: PageProps) {
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
               {top3.map(({ entry, item }) => {
                 const medal = getMedal(entry.rank);
+                const imageUrl = getRamenImageUrl(item);
                 return (
                   <Link
                     key={item.slug}
@@ -112,17 +114,23 @@ export default async function RankingPage({ params }: PageProps) {
                     className={`group relative overflow-hidden rounded-2xl border-2 ${medal.border} ${medal.bg} ${medal.ring} transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2`}
                   >
                     <div className="relative h-40 bg-orange-100">
-                      <AttributedImage
-                        src={getRamenImageUrl(item)}
-                        alt={item.name}
-                        fill
-                        className="object-cover transition-transform duration-500 group-hover:scale-105"
-                        sizes="(min-width: 768px) 33vw, 100vw"
-                        credit={item.imageUrl ? resolveCredit(item.imageUrl, item.name, item.officialUrl) : undefined}
-                        variant="hover"
-                        wrapperClassName="absolute inset-0"
-                      />
-                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                      {imageUrl ? (
+                        <>
+                          <AttributedImage
+                            src={imageUrl}
+                            alt={item.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            sizes="(min-width: 768px) 33vw, 100vw"
+                            credit={resolveCredit(imageUrl, item.name, item.officialUrl)}
+                            variant="hover"
+                            wrapperClassName="absolute inset-0"
+                          />
+                          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                        </>
+                      ) : (
+                        <RamenImagePlaceholder />
+                      )}
                       <span className={`absolute left-4 top-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${medal.badge} text-lg font-black text-white shadow-md`}>
                         {entry.rank}
                       </span>
@@ -172,6 +180,7 @@ export default async function RankingPage({ params }: PageProps) {
               <tbody>
                 {entries.map(({ entry, item }) => {
                   const medal = getMedal(entry.rank);
+                  const imageUrl = getRamenImageUrl(item);
                   return (
                     <tr
                       key={item.slug}
@@ -188,13 +197,17 @@ export default async function RankingPage({ params }: PageProps) {
                           className="flex items-center gap-3 font-bold text-slate-900 underline-offset-4 hover:text-[var(--primary)] hover:underline"
                         >
                           <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-orange-100">
-                            <AttributedImage
-                              src={getRamenImageUrl(item)}
-                              alt={item.name}
-                              fill
-                              className="object-cover"
-                              sizes="64px"
-                            />
+                            {imageUrl ? (
+                              <AttributedImage
+                                src={imageUrl}
+                                alt={item.name}
+                                fill
+                                className="object-cover"
+                                sizes="64px"
+                              />
+                            ) : (
+                              <RamenImagePlaceholder />
+                            )}
                           </span>
                           <span>{item.name}</span>
                         </Link>
@@ -225,35 +238,42 @@ export default async function RankingPage({ params }: PageProps) {
           <section>
             <h2 className="text-base font-bold text-slate-600">4位以下のランキング</h2>
             <div className="mt-4 space-y-3">
-              {rest.map(({ entry, item }) => (
-                <Link
-                  key={item.slug}
-                  href={routes.ramenItem(item.slug)}
-                  className="group flex items-start gap-4 rounded-xl border border-[var(--border)] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-600 transition-colors group-hover:bg-[var(--muted)] group-hover:text-[var(--primary)]">
-                    {entry.rank}
-                  </span>
-                  <span className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-orange-100">
-                    <AttributedImage
-                      src={getRamenImageUrl(item)}
-                      alt={item.name}
-                      fill
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                      sizes="96px"
-                    />
-                  </span>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-slate-900 transition-colors group-hover:text-[var(--primary)]">{item.name}</h3>
-                      <Badge className="text-[11px]">{item.genre}</Badge>
+              {rest.map(({ entry, item }) => {
+                const imageUrl = getRamenImageUrl(item);
+                return (
+                  <Link
+                    key={item.slug}
+                    href={routes.ramenItem(item.slug)}
+                    className="group flex items-start gap-4 rounded-xl border border-[var(--border)] bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-[var(--accent)] hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
+                  >
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-600 transition-colors group-hover:bg-[var(--muted)] group-hover:text-[var(--primary)]">
+                      {entry.rank}
+                    </span>
+                    <span className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-orange-100">
+                      {imageUrl ? (
+                        <AttributedImage
+                          src={imageUrl}
+                          alt={item.name}
+                          fill
+                          className="object-cover transition-transform duration-500 group-hover:scale-105"
+                          sizes="96px"
+                        />
+                      ) : (
+                        <RamenImagePlaceholder />
+                      )}
+                    </span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="font-bold text-slate-900 transition-colors group-hover:text-[var(--primary)]">{item.name}</h3>
+                        <Badge className="text-[11px]">{item.genre}</Badge>
+                      </div>
+                      <p className="mt-1 text-xs text-slate-500">{item.area} / {item.priceRange}</p>
+                      <p className="mt-2 text-sm leading-6 text-slate-600 line-clamp-2">{entry.reason}</p>
                     </div>
-                    <p className="mt-1 text-xs text-slate-500">{item.area} / {item.priceRange}</p>
-                    <p className="mt-2 text-sm leading-6 text-slate-600 line-clamp-2">{entry.reason}</p>
-                  </div>
-                  <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[var(--primary)]" />
-                </Link>
-              ))}
+                    <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-slate-400 transition-transform duration-200 group-hover:translate-x-1 group-hover:text-[var(--primary)]" />
+                  </Link>
+                );
+              })}
             </div>
           </section>
         )}

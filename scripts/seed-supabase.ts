@@ -30,6 +30,8 @@ import { yamagataRamenItems }    from "@/content/ramen/yamagata/items"
 import { yamagataRamenRankings } from "@/content/ramen/yamagata/rankings"
 import { chibaRamenItems }       from "@/content/ramen/chiba/items"
 import { chibaRamenRankings }    from "@/content/ramen/chiba/rankings"
+import { fukushimaRamenItems }    from "@/content/ramen/fukushima/items"
+import { fukushimaRamenRankings } from "@/content/ramen/fukushima/rankings"
 import { niigataCafeItems }      from "@/content/cafe/niigata/items"
 import { niigataCafeRankings }   from "@/content/cafe/niigata/rankings"
 import { yamagataCafeItems }     from "@/content/cafe/yamagata/items"
@@ -95,6 +97,7 @@ function inferRegion(slug: string): string | null {
   if (slug.startsWith("niigata"))  return "niigata"
   if (slug.startsWith("yamagata")) return "yamagata"
   if (slug.startsWith("chiba"))    return "chiba"
+  if (slug.startsWith("fukushima")) return "fukushima"
   if (slug.startsWith("toyama"))   return "toyama"
   return null
 }
@@ -197,6 +200,7 @@ async function migrateItems() {
     ...ramenItems.map(r         => ramenToRow(r, "niigata")),
     ...yamagataRamenItems.map(r => ramenToRow(r, "yamagata")),
     ...chibaRamenItems.map(r    => ramenToRow(r, "chiba")),
+    ...fukushimaRamenItems.map(r => ramenToRow(r, "fukushima")),
   ]
   const { error: e2, count: c2 } = await es.from("items")
     .upsert(ramenRows, { onConflict: "content_type,slug", count: "exact" })
@@ -360,6 +364,7 @@ async function migrateRankings() {
     ...ramenRankings.map(r         => normalizeRanking(r,                "ramen",        "ramen_item",    "niigata")),
     ...yamagataRamenRankings.map(r => normalizeRanking(r,                "ramen",        "ramen_item",    "yamagata")),
     ...chibaRamenRankings.map(r    => normalizeRanking(r,                "ramen",        "ramen_item",    "chiba")),
+    ...fukushimaRamenRankings.map(r => normalizeRanking(r,               "ramen",        "ramen_item",    "fukushima")),
     ...niigataCafeRankings.map(r   => normalizeCafeRanking(r,           "cafe",          "cafe",          "niigata")),
     ...yamagataCafeRankings.map(r  => normalizeCafeRanking(r,           "cafe",          "cafe",          "yamagata")),
     ...toyamaCafeRankings.map(r    => normalizeCafeRanking(r,           "cafe",          "cafe",          "toyama")),
@@ -438,6 +443,10 @@ function cafeToRow(c: (typeof niigataCafeItems)[number], region: string) {
 }
 
 function ramenToRow(r: (typeof ramenItems)[number], region: string) {
+  if (r.imageUrl?.includes("images.unsplash.com")) {
+    throw new Error(`ramen item ${r.slug} uses a placeholder image. Use official/SNS image URLs only, or omit imageUrl.`)
+  }
+
   return {
     slug: r.slug, content_type: "ramen_item", region,
     name: r.name, description: r.description,

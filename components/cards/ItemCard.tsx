@@ -6,6 +6,7 @@ import { getRamenImageUrl } from "@/lib/ramen-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
+import { RamenImagePlaceholder } from "@/components/ramen/RamenImagePlaceholder";
 
 export function ItemCard({ item }: { item: Item }) {
   const imageUrl = getRamenImageUrl(item);
@@ -17,16 +18,20 @@ export function ItemCard({ item }: { item: Item }) {
     >
       <Card className="h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-orange-200">
         <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 to-amber-100">
-          <AttributedImage
-            src={imageUrl}
-            alt={item.name}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
-            sizes="(min-width: 768px) 25vw, 50vw"
-            credit={item.imageUrl ? resolveCredit(item.imageUrl, item.name, item.officialUrl) : undefined}
-            variant="hover"
-            wrapperClassName="absolute inset-0"
-          />
+          {imageUrl ? (
+            <AttributedImage
+              src={imageUrl}
+              alt={item.name}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              sizes="(min-width: 768px) 25vw, 50vw"
+              credit={resolveCredit(imageUrl, item.name, item.officialUrl)}
+              variant="hover"
+              wrapperClassName="absolute inset-0"
+            />
+          ) : (
+            <RamenImagePlaceholder />
+          )}
           <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
           <div className="pointer-events-none absolute bottom-3 left-3">
             <span className="rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-bold text-[var(--primary)]">
