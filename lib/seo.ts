@@ -223,6 +223,7 @@ export function restaurantSchema(item: Item, editorialScore?: number) {
     url: absoluteUrl(routes.ramenItem(item.slug)),
     sameAs: item.officialLinks.map((link) => link.url),
     telephone: item.phone,
+    ...(item.imageUrl && { image: absoluteUrl(item.imageUrl) }),
     address: {
       "@type": "PostalAddress",
       streetAddress: item.address,
@@ -335,6 +336,7 @@ export function lodgingBusinessSchema(region: string, hotel: Hotel, editorialSco
     name: hotel.name,
     description: hotel.description,
     url: absoluteUrl(routes.travelHotel(region, hotel.slug)),
+    image: absoluteUrl(hotel.imageUrl),
     address: {
       "@type": "PostalAddress",
       streetAddress: hotel.address,
@@ -423,6 +425,7 @@ export function travelAgencySchema(region: string, agency: TravelAgency, editori
     name: agency.name,
     description: agency.description,
     url: absoluteUrl(routes.travelAgency(region, agency.slug)),
+    image: absoluteUrl(agency.imageUrl),
     sameAs: agency.officialLinks.map((link) => link.url),
     telephone: agency.phone,
     address: {
@@ -542,6 +545,7 @@ export function cafeSchema(region: string, cafe: CafeItem, editorialScore?: numb
     name: cafe.name,
     description: cafe.description,
     url: absoluteUrl(routes.cafeItem(region, cafe.slug)),
+    ...(cafe.imageUrl && { image: absoluteUrl(cafe.imageUrl) }),
     sameAs: cafe.officialLinks.map((link) => link.url),
     telephone: cafe.phone,
     address: {
@@ -634,6 +638,7 @@ export function beautySalonSchema(region: string, salon: Salon, editorialScore?:
     name: salon.name,
     description: salon.description,
     url: absoluteUrl(routes.beautySalon(region, salon.slug)),
+    image: absoluteUrl(salon.imageUrl),
     sameAs: [
       ...(salon.officialUrl && salon.officialUrl !== "#" ? [salon.officialUrl] : []),
       ...(salon.instagram && salon.instagram !== "#" ? [salon.instagram] : []),
