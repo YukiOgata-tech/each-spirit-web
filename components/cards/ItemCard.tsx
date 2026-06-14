@@ -2,37 +2,38 @@ import Link from "next/link";
 import { ArrowRight, Car, MapPin, Soup } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { routes } from "@/lib/routes";
+import { getRamenImageUrl } from "@/lib/ramen-images";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 
 export function ItemCard({ item }: { item: Item }) {
+  const imageUrl = getRamenImageUrl(item);
+
   return (
     <Link
       href={routes.ramenItem(item.slug)}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 rounded-[var(--radius)]"
     >
       <Card className="h-full overflow-hidden transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-orange-200">
-        {item.imageUrl && (
-          <div className="relative h-40 overflow-hidden bg-gradient-to-br from-orange-50 to-amber-100">
-            <AttributedImage
-              src={item.imageUrl}
-              alt={item.name}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              sizes="(min-width: 768px) 25vw, 50vw"
-              credit={resolveCredit(item.imageUrl, item.name, item.officialUrl)}
-              variant="hover"
-              wrapperClassName="absolute inset-0"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-            <div className="pointer-events-none absolute bottom-2 left-3">
-              <span className="rounded-full bg-white/90 px-2.5 py-0.5 text-[11px] font-bold text-[var(--primary)]">
-                {item.genre}
-              </span>
-            </div>
+        <div className="relative h-44 overflow-hidden bg-gradient-to-br from-orange-50 to-amber-100">
+          <AttributedImage
+            src={imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            sizes="(min-width: 768px) 25vw, 50vw"
+            credit={item.imageUrl ? resolveCredit(item.imageUrl, item.name, item.officialUrl) : undefined}
+            variant="hover"
+            wrapperClassName="absolute inset-0"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+          <div className="pointer-events-none absolute bottom-3 left-3">
+            <span className="rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-bold text-[var(--primary)]">
+              {item.genre}
+            </span>
           </div>
-        )}
+        </div>
         <CardHeader>
           <div className="flex items-center gap-2 text-sm font-semibold text-[var(--primary)]">
             <MapPin className="h-4 w-4" />

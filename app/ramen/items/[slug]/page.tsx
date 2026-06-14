@@ -12,6 +12,7 @@ import { breadcrumbSchema, faqSchema, pageMetadata, restaurantSchema, speakableW
 import { getRamenItem, getRamenItems, getRamenRankings } from "@/lib/content";
 import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
+import { getRamenImageUrl } from "@/lib/ramen-images";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -28,6 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: item.name,
     description: item.description,
     path: routes.ramenItem(item.slug),
+    image: getRamenImageUrl(item),
   });
 }
 
@@ -40,6 +42,7 @@ export default async function ItemPage({ params }: PageProps) {
     .flatMap((r) => r.items)
     .find((entry) => entry.itemSlug === item.slug)
     ?.score;
+  const imageUrl = getRamenImageUrl(item);
 
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
@@ -54,22 +57,20 @@ export default async function ItemPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.ramenItem(item.slug), item.name)} />
       <Breadcrumbs items={breadcrumbs.map((value, index) => ({ label: value.name, href: index === breadcrumbs.length - 1 ? undefined : value.href }))} />
       <section className="overflow-hidden rounded-lg border border-orange-200 bg-white shadow-soft">
-        {item.imageUrl && (
-          <div className="relative h-[260px] w-full sm:h-[320px]">
-            <AttributedImage
-              src={item.imageUrl}
-              alt={item.name}
-              fill
-              className="object-cover"
-              priority
-              sizes="(min-width: 1024px) 60vw, 100vw"
-              credit={resolveCredit(item.imageUrl, item.name, item.officialUrl)}
-              variant="hover"
-              wrapperClassName="absolute inset-0"
-            />
-            <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
-          </div>
-        )}
+        <div className="relative h-[260px] w-full sm:h-[320px]">
+          <AttributedImage
+            src={imageUrl}
+            alt={item.name}
+            fill
+            className="object-cover"
+            priority
+            sizes="(min-width: 1024px) 60vw, 100vw"
+            credit={item.imageUrl ? resolveCredit(item.imageUrl, item.name, item.officialUrl) : undefined}
+            variant="hover"
+            wrapperClassName="absolute inset-0"
+          />
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+        </div>
         <div className="grid gap-6 p-5 lg:grid-cols-[1.1fr_0.9fr]">
         <div>
           <div className="flex flex-wrap gap-2">
