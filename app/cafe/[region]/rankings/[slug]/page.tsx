@@ -5,6 +5,7 @@ import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { CafeCard } from "@/components/cafe/CafeCard";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
+import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
@@ -100,20 +101,37 @@ export default async function CafeRankingPage({ params }: PageProps) {
                 <Link
                   key={cafe.slug}
                   href={routes.cafeItem(region, cafe.slug)}
-                  className={`group flex flex-col gap-4 rounded-xl border p-5 transition-all hover:-translate-y-1 hover:shadow-lg ${m.bg} ${m.border}`}
+                  className={`group overflow-hidden rounded-xl border transition-all hover:-translate-y-1 hover:shadow-lg ${m.bg} ${m.border}`}
                 >
-                  <div className="flex items-center gap-3">
-                    <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-black text-white ${m.badge}`}>
+                  <div className="relative h-40 bg-[var(--muted)]">
+                    {cafe.imageUrl ? (
+                      <AttributedImage
+                        src={cafe.imageUrl}
+                        alt={cafe.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(min-width: 768px) 33vw, 100vw"
+                        credit={resolveCredit(cafe.imageUrl, cafe.name, cafe.officialUrl)}
+                        variant="hover"
+                        wrapperClassName="absolute inset-0"
+                      />
+                    ) : null}
+                    <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent" />
+                    <span className={`absolute left-4 top-4 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-sm font-black text-white shadow ${m.badge}`}>
                       {entry.rank}
                     </span>
-                    <div>
-                      <p className={`text-xs font-bold ${m.text}`}>{cafe.style}</p>
-                      <p className="text-sm font-black text-slate-900 leading-snug">{cafe.name}</p>
+                    <div className="absolute right-4 top-4">
+                      <ScoreCircle score={entry.score} size={72} />
                     </div>
                   </div>
-                  <ScoreCircle score={entry.score} size={72} />
-                  <p className="text-xs leading-5 text-slate-600">{entry.reason}</p>
-                  <span className={`text-xs font-bold ${m.text}`}>{cafe.area}</span>
+                  <div className="flex flex-col gap-3 p-5">
+                    <div>
+                      <p className={`text-xs font-bold ${m.text}`}>{cafe.style}</p>
+                      <p className="text-sm font-black leading-snug text-slate-900">{cafe.name}</p>
+                    </div>
+                    <p className="text-xs leading-5 text-slate-600">{entry.reason}</p>
+                    <span className={`text-xs font-bold ${m.text}`}>{cafe.area}</span>
+                  </div>
                 </Link>
               );
             })}
@@ -138,6 +156,17 @@ export default async function CafeRankingPage({ params }: PageProps) {
                 <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-black text-white ${entry.rank <= 3 ? m.badge : "bg-slate-300"}`}>
                   {entry.rank}
                 </span>
+                {cafe.imageUrl ? (
+                  <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-[var(--muted)]">
+                    <AttributedImage
+                      src={cafe.imageUrl}
+                      alt={cafe.name}
+                      fill
+                      className="object-cover"
+                      sizes="64px"
+                    />
+                  </span>
+                ) : null}
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-bold text-slate-900">{cafe.name}</p>
                   <p className="text-[11px] text-slate-500">{cafe.area} · {cafe.style}</p>

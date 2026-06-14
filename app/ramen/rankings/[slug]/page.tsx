@@ -6,12 +6,14 @@ import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { ItemCard } from "@/components/cards/ItemCard";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { breadcrumbSchema, faqSchema, itemListSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { getRankingEntries, getRamenRanking, getRamenRankings } from "@/lib/content";
 import { routes } from "@/lib/routes";
+import { getRamenImageUrl } from "@/lib/ramen-images";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -107,15 +109,29 @@ export default async function RankingPage({ params }: PageProps) {
                   <Link
                     key={item.slug}
                     href={routes.ramenItem(item.slug)}
-                    className={`group relative rounded-2xl border-2 ${medal.border} ${medal.bg} ${medal.ring} p-5 transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2`}
+                    className={`group relative overflow-hidden rounded-2xl border-2 ${medal.border} ${medal.bg} ${medal.ring} transition-all duration-200 hover:-translate-y-1 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2`}
                   >
-                    <div className="flex items-center justify-between gap-3">
-                      <span className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${medal.badge} text-lg font-black text-white shadow-md`}>
+                    <div className="relative h-40 bg-orange-100">
+                      <AttributedImage
+                        src={getRamenImageUrl(item)}
+                        alt={item.name}
+                        fill
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                        sizes="(min-width: 768px) 33vw, 100vw"
+                        credit={item.imageUrl ? resolveCredit(item.imageUrl, item.name, item.officialUrl) : undefined}
+                        variant="hover"
+                        wrapperClassName="absolute inset-0"
+                      />
+                      <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-transparent" />
+                      <span className={`absolute left-4 top-4 flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${medal.badge} text-lg font-black text-white shadow-md`}>
                         {entry.rank}
                       </span>
-                      <ScoreCircle score={entry.score} size={72} />
+                      <div className="absolute right-4 top-4">
+                        <ScoreCircle score={entry.score} size={72} />
+                      </div>
                     </div>
-                    <div className="mt-3">
+                    <div className="p-5">
+                    <div>
                       <p className="text-xs font-semibold text-slate-500">{item.area}</p>
                       <h3 className={`mt-0.5 text-lg font-black leading-snug ${medal.text} transition-colors group-hover:text-[var(--primary)]`}>
                         {item.name}
@@ -128,6 +144,7 @@ export default async function RankingPage({ params }: PageProps) {
                     </div>
                     <div className="mt-4 flex items-center gap-1 text-xs font-bold text-[var(--primary)]">
                       店舗詳細 <ArrowRight className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                    </div>
                     </div>
                   </Link>
                 );
@@ -168,9 +185,18 @@ export default async function RankingPage({ params }: PageProps) {
                       <td className="p-4">
                         <Link
                           href={routes.ramenItem(item.slug)}
-                          className="font-bold text-slate-900 underline-offset-4 hover:text-[var(--primary)] hover:underline"
+                          className="flex items-center gap-3 font-bold text-slate-900 underline-offset-4 hover:text-[var(--primary)] hover:underline"
                         >
-                          {item.name}
+                          <span className="relative h-12 w-16 shrink-0 overflow-hidden rounded-md bg-orange-100">
+                            <AttributedImage
+                              src={getRamenImageUrl(item)}
+                              alt={item.name}
+                              fill
+                              className="object-cover"
+                              sizes="64px"
+                            />
+                          </span>
+                          <span>{item.name}</span>
                         </Link>
                       </td>
                       <td className="p-4 text-slate-500">{item.genre}</td>
@@ -207,6 +233,15 @@ export default async function RankingPage({ params }: PageProps) {
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-slate-100 text-sm font-black text-slate-600 transition-colors group-hover:bg-[var(--muted)] group-hover:text-[var(--primary)]">
                     {entry.rank}
+                  </span>
+                  <span className="relative h-20 w-24 shrink-0 overflow-hidden rounded-lg bg-orange-100">
+                    <AttributedImage
+                      src={getRamenImageUrl(item)}
+                      alt={item.name}
+                      fill
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      sizes="96px"
+                    />
                   </span>
                   <div className="flex-1 min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
