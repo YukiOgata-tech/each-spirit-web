@@ -54,7 +54,6 @@ export function AttributedImage({
           href={credit.url}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={(e) => e.stopPropagation()}
           className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-end bg-gradient-to-t from-black/60 to-transparent px-2.5 py-2 opacity-0 transition-opacity duration-200 group-hover/attr:pointer-events-auto group-hover/attr:opacity-100"
         >
           <span className="flex items-center gap-0.5 rounded-sm bg-black/30 px-1.5 py-0.5 text-[10px] font-medium text-white/90 backdrop-blur-sm">
