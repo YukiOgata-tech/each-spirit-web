@@ -28,6 +28,8 @@ import { ramenItems }            from "@/content/ramen/items"
 import { ramenRankings }         from "@/content/ramen/rankings"
 import { yamagataRamenItems }    from "@/content/ramen/yamagata/items"
 import { yamagataRamenRankings } from "@/content/ramen/yamagata/rankings"
+import { chibaRamenItems }       from "@/content/ramen/chiba/items"
+import { chibaRamenRankings }    from "@/content/ramen/chiba/rankings"
 import { niigataCafeItems }      from "@/content/cafe/niigata/items"
 import { niigataCafeRankings }   from "@/content/cafe/niigata/rankings"
 import { yamagataCafeItems }     from "@/content/cafe/yamagata/items"
@@ -92,6 +94,7 @@ function readMd(dir: string, file: string): string {
 function inferRegion(slug: string): string | null {
   if (slug.startsWith("niigata"))  return "niigata"
   if (slug.startsWith("yamagata")) return "yamagata"
+  if (slug.startsWith("chiba"))    return "chiba"
   if (slug.startsWith("toyama"))   return "toyama"
   return null
 }
@@ -193,6 +196,7 @@ async function migrateItems() {
   const ramenRows = [
     ...ramenItems.map(r         => ramenToRow(r, "niigata")),
     ...yamagataRamenItems.map(r => ramenToRow(r, "yamagata")),
+    ...chibaRamenItems.map(r    => ramenToRow(r, "chiba")),
   ]
   const { error: e2, count: c2 } = await es.from("items")
     .upsert(ramenRows, { onConflict: "content_type,slug", count: "exact" })
@@ -355,6 +359,7 @@ async function migrateRankings() {
   const allRankings: RankingInput[] = [
     ...ramenRankings.map(r         => normalizeRanking(r,                "ramen",        "ramen_item",    "niigata")),
     ...yamagataRamenRankings.map(r => normalizeRanking(r,                "ramen",        "ramen_item",    "yamagata")),
+    ...chibaRamenRankings.map(r    => normalizeRanking(r,                "ramen",        "ramen_item",    "chiba")),
     ...niigataCafeRankings.map(r   => normalizeCafeRanking(r,           "cafe",          "cafe",          "niigata")),
     ...yamagataCafeRankings.map(r  => normalizeCafeRanking(r,           "cafe",          "cafe",          "yamagata")),
     ...toyamaCafeRankings.map(r    => normalizeCafeRanking(r,           "cafe",          "cafe",          "toyama")),
