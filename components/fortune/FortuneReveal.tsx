@@ -7,7 +7,6 @@ import { toPng } from "html-to-image";
 import { Sparkles, Star, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import type { FortuneResult, FortuneScore } from "@/lib/fortune";
-import { ShareCard } from "./ShareCard";
 
 const LEVEL: Record<number, { label: string; color: string }> = {
   1: { label: "絶不調", color: "#f87171" },
@@ -280,20 +279,24 @@ function ResultView({
       captureNode.style.transform = "none";
       captureNode.style.opacity = "1";
       captureNode.style.pointerEvents = "none";
-      captureNode.style.width = "1080px";
-      captureNode.style.height = "1350px";
+      captureNode.style.width = "1480px";
+      captureNode.style.height = "auto";
       document.body.appendChild(captureNode);
       await document.fonts.ready;
       await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+      const width = Math.ceil(captureNode.getBoundingClientRect().width);
+      const height = Math.ceil(captureNode.getBoundingClientRect().height);
 
       const dataUrl = await toPng(captureNode, {
         pixelRatio: 2,
         cacheBust: true,
         backgroundColor: "#17122f",
-        width: 1080,
-        height: 1350,
+        width,
+        height,
         style: {
           transform: "none",
+          width: `${width}px`,
+          height: `${height}px`,
         },
       });
       const a = document.createElement("a");
@@ -314,8 +317,26 @@ function ResultView({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      {/* 画像化用カード（画面外） */}
-      <ShareCard ref={cardRef} result={result} />
+      {/* 画像化用: PC表示と同一レイアウトを固定幅でレンダリングして撮影する */}
+      <div
+        ref={cardRef}
+        className="fixed left-[-99999px] top-0 box-border w-[1480px] p-6 text-white"
+        style={{
+          background:
+            "radial-gradient(1100px 600px at 72% -8%, #3b1d6e 0%, transparent 58%)," +
+            "radial-gradient(900px 520px at 8% 18%, rgba(30,58,138,0.45) 0%, transparent 55%)," +
+            "linear-gradient(180deg, rgba(12,10,30,0.92) 0%, rgba(18,16,48,0.86) 42%, rgba(6,10,30,0.96) 100%)," +
+            "url('/images/fortune/bg.png') center / cover no-repeat",
+        }}
+      >
+        <DesktopResultDashboard
+          result={result}
+          ov={ov}
+          strongest={strongest}
+          focus={focus}
+          fullStars={fullStars}
+        />
+      </div>
 
       {/* ポイント獲得 */}
       {awardedPoints ? (
@@ -338,108 +359,14 @@ function ResultView({
         fullStars={fullStars}
       />
 
-      <div className="hidden gap-5 xl:grid xl:grid-cols-[minmax(410px,0.9fr)_minmax(0,1.55fr)] 2xl:grid-cols-[minmax(460px,0.85fr)_minmax(0,1.65fr)]">
-        <motion.section
-          initial={{ opacity: 0, y: 18, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          className="relative overflow-hidden rounded-3xl border border-white/15 bg-slate-950/38 p-5 shadow-2xl shadow-violet-950/35 backdrop-blur-xl sm:p-6 xl:min-h-[720px]"
-        >
-          <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(216,180,254,0.24),transparent_42%),radial-gradient(circle_at_16%_80%,rgba(96,165,250,0.18),transparent_36%)]" />
-          <div className="relative flex h-full flex-col">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-200">Fortune Analytics</p>
-                <h1 className="mt-1 text-2xl font-black tracking-normal text-white sm:text-3xl">今日の運勢レポート</h1>
-              </div>
-              <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70">{result.date}</div>
-            </div>
-
-            <ArcaneScore score={result.overall.score} label={ov.label} color={ov.color} fullStars={fullStars} />
-
-            <div className="mt-auto rounded-3xl border border-white/10 bg-white/10 p-4">
-              <div className="flex items-center gap-2 text-violet-200">
-                <Gauge className="h-4 w-4" />
-                <p className="text-xs font-black uppercase tracking-[0.18em]">Reading</p>
-              </div>
-              <p className="mt-3 text-sm leading-7 text-white/80">{result.overall.text}</p>
-            </div>
-          </div>
-        </motion.section>
-
-        <div className="grid gap-5 xl:grid-rows-[auto_1fr_auto]">
-          <motion.section
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.04 }}
-            className="grid gap-3 lg:grid-cols-2"
-          >
-            {strongest && (
-              <AnalysisTile
-                icon={<TrendingUp className="h-4 w-4" />}
-                label="今日の強み"
-                title={strongest.label}
-                value={strongest.score.toFixed(1)}
-                color={LEVEL[strongest.band].color}
-                expanded
-              />
-            )}
-            {focus && (
-              <AnalysisTile
-                icon={<BarChart3 className="h-4 w-4" />}
-                label="整えるポイント"
-                title={focus.label}
-                value={focus.score.toFixed(1)}
-                color={LEVEL[focus.band].color}
-                expanded
-              />
-            )}
-          </motion.section>
-
-          <motion.section
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08 }}
-            className="rounded-3xl border border-white/15 bg-slate-950/36 p-5 shadow-xl shadow-violet-950/20 backdrop-blur-xl sm:p-6"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-violet-200">6 Signals</p>
-                <h2 className="text-xl font-black text-white">運勢シグナル分析</h2>
-              </div>
-              <BarChart3 className="h-5 w-5 text-white/45" />
-            </div>
-            <div className="grid gap-3 lg:grid-cols-2">
-              {result.categories.map((c, i) => (
-                <ScoreMeter key={c.key} c={c} delay={0.05 * i} />
-              ))}
-            </div>
-          </motion.section>
-
-          <motion.section
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.12 }}
-            className="grid gap-3 md:grid-cols-3"
-          >
-            <LuckyPanel label="ラッキーカラー">
-              <span className="mx-auto mt-2 block h-9 w-9 rounded-full border-2 border-white/30" style={{ backgroundColor: result.lucky.color.hex }} />
-              <p className="mt-2 text-xs font-semibold">{result.lucky.color.name}</p>
-            </LuckyPanel>
-            <LuckyPanel label="ラッキーナンバー">
-              <p className="mt-2 text-4xl font-black text-violet-200">{result.lucky.number}</p>
-            </LuckyPanel>
-            <LuckyPanel label="ラッキースポット">
-              {result.lucky.item ? (
-                <Link href={result.lucky.item.href} className="mt-2 inline-flex items-center justify-center gap-1 text-xs font-bold text-violet-200 hover:underline">
-                  <MapPin className="h-3.5 w-3.5" />
-                  {result.lucky.item.name.slice(0, 18)}
-                </Link>
-              ) : (
-                <p className="mt-2 text-xs text-white/40">—</p>
-              )}
-            </LuckyPanel>
-          </motion.section>
-        </div>
+      <div className="hidden xl:block">
+        <DesktopResultDashboard
+          result={result}
+          ov={ov}
+          strongest={strongest}
+          focus={focus}
+          fullStars={fullStars}
+        />
       </div>
 
       {/* シェア */}
@@ -479,6 +406,107 @@ function ResultView({
         )}
       </div>
     </motion.div>
+  );
+}
+
+function DesktopResultDashboard({
+  result,
+  ov,
+  strongest,
+  focus,
+  fullStars,
+}: {
+  result: FortuneResult;
+  ov: { label: string; color: string };
+  strongest?: FortuneScore;
+  focus?: FortuneScore;
+  fullStars: number;
+}) {
+  return (
+    <div className="grid w-full gap-5 xl:grid-cols-[minmax(410px,0.9fr)_minmax(0,1.55fr)] 2xl:grid-cols-[minmax(460px,0.85fr)_minmax(0,1.65fr)]">
+      <section className="relative min-h-[720px] overflow-hidden rounded-3xl border border-white/15 bg-slate-950/38 p-6 shadow-2xl shadow-violet-950/35 backdrop-blur-xl">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(216,180,254,0.24),transparent_42%),radial-gradient(circle_at_16%_80%,rgba(96,165,250,0.18),transparent_36%)]" />
+        <div className="relative flex h-full flex-col">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-violet-200">Fortune Analytics</p>
+              <h1 className="mt-1 text-3xl font-black tracking-normal text-white">今日の運勢レポート</h1>
+            </div>
+            <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70">{result.date}</div>
+          </div>
+
+          <ArcaneScore score={result.overall.score} label={ov.label} color={ov.color} fullStars={fullStars} />
+
+          <div className="mt-auto rounded-3xl border border-white/10 bg-white/10 p-4">
+            <div className="flex items-center gap-2 text-violet-200">
+              <Gauge className="h-4 w-4" />
+              <p className="text-xs font-black uppercase tracking-[0.18em]">Reading</p>
+            </div>
+            <p className="mt-3 text-sm leading-7 text-white/80">{result.overall.text}</p>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-5 xl:grid-rows-[auto_1fr_auto]">
+        <section className="grid gap-3 lg:grid-cols-2">
+          {strongest && (
+            <AnalysisTile
+              icon={<TrendingUp className="h-4 w-4" />}
+              label="今日の強み"
+              title={strongest.label}
+              value={strongest.score.toFixed(1)}
+              color={LEVEL[strongest.band].color}
+              expanded
+            />
+          )}
+          {focus && (
+            <AnalysisTile
+              icon={<BarChart3 className="h-4 w-4" />}
+              label="整えるポイント"
+              title={focus.label}
+              value={focus.score.toFixed(1)}
+              color={LEVEL[focus.band].color}
+              expanded
+            />
+          )}
+        </section>
+
+        <section className="rounded-3xl border border-white/15 bg-slate-950/36 p-6 shadow-xl shadow-violet-950/20 backdrop-blur-xl">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.24em] text-violet-200">6 Signals</p>
+              <h2 className="text-xl font-black text-white">運勢シグナル分析</h2>
+            </div>
+            <BarChart3 className="h-5 w-5 text-white/45" />
+          </div>
+          <div className="grid gap-3 lg:grid-cols-2">
+            {result.categories.map((c, i) => (
+              <ScoreMeter key={c.key} c={c} delay={0.05 * i} />
+            ))}
+          </div>
+        </section>
+
+        <section className="grid gap-3 md:grid-cols-3">
+          <LuckyPanel label="ラッキーカラー">
+            <span className="mx-auto mt-2 block h-9 w-9 rounded-full border-2 border-white/30" style={{ backgroundColor: result.lucky.color.hex }} />
+            <p className="mt-2 text-xs font-semibold">{result.lucky.color.name}</p>
+          </LuckyPanel>
+          <LuckyPanel label="ラッキーナンバー">
+            <p className="mt-2 text-4xl font-black text-violet-200">{result.lucky.number}</p>
+          </LuckyPanel>
+          <LuckyPanel label="ラッキースポット">
+            {result.lucky.item ? (
+              <Link href={result.lucky.item.href} className="mt-2 inline-flex items-center justify-center gap-1 text-xs font-bold text-violet-200 hover:underline">
+                <MapPin className="h-3.5 w-3.5" />
+                {result.lucky.item.name.slice(0, 18)}
+              </Link>
+            ) : (
+              <p className="mt-2 text-xs text-white/40">—</p>
+            )}
+          </LuckyPanel>
+        </section>
+      </div>
+    </div>
   );
 }
 

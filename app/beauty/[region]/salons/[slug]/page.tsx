@@ -29,6 +29,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: salon.name,
     description: salon.description,
     path: routes.beautySalon(region, slug),
+    image: salon.imageUrl,
   });
 }
 

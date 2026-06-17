@@ -16,6 +16,8 @@
 - ランキング（`rankings` テーブル）は、登録された店舗・商品（`items` テーブル）の `slug` を参照します。
 - ローカルで新しいランキングを定義する際は、必ず**「そのランキングに紐づく店舗（Item/Product）データ」も定義されていること**を確認してください。参照先の店舗が存在しない場合、シードやビルドの段階で外部キー整合性エラーになります。
 
+外部 ChatGPT などへ調査を依頼する場合は、[docs/research-output-schema.md](file:///C:/projects/each-spirit/docs/research-output-schema.md) の JSON 形式で返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、content_type、metadata、sources の解釈コストが増えます。
+
 ### ③ sitemap.ts へのカテゴリ登録
 サイトマップ自動生成ファイルである [app/sitemap.ts](file:///C:/projects/each-spirit/app/sitemap.ts) は、Supabase から動的にデータを取得して生成を行っています。
 - `gadget` や `life` などの新しいカテゴリを「Live（公開中）」に変更する際は、[sitemap.ts](file:///C:/projects/each-spirit/app/sitemap.ts) にもそのカテゴリの静的/動的ルートの取得・生成ロジックを追加してください。
@@ -50,7 +52,7 @@
 ## 3. 🚀 レンダリング・パフォーマンス面（ISRの維持）
 
 ### ① root layout 配下での動的関数の呼び出し禁止
-本メディアはコンテンツ表示の高速化とサーバー負荷低減のため、**ISR（1時間キャッシュ）** をデフォルトとしています。
+本メディアはコンテンツ表示の高速化とサーバー負荷低減のため、`app/layout.tsx` の `revalidate` による **ISR** をデフォルトとしています。現在の既定値は 30 日です。コンテンツを即時反映したい場合は `app/api/revalidate/route.ts` の on-demand revalidate を使ってください。
 - ヘッダー、フッター、サイドバーなど、**ルートレイアウト（`RootLayout`）やその直下の共通コンポーネント内で、不用意に `cookies()` や `headers()` などの Next.js 動的関数を呼び出してはいけません**。これらを呼び出すと、サイト全体のすべての静的/ISRページが動的レンダリング（強制SSR）へフォールバックされ、キャッシュが破棄されてしまいます。
 - ログイン状況やユーザー固有情報の切り替えは、必ず `"use client"` を明示したクライアントコンポーネント側から非同期（またはマウント後）で取得するように設計してください。
 

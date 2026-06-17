@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: cafe.name,
     description: cafe.description,
     path: routes.cafeItem(region, slug),
+    image: cafe.imageUrl,
     keywords: cafe.tags,
   });
 }

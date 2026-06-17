@@ -27,6 +27,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: `${product.brand} ${product.name.split("（")[0]}`,
     description: product.description,
     path: routes.proteinProduct(slug),
+    image: product.imageUrl,
   });
 }
 

@@ -32,6 +32,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: agency.name,
     description: agency.description,
     path: routes.travelAgency(region, slug),
+    image: agency.imageUrl,
     keywords: agency.tags,
   });
 }
