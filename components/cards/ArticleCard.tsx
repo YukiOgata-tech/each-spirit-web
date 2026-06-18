@@ -5,10 +5,10 @@ import { routes } from "@/lib/routes";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-export function ArticleCard({ article }: { article: Article }) {
+export function ArticleCard({ article, href }: { article: Article; href?: string }) {
   return (
     <Link
-      href={routes.ramenArticle(article.slug)}
+      href={href ?? routes.ramenArticle(article.slug)}
       className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 rounded-[var(--radius)]"
     >
       <Card className="h-full transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-md">

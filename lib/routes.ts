@@ -33,6 +33,7 @@ export const routes = {
   cafeRegion: (region: string) => "/cafe/" + region,
   cafeItem: (region: string, slug: string) => "/cafe/" + region + "/items/" + slug,
   cafeRanking: (region: string, slug: string) => "/cafe/" + region + "/rankings/" + slug,
+  cafeArticle: (region: string, slug: string) => "/cafe/" + region + "/articles/" + slug,
   protein: "/protein",
   proteinTarget: (target: string) => "/protein/" + target,
   proteinProduct: (slug: string) => "/protein/products/" + slug,

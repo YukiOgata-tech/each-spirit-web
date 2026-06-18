@@ -498,6 +498,24 @@ export async function getBeautyArticleMarkdown(region: string, slug: string): Pr
   return data?.body_md ?? "";
 }
 
+export async function getCafeArticles(region: string): Promise<Article[]> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("category", "cafe").eq("region", region).order("updated_at", { ascending: false });
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getCafeArticle(region: string, slug: string): Promise<Article | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "cafe").eq("region", region).maybeSingle();
+  return data ? mapArticle(data) : undefined;
+}
+
+export async function getCafeArticleMarkdown(region: string, slug: string): Promise<string> {
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "cafe").eq("region", region).maybeSingle();
+  return data?.body_md ?? "";
+}
+
 // ── Ramen items ──────────────────────────────────────────────────────────────
 
 export async function getRamenItems(): Promise<Item[]> {

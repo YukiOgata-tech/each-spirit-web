@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Coffee, Trophy } from "lucide-react";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
+import { ArticleCard } from "@/components/cards/ArticleCard";
 import { CafeCard } from "@/components/cafe/CafeCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -10,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, cafeRegionItemListSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getCafeRegion, getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion } from "@/lib/content";
+import { getCafeRegion, getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeArticles } from "@/lib/content";
 import type { CafeRanking } from "@/lib/types";
 
 type PageProps = { params: Promise<{ region: string }> };
@@ -36,7 +37,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
   const regionData = getCafeRegion(region);
   if (!regionData) notFound();
 
-  const [items, rankings] = await Promise.all([getCafeItemsByRegion(region), getCafeRankingsByRegion(region)]);
+  const [items, rankings, articles] = await Promise.all([getCafeItemsByRegion(region), getCafeRankingsByRegion(region), getCafeArticles(region)]);
   const featured = regionData.featuredSlugs
     .map((slug) => items.find((c) => c.slug === slug))
     .filter(Boolean) as typeof items;
@@ -98,7 +99,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
             <div className="cafe-glass rounded-2xl p-6 text-center">
               <Coffee className="mx-auto h-10 w-10 text-[var(--primary)]" />
               <p className="mt-3 text-sm font-bold text-slate-700">{regionData.tagline}</p>
-              <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="mt-4 grid grid-cols-3 gap-3">
                 <div className="rounded-xl bg-[var(--muted)] py-3">
                   <p className="text-xl font-black text-[var(--primary)]">{items.length}</p>
                   <p className="text-[11px] font-semibold text-slate-500">カフェ</p>
@@ -106,6 +107,10 @@ export default async function CafeRegionPage({ params }: PageProps) {
                 <div className="rounded-xl bg-[var(--muted)] py-3">
                   <p className="text-xl font-black text-[var(--primary)]">{rankings.length}</p>
                   <p className="text-[11px] font-semibold text-slate-500">ランキング</p>
+                </div>
+                <div className="rounded-xl bg-[var(--muted)] py-3">
+                  <p className="text-xl font-black text-[var(--primary)]">{articles.length}</p>
+                  <p className="text-[11px] font-semibold text-slate-500">記事</p>
                 </div>
               </div>
             </div>
@@ -130,6 +135,19 @@ export default async function CafeRegionPage({ params }: PageProps) {
                   ranking={{ ...ranking, items: ranking.items.map((item) => ({ rank: item.rank, itemSlug: item.cafeSlug, score: item.score, reason: item.reason, isPr: item.isPr })) }}
                   href={routes.cafeRanking(region, ranking.slug)}
                 />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* Articles */}
+        {articles.length > 0 && (
+          <section className="mt-12">
+            <p className="section-kicker">ARTICLES</p>
+            <h2 className="section-heading mt-2">カフェ選びのガイド記事</h2>
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+              {articles.map((article) => (
+                <ArticleCard key={article.slug} article={article} href={routes.cafeArticle(region, article.slug)} />
               ))}
             </div>
           </section>
