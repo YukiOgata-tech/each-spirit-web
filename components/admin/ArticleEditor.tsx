@@ -55,9 +55,12 @@ async function optimizeImage(file: File) {
 export function ArticleEditor({ action }: ArticleEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const coverFileRef = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initialBody);
   const [slug, setSlug] = useState("");
+  const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
 
@@ -66,22 +69,38 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
     insertAt(textareaRef.current, value);
   };
 
-  const uploadImage = async (file: File) => {
+  const uploadAsset = async (file: File) => {
+    const optimized = await optimizeImage(file);
+    const formData = new FormData();
+    formData.set("file", optimized);
+    formData.set("slug", slug || "draft");
+    const res = await fetch("/api/admin/article-assets", { method: "POST", body: formData });
+    const data = (await res.json()) as { ok: boolean; publicUrl?: string; message?: string };
+    if (!res.ok || !data.ok || !data.publicUrl) {
+      throw new Error(data.message ?? "upload failed");
+    }
+    return data.publicUrl;
+  };
+
+  const uploadBodyImage = async (file: File) => {
     setUploading(true);
     try {
-      const optimized = await optimizeImage(file);
-      const formData = new FormData();
-      formData.set("file", optimized);
-      formData.set("slug", slug || "draft");
-      const res = await fetch("/api/admin/article-assets", { method: "POST", body: formData });
-      const data = (await res.json()) as { ok: boolean; publicUrl?: string; message?: string };
-      if (!res.ok || !data.ok || !data.publicUrl) {
-        throw new Error(data.message ?? "upload failed");
-      }
-      apply(`\n\n:::official-image\nsrc: ${data.publicUrl}\nalt: 画像の説明\ncaption: 画像の説明を入力してください。\nsource: Each Spirit\nsourceUrl: ${data.publicUrl}\n:::\n\n`);
+      const publicUrl = await uploadAsset(file);
+      apply(`\n\n:::official-image\nsrc: ${publicUrl}\nalt: 画像の説明\ncaption: 画像の説明を入力してください。\nsource: Each Spirit\nsourceUrl: ${publicUrl}\n:::\n\n`);
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
+    }
+  };
+
+  const uploadCoverImage = async (file: File) => {
+    setCoverUploading(true);
+    try {
+      const publicUrl = await uploadAsset(file);
+      setCoverImageUrl(publicUrl);
+    } finally {
+      setCoverUploading(false);
+      if (coverFileRef.current) coverFileRef.current.value = "";
     }
   };
 
@@ -91,7 +110,18 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="カテゴリ">
-              <input name="category" required defaultValue="dining" className={inputClass} placeholder="dining / ramen / beauty / cafe" />
+              <input name="category" required defaultValue="dining" list="article-category-options" className={inputClass} placeholder="dining / ramen / beauty / cafe" />
+              <datalist id="article-category-options">
+                <option value="dining" />
+                <option value="ramen" />
+                <option value="beauty" />
+                <option value="cafe" />
+                <option value="travel" />
+                <option value="column" />
+              </datalist>
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">
+                自由slugも可。ramenは /ramen/articles、beauty/cafeは地域付き、その他は /category/articles に出ます。
+              </span>
             </Field>
             <Field label="地域">
               <input name="region" className={inputClass} placeholder="niigata など。自由カテゴリは空でも可" />
@@ -111,7 +141,36 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
             <textarea name="description" required rows={3} className={`${inputClass} resize-y`} placeholder="検索結果や記事冒頭に出る説明文" />
           </Field>
           <Field label="サムネイル画像URL" className="mt-4">
-            <input name="cover_image_url" className={inputClass} placeholder="Supabase Storage URL または外部画像URL" />
+            <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
+              <input
+                name="cover_image_url"
+                value={coverImageUrl}
+                onChange={(event) => setCoverImageUrl(event.target.value)}
+                className={inputClass}
+                placeholder="外部画像URLを入力、または右のボタンでアップロード"
+              />
+              <Button type="button" variant="outline" disabled={coverUploading} onClick={() => coverFileRef.current?.click()}>
+                <ImagePlus className="h-4 w-4" />
+                {coverUploading ? "アップロード中" : "サムネをアップロード"}
+              </Button>
+            </div>
+            <input
+              ref={coverFileRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                if (file) void uploadCoverImage(file);
+              }}
+            />
+            <span className="mt-1 block text-[11px] leading-5 text-slate-500">
+              アップロード時はSupabase Storageへ最適化保存し、URLを自動入力します。外部URLを使う場合は本文内画像と同様に出典を本文側で明記してください。
+            </span>
+            {coverImageUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={coverImageUrl} alt="サムネイルプレビュー" className="mt-3 aspect-[16/9] w-full max-w-md rounded-lg border border-slate-200 object-cover" />
+            )}
           </Field>
         </section>
 
@@ -136,7 +195,7 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];
-                if (file) void uploadImage(file);
+                if (file) void uploadBodyImage(file);
               }}
             />
           </div>
