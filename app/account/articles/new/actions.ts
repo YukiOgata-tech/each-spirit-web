@@ -8,6 +8,29 @@ import { routes } from "@/lib/routes";
 
 type ArticleStatus = "draft" | "published";
 
+const regionRequiredCategories = new Set(["beauty", "cafe"]);
+const unavailableCategorySlugs = new Set([
+  "about",
+  "account",
+  "api",
+  "apple-icon.png",
+  "articles",
+  "auth",
+  "contact",
+  "disclaimer",
+  "fortune",
+  "icon.png",
+  "leisure",
+  "llms.txt",
+  "opengraph-image",
+  "privacy",
+  "protein",
+  "robots.txt",
+  "sitemap.xml",
+  "travel",
+  "travel-services",
+]);
+
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
@@ -29,8 +52,8 @@ function slugify(input: string) {
 
 function articlePath(category: string, region: string | null, slug: string) {
   if (category === "ramen") return routes.ramenArticle(slug);
-  if (category === "beauty") return routes.beautyArticle(region ?? "niigata", slug);
-  if (category === "cafe") return routes.cafeArticle(region ?? "niigata", slug);
+  if (category === "beauty") return routes.beautyArticle(region!, slug);
+  if (category === "cafe") return routes.cafeArticle(region!, slug);
   return routes.genericArticle(category, slug);
 }
 
@@ -71,7 +94,8 @@ export async function saveArticle(formData: FormData) {
   const admin = await requireAdminUser();
   const service = createServerClient();
 
-  const category = slugify(text(formData, "category"));
+  const categoryInput = text(formData, "category").toLowerCase();
+  const category = slugify(categoryInput);
   const regionRaw = slugify(text(formData, "region"));
   const region = regionRaw || null;
   const slug = slugify(text(formData, "slug"));
@@ -82,6 +106,15 @@ export async function saveArticle(formData: FormData) {
 
   if (!category || !slug || !title || !description || !bodyMd) {
     throw new Error("category, slug, title, description, body_md are required");
+  }
+  if (unavailableCategorySlugs.has(category)) {
+    throw new Error("このカテゴリslugは固定ページまたはシステムページと衝突するため使えません");
+  }
+  if (regionRequiredCategories.has(category) && !region) {
+    throw new Error("beauty と cafe の記事は region が必須です");
+  }
+  if (categoryInput.includes(".")) {
+    throw new Error("カテゴリslugにドットは使えません");
   }
 
   const path = articlePath(category, region, slug);

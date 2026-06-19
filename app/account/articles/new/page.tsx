@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ArticleEditor } from "@/components/admin/ArticleEditor";
 import { getCurrentAdminUser } from "@/lib/admin";
+import { getCategories, getGenericArticles } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { saveArticle } from "./actions";
 
@@ -15,6 +16,70 @@ export default async function NewArticlePage() {
   if (!admin) {
     redirect(`${routes.authLogin}?next=/account/articles/new`);
   }
+  const [siteCategories, genericArticles] = await Promise.all([
+    Promise.resolve(getCategories()),
+    getGenericArticles(),
+  ]);
+  const genericCategories = Array.from(new Set(genericArticles.map((article) => article.category)));
+  const articleSupportedDedicatedCategories = new Set(["ramen", "beauty", "cafe"]);
+  const reservedSlugs = [
+    "about",
+    "account",
+    "api",
+    "apple-icon.png",
+    "articles",
+    "auth",
+    "contact",
+    "disclaimer",
+    "fortune",
+    "icon.png",
+    "llms.txt",
+    "opengraph-image",
+    "privacy",
+    "robots.txt",
+    "sitemap.xml",
+  ];
+  const reservedSlugSet = new Set(reservedSlugs);
+  const categoryOptions = [
+    ...siteCategories.map((category) => ({
+      slug: category.slug,
+      path: category.status === "planned"
+        ? routes.genericCategory(category.slug)
+        : category.href.startsWith("/")
+          ? category.href
+          : "/" + category.slug,
+      label: category.name,
+      kind: articleSupportedDedicatedCategories.has(category.slug)
+        ? "記事対応専用カテゴリ"
+        : category.status === "live"
+          ? "既存カテゴリ"
+          : "予定カテゴリ",
+      available: articleSupportedDedicatedCategories.has(category.slug) || category.status === "planned",
+      note: articleSupportedDedicatedCategories.has(category.slug)
+        ? "専用の記事URL構成を使用します。beauty/cafeはregion必須です。"
+        : category.status === "live"
+          ? "既存固定ページと衝突するため、記事カテゴリslugとしては使えません。"
+          : "自由カテゴリとして使用できます。公開URLは /" + category.slug + "/[slug] です。",
+    })),
+    ...genericCategories
+      .filter((slug) => !siteCategories.some((category) => category.slug === slug) && !reservedSlugSet.has(slug))
+      .map((slug) => ({
+        slug,
+        path: routes.genericCategory(slug),
+        label: slug,
+        kind: "自由カテゴリ",
+        available: true,
+        note: "既存の自由カテゴリです。",
+      })),
+    ...reservedSlugs.map((slug) => ({
+      slug,
+      path: "/" + slug,
+      label: slug,
+      kind: "予約済み",
+      available: false,
+      note: "システム/固定ページのためカテゴリslugには使えません。",
+    })),
+  ];
 
   return (
     <main className="min-h-screen bg-slate-100 pb-12">
@@ -36,7 +101,7 @@ export default async function NewArticlePage() {
       </header>
 
       <div className="mx-auto mt-6 w-[min(1480px,calc(100%-32px))]">
-        <ArticleEditor action={saveArticle} />
+        <ArticleEditor action={saveArticle} categoryOptions={categoryOptions} />
       </div>
     </main>
   );

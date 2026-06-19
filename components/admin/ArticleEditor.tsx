@@ -7,6 +7,16 @@ import { Button } from "@/components/ui/button";
 
 type ArticleEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
+  categoryOptions: CategoryOption[];
+};
+
+type CategoryOption = {
+  slug: string;
+  path: string;
+  label: string;
+  kind: string;
+  available: boolean;
+  note: string;
 };
 
 const initialBody = `## 見出しを入力
@@ -40,11 +50,12 @@ async function optimizeImage(file: File) {
   return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
 }
 
-export function ArticleEditor({ action }: ArticleEditorProps) {
+export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initialBody);
+  const [category, setCategory] = useState("dining");
   const [slug, setSlug] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -52,6 +63,13 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
   const [uploadError, setUploadError] = useState("");
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
+  const normalizedCategory = category.trim().toLowerCase();
+  const selectedCategory = categoryOptions.find((option) => option.slug === normalizedCategory);
+  const requiresRegion = normalizedCategory === "beauty" || normalizedCategory === "cafe";
+  const hasInvalidCategoryCharacter = normalizedCategory.includes(".");
+  const suggestedCategories = categoryOptions
+    .filter((option) => !normalizedCategory || option.slug.includes(normalizedCategory) || option.label.toLowerCase().includes(normalizedCategory))
+    .slice(0, 12);
 
   const apply = (value: string) => {
     const textarea = textareaRef.current;
@@ -115,21 +133,27 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="カテゴリ">
-              <input name="category" required defaultValue="dining" list="article-category-options" className={inputClass} placeholder="dining / ramen / beauty / cafe" />
+              <input
+                name="category"
+                required
+                value={category}
+                onChange={(event) => setCategory(event.target.value)}
+                list="article-category-options"
+                className={inputClass}
+                placeholder="dining / ramen / beauty / cafe"
+              />
               <datalist id="article-category-options">
-                <option value="dining" />
-                <option value="ramen" />
-                <option value="beauty" />
-                <option value="cafe" />
-                <option value="travel" />
-                <option value="column" />
+                {categoryOptions.filter((option) => option.available).map((option) => <option key={option.slug} value={option.slug} />)}
               </datalist>
-              <span className="mt-1 block text-[11px] leading-5 text-slate-500">
-                自由slugも可。ramenは /ramen/articles、beauty/cafeは地域付き、その他は /category/articles に出ます。
-              </span>
+              <CategorySlugStatus category={normalizedCategory} selected={selectedCategory} />
             </Field>
             <Field label="地域">
-              <input name="region" className={inputClass} placeholder="niigata など。自由カテゴリは空でも可" />
+              <input name="region" required={requiresRegion} className={inputClass} placeholder="niigata など。自由カテゴリは空でも可" />
+              {requiresRegion ? (
+                <span className="mt-1 block text-[11px] font-semibold leading-5 text-red-600">beauty / cafe の記事は地域slugが必須です。</span>
+              ) : (
+                <span className="mt-1 block text-[11px] leading-5 text-slate-500">自由カテゴリは空でも可。地域別にしたい場合だけ入力します。</span>
+              )}
             </Field>
             <Field label="slug">
               <input name="slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className={inputClass} placeholder="shokudo-ajiyoshi-niigata-kobari" />
@@ -178,6 +202,56 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
               <img src={coverImageUrl} alt="サムネイルプレビュー" className="mt-3 aspect-[16/9] w-full max-w-md rounded-lg border border-slate-200 object-cover" />
             )}
           </Field>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">カテゴリslug確認</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">
+                第一slugに使える既存パスと、固定ページとして使えないslugです。カテゴリ入力と連動して絞り込みます。
+              </p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{suggestedCategories.length}件表示</span>
+          </div>
+          <div className="mt-4 overflow-x-auto rounded-lg border border-slate-200">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-slate-500">slug</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-slate-500">path</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-slate-500">区分</th>
+                  <th className="px-3 py-2 text-left text-xs font-bold text-slate-500">状態</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 bg-white">
+                {suggestedCategories.length > 0 ? suggestedCategories.map((option) => {
+                  const active = option.slug === normalizedCategory;
+                  return (
+                    <tr key={option.slug + option.kind} className={active ? "bg-[var(--primary)]/5" : undefined}>
+                      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs font-semibold text-slate-900">{option.slug}</td>
+                      <td className="whitespace-nowrap px-3 py-2 font-mono text-xs text-slate-600">{option.path}</td>
+                      <td className="whitespace-nowrap px-3 py-2 text-xs text-slate-600">{option.kind}</td>
+                      <td className="px-3 py-2 text-xs">
+                        <span className={option.available ? "font-semibold text-emerald-700" : "font-semibold text-red-600"}>
+                          {option.available ? "使用可" : "使用不可"}
+                        </span>
+                        <span className="ml-2 text-slate-500">{option.note}</span>
+                      </td>
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={4} className="px-3 py-4 text-xs leading-5 text-slate-500">
+                      {hasInvalidCategoryCharacter
+                        ? "カテゴリslugにドットは使えません。ハイフン区切りのslugにしてください。"
+                        : <>一致する既存slugはありません。固定ページと衝突しない自由カテゴリとして、公開URLは /{normalizedCategory}/[slug] になります。</>}
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
@@ -272,6 +346,27 @@ function Field({ label, className, children }: { label: string; className?: stri
       <span className="mb-1.5 block text-xs font-bold text-slate-600">{label}</span>
       {children}
     </label>
+  );
+}
+
+function CategorySlugStatus({ category, selected }: { category: string; selected?: CategoryOption }) {
+  if (!category) {
+    return <span className="mt-1 block text-[11px] leading-5 text-slate-500">カテゴリslugを入力してください。</span>;
+  }
+  if (category.includes(".")) {
+    return <span className="mt-1 block text-[11px] font-semibold leading-5 text-red-600">カテゴリslugにドットは使えません。</span>;
+  }
+  if (!selected) {
+    return (
+      <span className="mt-1 block text-[11px] leading-5 text-emerald-700">
+        未登録の自由カテゴリです。公開URLは /{category}/[slug] になります。
+      </span>
+    );
+  }
+  return (
+    <span className={selected.available ? "mt-1 block text-[11px] leading-5 text-slate-500" : "mt-1 block text-[11px] font-semibold leading-5 text-red-600"}>
+      {selected.kind}: {selected.note}
+    </span>
   );
 }
 
