@@ -19,18 +19,6 @@ const initialBody = `## 見出しを入力
 `;
 const inputClass = "w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
 
-function insertAt(textarea: HTMLTextAreaElement, value: string) {
-  const start = textarea.selectionStart;
-  const end = textarea.selectionEnd;
-  const before = textarea.value.slice(0, start);
-  const after = textarea.value.slice(end);
-  const next = before + value + after;
-  textarea.value = next;
-  textarea.dispatchEvent(new Event("input", { bubbles: true }));
-  textarea.focus();
-  textarea.selectionStart = textarea.selectionEnd = start + value.length;
-}
-
 async function optimizeImage(file: File) {
   if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
   const bitmap = await createImageBitmap(file).catch(() => null);
@@ -61,12 +49,23 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
 
   const apply = (value: string) => {
-    if (!textareaRef.current) return;
-    insertAt(textareaRef.current, value);
+    const textarea = textareaRef.current;
+    const start = textarea?.selectionStart ?? body.length;
+    const end = textarea?.selectionEnd ?? body.length;
+    const next = body.slice(0, start) + value + body.slice(end);
+    setBody(next);
+
+    window.setTimeout(() => {
+      textareaRef.current?.focus();
+      if (textareaRef.current) {
+        textareaRef.current.selectionStart = textareaRef.current.selectionEnd = start + value.length;
+      }
+    }, 0);
   };
 
   const uploadAsset = async (file: File) => {
@@ -84,9 +83,12 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
 
   const uploadBodyImage = async (file: File) => {
     setUploading(true);
+    setUploadError("");
     try {
       const publicUrl = await uploadAsset(file);
       apply(`\n\n:::official-image\nsrc: ${publicUrl}\nalt: 画像の説明\ncaption: 画像の説明を入力してください。\nsource: Each Spirit\nsourceUrl: ${publicUrl}\n:::\n\n`);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "画像アップロードに失敗しました");
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
@@ -95,9 +97,12 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
 
   const uploadCoverImage = async (file: File) => {
     setCoverUploading(true);
+    setUploadError("");
     try {
       const publicUrl = await uploadAsset(file);
       setCoverImageUrl(publicUrl);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "サムネイルアップロードに失敗しました");
     } finally {
       setCoverUploading(false);
       if (coverFileRef.current) coverFileRef.current.value = "";
@@ -167,6 +172,7 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
             <span className="mt-1 block text-[11px] leading-5 text-slate-500">
               アップロード時はSupabase Storageへ最適化保存し、URLを自動入力します。外部URLを使う場合は本文内画像と同様に出典を本文側で明記してください。
             </span>
+            {uploadError && <p className="mt-2 text-xs font-semibold text-red-600">{uploadError}</p>}
             {coverImageUrl && (
               // eslint-disable-next-line @next/next/no-img-element
               <img src={coverImageUrl} alt="サムネイルプレビュー" className="mt-3 aspect-[16/9] w-full max-w-md rounded-lg border border-slate-200 object-cover" />
@@ -198,6 +204,7 @@ export function ArticleEditor({ action }: ArticleEditorProps) {
                 if (file) void uploadBodyImage(file);
               }}
             />
+            {uploadError && <p className="basis-full text-xs font-semibold text-red-600">{uploadError}</p>}
           </div>
           <textarea
             ref={textareaRef}
