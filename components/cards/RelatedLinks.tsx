@@ -14,9 +14,9 @@ export function RelatedLinks({ links }: { links?: RelatedLink[] }) {
   if (!links || links.length === 0) return null;
 
   return (
-    <section className="rounded-lg border border-slate-200 bg-white p-5">
+    <section className="rounded-lg border border-slate-200 bg-white p-4 sm:p-5 max-sm:border-slate-100">
       <h2 className="text-lg font-semibold text-slate-950">関連コンテンツ</h2>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+      <div className="mt-3 grid gap-2 sm:mt-4 sm:grid-cols-2 sm:gap-3">
         {links.map((link) => {
           const content = (
             <>
@@ -26,7 +26,7 @@ export function RelatedLinks({ links }: { links?: RelatedLink[] }) {
               <ArrowUpRight className="absolute right-3 top-3 h-4 w-4 text-slate-400 transition group-hover:text-[var(--primary)]" />
             </>
           );
-          const className = "group relative block min-h-28 rounded-lg border border-slate-200 bg-slate-50 p-4 pr-10 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 hover:bg-white hover:shadow-md";
+          const className = "group relative block min-h-24 rounded-lg border border-slate-200 bg-slate-50 p-3 pr-10 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 hover:bg-white hover:shadow-md sm:min-h-28 sm:p-4 sm:pr-10";
 
           return link.url.startsWith("/") ? (
             <Link key={link.title + link.url} href={link.url} className={className}>{content}</Link>

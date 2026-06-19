@@ -1,12 +1,28 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
-import { Sparkles, Star, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp } from "lucide-react";
+import { Sparkles, Star, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
-import type { FortuneResult, FortuneScore } from "@/lib/fortune";
+import {
+  FORTUNE_GENDERS,
+  FORTUNE_GENDER_LABEL,
+  type FortuneResult,
+  type FortuneScore,
+  type FortuneInput,
+  type FortuneGender,
+} from "@/lib/fortune";
+import { requestFortune } from "@/app/fortune/actions";
+
+const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
+  male: Mars,
+  female: Venus,
+  other: CircleUser,
+};
+
+const GUEST_STORAGE_KEY = "es_fortune_guest_v1";
 
 const LEVEL: Record<number, { label: string; color: string }> = {
   1: { label: "絶不調", color: "#f87171" },
@@ -16,7 +32,7 @@ const LEVEL: Record<number, { label: string; color: string }> = {
   5: { label: "絶好調", color: "#4ade80" },
 };
 
-type Phase = "idle" | "loading" | "result";
+type Phase = "input" | "idle" | "loading" | "result";
 type RenderMode = "2d" | "3d";
 type MobilePanel = "overview" | "signals" | "lucky";
 
@@ -81,17 +97,72 @@ export function FortuneReveal({
   isGuest,
   renderMode = "2d",
   awardedPoints = null,
+  needsInput = false,
+  date,
 }: {
-  result: FortuneResult;
+  result: FortuneResult | null;
   isGuest: boolean;
   renderMode?: RenderMode;
   awardedPoints?: number | null;
+  needsInput?: boolean;
+  date: string;
 }) {
-  const [phase, setPhase] = useState<Phase>("idle");
+  const [phase, setPhase] = useState<Phase>(needsInput ? "input" : "idle");
+  const [liveResult, setLiveResult] = useState<FortuneResult | null>(result);
+  const [liveAwarded, setLiveAwarded] = useState<number | null>(awardedPoints);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  // 入力が必要なゲストは localStorage 確認まで描画を保留（フォームのちらつき防止）
+  const [ready, setReady] = useState(!needsInput);
+
+  // ゲストは当日分の選択・結果を localStorage に保持し、再訪・再実行で固定する
+  useEffect(() => {
+    if (!needsInput) return;
+    if (isGuest) {
+      try {
+        const raw = window.localStorage.getItem(GUEST_STORAGE_KEY);
+        if (raw) {
+          const saved = JSON.parse(raw) as { result?: FortuneResult } | null;
+          if (saved?.result && saved.result.date === date) {
+            setLiveResult(saved.result);
+            setPhase("idle");
+          }
+        }
+      } catch {
+        /* noop */
+      }
+    }
+    setReady(true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function start() {
     setPhase("loading");
     window.setTimeout(() => setPhase("result"), 2200);
+  }
+
+  async function handleSubmit(input: FortuneInput) {
+    if (submitting) return;
+    setSubmitting(true);
+    setError(null);
+    try {
+      const res = await requestFortune(input);
+      setLiveResult(res.result);
+      setLiveAwarded(res.awardedPoints);
+      if (isGuest) {
+        try {
+          window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify({ input, result: res.result }));
+        } catch {
+          /* noop */
+        }
+      }
+      setPhase("loading");
+      window.setTimeout(() => setPhase("result"), 2200);
+    } catch {
+      setError("運勢の生成に失敗しました。入力内容を確認して、もう一度お試しください。");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -115,14 +186,136 @@ export function FortuneReveal({
         }
       >
         <AnimatePresence mode="wait">
-          {phase === "idle" && <IdleView key="idle" onStart={start} date={result.date} mode={renderMode} />}
-          {phase === "loading" && (renderMode === "3d" ? <Loading3D key="l3" /> : <Loading2D key="l2" />)}
-          {phase === "result" && (
-            <ResultView key="result" result={result} isGuest={isGuest} awardedPoints={awardedPoints} onReplay={start} />
+          {!ready && <Loading2D key="hydrate" />}
+          {ready && phase === "input" && (
+            <InputGate
+              key="input"
+              date={date}
+              isGuest={isGuest}
+              submitting={submitting}
+              error={error}
+              onSubmit={handleSubmit}
+            />
+          )}
+          {ready && phase === "idle" && (
+            <IdleView key="idle" onStart={start} date={date} mode={renderMode} />
+          )}
+          {ready && phase === "loading" && (renderMode === "3d" ? <Loading3D key="l3" /> : <Loading2D key="l2" />)}
+          {ready && phase === "result" && liveResult && (
+            <ResultView key="result" result={liveResult} isGuest={isGuest} awardedPoints={liveAwarded} onReplay={start} />
           )}
         </AnimatePresence>
       </div>
     </div>
+  );
+}
+
+// ── 占う前: 誕生日・性別入力ゲート ───────────────────────────────────────────────
+function InputGate({
+  date,
+  isGuest,
+  submitting,
+  error,
+  onSubmit,
+}: {
+  date: string;
+  isGuest: boolean;
+  submitting: boolean;
+  error: string | null;
+  onSubmit: (input: FortuneInput) => void;
+}) {
+  const [birthday, setBirthday] = useState("");
+  const [gender, setGender] = useState<FortuneGender | null>(null);
+  const canSubmit = !!birthday && !!gender && !submitting;
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!birthday || !gender) return;
+    onSubmit({ birthday, gender });
+  }
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.97 }}
+      className="flex flex-col items-center pt-6 text-center sm:pt-10"
+    >
+      <motion.div
+        animate={{ rotate: 360 }}
+        transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
+        className="grid h-20 w-20 place-items-center rounded-full border border-white/20 bg-white/5"
+      >
+        <Sparkles className="h-9 w-9 text-violet-300" />
+      </motion.div>
+      <p className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
+      <h1 className="mt-2 text-3xl font-black sm:text-4xl">今日の運勢</h1>
+      <p className="mt-3 max-w-sm text-sm leading-7 text-white/70">
+        あなただけの運勢を占うために、<br />
+        誕生日と性別を選んでください。
+      </p>
+
+      <form onSubmit={submit} className="mt-7 w-full max-w-sm space-y-5 text-left">
+        <div>
+          <label htmlFor="fortune-birthday" className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/70">
+            <Cake className="h-4 w-4 text-violet-300" /> 誕生日
+          </label>
+          <input
+            id="fortune-birthday"
+            type="date"
+            value={birthday}
+            max={date}
+            min="1900-01-01"
+            onChange={(e) => setBirthday(e.target.value)}
+            className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-violet-300/70 focus:bg-white/15 [color-scheme:dark]"
+            required
+          />
+        </div>
+
+        <div>
+          <span className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/70">
+            <CircleUser className="h-4 w-4 text-violet-300" /> 性別
+          </span>
+          <div className="grid grid-cols-3 gap-2">
+            {FORTUNE_GENDERS.map((g) => {
+              const Icon = GENDER_ICON[g];
+              const active = gender === g;
+              return (
+                <button
+                  key={g}
+                  type="button"
+                  onClick={() => setGender(g)}
+                  className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-bold transition ${
+                    active
+                      ? "border-violet-300/70 bg-violet-500/30 text-white"
+                      : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {FORTUNE_GENDER_LABEL[g]}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {error && <p className="text-sm font-semibold text-rose-300">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={!canSubmit}
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+        >
+          <Sparkles className="h-5 w-5" /> {submitting ? "占っています…" : "この内容で占う"}
+        </button>
+      </form>
+
+      <p className="mt-4 max-w-xs text-xs leading-5 text-white/40">
+        {isGuest
+          ? "今日の結果はこの内容で確定します。何度開いても変わりません。"
+          : "プロフィールに保存され、次回からは入力を省略できます。"}
+      </p>
+    </motion.div>
   );
 }
 

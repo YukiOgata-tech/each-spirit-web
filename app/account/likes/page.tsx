@@ -8,7 +8,7 @@ import { routes } from "@/lib/routes";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "保存した項目 | Each Spirit",
+  title: "保存した項目",
   robots: { index: false },
 };
 

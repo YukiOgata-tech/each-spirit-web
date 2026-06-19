@@ -2,7 +2,7 @@ import { SignupForm } from "@/components/auth/SignupForm";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "アカウント登録 | Each Spirit",
+  title: "アカウント登録（無料）",
   robots: { index: false },
 };
 

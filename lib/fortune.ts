@@ -11,6 +11,25 @@ export type FortuneExplanations = Record<FortuneCategoryKey, { label: string; ba
 
 export type LuckyItem = { type: string; slug: string; name: string; href: string };
 
+/** 占いのパーソナライズ入力（誕生日・性別）。ゲストはフォーム、ログインユーザーは profiles から。 */
+export type FortuneGender = "male" | "female" | "other";
+export type FortuneInput = { birthday: string; gender: FortuneGender };
+
+export const FORTUNE_GENDERS: FortuneGender[] = ["male", "female", "other"];
+export const FORTUNE_GENDER_LABEL: Record<FortuneGender, string> = {
+  male: "男性",
+  female: "女性",
+  other: "その他",
+};
+
+/**
+ * 入力（誕生日・性別）をシードへ畳み込む。
+ * 同じ base + 同じ入力なら必ず同じ列になり、占い結果が固定される。
+ */
+export function fortuneSeed(base: string, input: FortuneInput): string {
+  return `${base}|b:${input.birthday}|g:${input.gender}`;
+}
+
 export type FortuneScore = {
   key: FortuneCategoryKey;
   label: string;

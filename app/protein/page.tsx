@@ -8,7 +8,7 @@ import { routes } from "@/lib/routes";
 import { getProteinProducts, getProteinRankings, getProteinTargets } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "おすすめプロテイン完全ガイド",
+  title: "プロテインおすすめ比較完全ガイド｜目的別ランキングと選び方（ホエイ・ソイ）",
   description: "女性・男性・ダイエット・初心者・トレーナー・大学生など目的別に、タンパク質量・カロリー・価格の実データでプロテインを比較するガイドサイト。",
   path: routes.protein,
 });

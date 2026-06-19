@@ -20,11 +20,11 @@ export function RankingCard({ ranking, href }: { ranking: Ranking; href?: string
             {ranking.title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-7 text-slate-600">{ranking.description}</p>
-          <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--primary)]">
+        <CardContent className="space-y-2 sm:space-y-4">
+          <p className="text-sm leading-5 sm:leading-7 text-slate-600">{ranking.description}</p>
+          <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[var(--primary)]">
             ランキングを見る
-            <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
+            <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-200 group-hover:translate-x-1" />
           </div>
         </CardContent>
       </Card>

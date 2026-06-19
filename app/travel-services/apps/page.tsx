@@ -13,7 +13,7 @@ import { getTravelApps } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
-  title: "おすすめ旅行アプリ比較",
+  title: "旅行アプリおすすめ比較ランキング｜予約・乗換・地図・翻訳アプリの選び方",
   description: "旅行計画に使えるアプリを、移動計画・乗換検索・旅程管理など用途別に整理。都道府県ではなく使う場面で比較します。",
   path: routes.travelApps,
   keywords: ["旅行アプリ", "乗換アプリ", "旅行計画アプリ", "NAVITIME", "ジョルダン"],

@@ -5,7 +5,7 @@ import { routes } from "@/lib/routes";
 import { initialContactFormState } from "@/app/contact/form-state";
 
 export const metadata = pageMetadata({
-  title: "お問い合わせ",
+  title: "お問い合わせ・掲載/取材のご相談",
   description: "Each Spirit 編集部へのお問い合わせ、情報提供、掲載内容の修正依頼はこちらから。",
   path: routes.contact,
 });

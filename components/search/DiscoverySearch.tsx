@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowUpRight, FileText, MapPin, Search, SlidersHorizontal, Trophy } from "lucide-react";
 import type { Category, SearchResult } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 
@@ -31,6 +31,13 @@ export function DiscoverySearch({
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<SearchResult["type"] | "all">("all");
+  const liveCategories = useMemo(() => categories.filter((item) => item.status === "live"), [categories]);
+  const [randomCategories, setRandomCategories] = useState<Category[]>(() => liveCategories.slice(0, 6));
+  const isDefaultView = query.trim() === "" && category === "all" && type === "all";
+
+  useEffect(() => {
+    setRandomCategories([...liveCategories].sort(() => Math.random() - 0.5).slice(0, 6));
+  }, [liveCategories]);
 
   const matched = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -47,23 +54,29 @@ export function DiscoverySearch({
   }, [category, query, results, type]);
   const filtered = useMemo(() => matched.slice(0, maxResults), [matched, maxResults]);
 
-  // カテゴリ名 → 背景画像・テーマ色（カテゴリデータの実URLを利用）
+  // カテゴリ名 → テーマ色。検索結果では画像を安易にカテゴリ代用しない。
   const catVisual = useMemo(() => {
-    const m = new Map<string, { image?: string; color: string }>();
-    for (const c of categories) m.set(c.name, { image: c.images?.[0]?.url, color: c.theme.primary });
+    const m = new Map<string, { color: string }>();
+    for (const c of liveCategories) m.set(c.name, { color: c.theme.primary });
     return m;
-  }, [categories]);
+  }, [liveCategories]);
 
-  function visualFor(name: string): { image?: string; color: string } {
+  function visualFor(name: string): { color: string } {
     const exact = catVisual.get(name);
     if (exact) return exact;
     for (const [key, v] of catVisual) if (name.includes(key) || key.includes(name)) return v;
     return { color: "#1d4f8f" };
   }
 
+  function iconFor(typeValue: SearchResult["type"]) {
+    if (typeValue === "ranking") return Trophy;
+    if (typeValue === "item") return MapPin;
+    return FileText;
+  }
+
   return (
-    <div className="media-card overflow-hidden" id="search">
-      <div className="grid gap-4 border-b border-slate-200 bg-white p-4 lg:grid-cols-[1fr_auto_auto]">
+    <div className="media-card overflow-hidden max-sm:border-0 max-sm:shadow-none" id="search">
+      <div className="grid gap-3 border-b border-slate-200 bg-white p-3 sm:gap-4 sm:p-4 lg:grid-cols-[1fr_auto_auto]">
         <label className="relative block">
           <span className="sr-only">キーワード検索</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
@@ -81,7 +94,7 @@ export function DiscoverySearch({
           aria-label="カテゴリ"
         >
           <option value="all">全カテゴリ</option>
-          {categories.map((item) => (
+          {liveCategories.map((item) => (
             <option key={item.slug} value={item.name}>
               {item.name}
             </option>
@@ -102,17 +115,49 @@ export function DiscoverySearch({
         </select>
       </div>
 
-      <div className="grid gap-3 p-4">
-        <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
+      <div className="grid gap-3 p-3 sm:p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 sm:gap-3 sm:text-sm">
           <span className="inline-flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {matched.length}件中 {filtered.length}件を表示
+            {isDefaultView ? "おすすめカテゴリを6件表示" : `${matched.length}件中 ${filtered.length}件を表示`}
           </span>
-          <span>{expanded ? "検索ページで詳細に絞り込み" : "カテゴリ追加後も同じ検索UIに統合"}</span>
+          <span>{expanded ? "検索ページで詳細に絞り込み" : "公開カテゴリから探せます"}</span>
         </div>
-        <div className={expanded ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid gap-3 sm:grid-cols-2"}>
-          {filtered.map((result, index) => {
+        {isDefaultView ? (
+          <div className={expanded ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
+            {randomCategories.map((item, index) => (
+              <motion.div
+                key={item.slug}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.035, duration: 0.28 }}
+                whileHover={{ y: -3 }}
+              >
+                <Link
+                  href={item.href}
+                  className="group relative flex min-h-[136px] flex-col justify-end overflow-hidden rounded-lg border border-slate-300 shadow-sm transition hover:shadow-lg sm:min-h-[150px] sm:rounded-xl"
+                >
+                  {item.images?.[0]?.url ? (
+                    <Image src={item.images[0].url} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-500 group-hover:scale-105" />
+                  ) : (
+                    <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${item.theme.primary}, ${item.theme.accent})` }} />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-b from-slate-950/10 via-slate-950/40 to-slate-950/85" />
+                  <ArrowUpRight className="absolute right-3 top-3 z-10 h-4 w-4 text-white/85 transition group-hover:scale-110" />
+                  <div className="relative z-10 p-3 text-white sm:p-4">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-slate-900">公開中</span>
+                    <h3 className="mt-2 text-lg font-bold leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.5)]">{item.name}</h3>
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-white/90">{item.tagline}</p>
+                  </div>
+                </Link>
+              </motion.div>
+            ))}
+          </div>
+        ) : (
+          <div className={expanded ? "grid gap-3 lg:grid-cols-2" : "grid gap-3 lg:grid-cols-2"}>
+            {filtered.map((result, index) => {
             const v = visualFor(result.category);
+            const Icon = iconFor(result.type);
             return (
               <motion.div
                 key={result.id}
@@ -123,51 +168,53 @@ export function DiscoverySearch({
               >
                 <Link
                   href={result.href}
-                  className="group relative flex min-h-[150px] flex-col justify-end overflow-hidden rounded-xl border border-slate-300 shadow-sm transition hover:shadow-lg"
+                  className="group grid min-h-[156px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:grid-cols-[168px_minmax(0,1fr)]"
                 >
-                  {/* 背景: カテゴリ画像 or テーマ色 */}
-                  {v.image ? (
-                    <Image
-                      src={v.image}
-                      alt=""
-                      fill
-                      sizes="(min-width: 640px) 50vw, 100vw"
-                      className="object-cover transition duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${v.color}, ${v.color}bb)` }} />
-                  )}
-                  {/* 可読性のための暗オーバーレイ（どんな画像でも文字が読める） */}
-                  <div
-                    className="absolute inset-0"
-                    style={{ background: "linear-gradient(180deg, rgba(2,6,23,0.12) 0%, rgba(2,6,23,0.55) 52%, rgba(2,6,23,0.88) 100%)" }}
-                  />
-                  <ArrowUpRight className="absolute right-3 top-3 z-10 h-4 w-4 text-white/85 transition group-hover:scale-110" />
+                  <div className="relative min-h-[118px] overflow-hidden bg-slate-100 sm:min-h-full">
+                    {result.imageUrl ? (
+                      <Image
+                        src={result.imageUrl}
+                        alt=""
+                        fill
+                        sizes="(min-width: 1024px) 168px, 100vw"
+                        className="object-cover transition duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 overflow-hidden" style={{ background: `linear-gradient(135deg, ${v.color}18, #ffffff 54%, ${v.color}2b)` }}>
+                        <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full opacity-15" style={{ backgroundColor: v.color }} />
+                        <div className="absolute bottom-4 left-4 grid h-12 w-12 place-items-center rounded-xl text-white shadow-sm" style={{ backgroundColor: v.color }}>
+                          <Icon className="h-6 w-6" />
+                        </div>
+                      </div>
+                    )}
+                    <span className="absolute left-3 top-3 rounded-full bg-white/92 px-2.5 py-1 text-[11px] font-black text-slate-900 shadow-sm">{typeLabels[result.type]}</span>
+                  </div>
 
-                  {/* コンテンツ */}
-                  <div className="relative z-10 p-4 text-white max-sm:text-center">
-                    <div className="flex flex-wrap items-center gap-1.5 max-sm:justify-center">
-                      <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-slate-900">{result.category}</span>
-                      <span className="rounded-full bg-black/55 px-2 py-0.5 text-[11px] font-bold text-white ring-1 ring-white/25">
+                  <div className="relative flex min-w-0 flex-col p-4">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      <span className="rounded-full px-2.5 py-1 text-[11px] font-black text-white" style={{ backgroundColor: v.color }}>{result.category}</span>
+                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-bold text-slate-600">
                         {typeLabels[result.type]}
                       </span>
                     </div>
-                    <h3 className="mt-2 text-base font-bold leading-tight [text-shadow:0_1px_3px_rgba(0,0,0,0.5)] sm:text-lg">{result.title}</h3>
-                    <p className="mt-1.5 line-clamp-2 text-sm leading-snug text-white/90 max-sm:hidden">{result.description}</p>
-                    <div className="mt-2 flex flex-wrap gap-1.5 max-sm:justify-center">
+                    <h3 className="mt-2 line-clamp-2 text-base font-black leading-snug text-slate-950 transition group-hover:text-[var(--primary)] sm:text-lg">{result.title}</h3>
+                    <p className="mt-1.5 line-clamp-2 text-sm leading-6 text-slate-600">{result.description}</p>
+                    <div className="mt-3 flex flex-wrap gap-1.5">
                       {result.tags.slice(0, 3).map((tag) => (
-                        <span key={tag} className="rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-semibold text-white ring-1 ring-white/15 backdrop-blur-sm">
+                        <span key={tag} className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-bold text-slate-600">
                           {tag}
                         </span>
                       ))}
                     </div>
+                    <ArrowUpRight className="absolute right-4 top-4 h-4 w-4 text-slate-400 transition group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[var(--primary)]" />
                   </div>
                 </Link>
               </motion.div>
             );
-          })}
-        </div>
-        {filtered.length === 0 ? (
+            })}
+          </div>
+        )}
+        {!isDefaultView && filtered.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
             条件に合う項目がありません。カテゴリや種別を広げて検索してください。
           </div>

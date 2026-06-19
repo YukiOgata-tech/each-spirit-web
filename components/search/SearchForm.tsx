@@ -15,7 +15,7 @@ export function SearchForm({
   size?: "default" | "compact";
 }) {
   return (
-    <form action={routes.search} className={cn("flex min-w-0 items-center gap-2", className)}>
+    <form action={routes.search} className={cn("flex min-w-0 items-center gap-2", size === "default" && "max-sm:flex-col", className)}>
       <label className="relative min-w-0 flex-1">
         <span className="sr-only">サイト内検索</span>
         <Search className={cn("pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-slate-400", size === "compact" ? "h-4 w-4" : "h-5 w-5")} />
@@ -30,7 +30,7 @@ export function SearchForm({
           )}
         />
       </label>
-      <Button type="submit" size={size === "compact" ? "sm" : "default"} className="shrink-0">
+      <Button type="submit" size={size === "compact" ? "sm" : "default"} className={cn("shrink-0", size === "default" && "max-sm:w-full")}>
         検索
       </Button>
     </form>

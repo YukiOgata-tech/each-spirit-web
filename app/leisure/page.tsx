@@ -8,7 +8,7 @@ import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
-  title: "レジャー",
+  title: "レジャー・お出かけスポットおすすめ比較ガイド｜人気の遊び場ランキングと選び方",
   description: "新潟を中心に、アウトドア、インドア、雨の日、子連れ、車なしで選べるレジャースポットを整理するカテゴリページです。",
   path: routes.leisure,
 });

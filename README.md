@@ -53,12 +53,14 @@ UI コンポーネントでは `content/**` を直接 import せず、原則と�
 現在、記事・店舗/商品・ランキングの配信データは Supabase の `es` スキーマから読み取ります。公開コンテンツの正は Supabase です。
 
 1. 調査 JSON / Markdown を確認します。
-2. 記事だけなら `npm run db:import:articles -- <json-path>` で Supabase `es.articles` へ反映します。
+2. 記事だけなら、管理画面 `/account/articles/new` から投稿するか、`npm run db:import:articles -- <json-path>` で Supabase `es.articles` へ反映します。
 3. 店舗やランキングも含む場合は import script や SQL で `es.items`、`es.rankings`、`es.ranking_items` へ反映します。
 4. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
 5. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
 
-自由カテゴリの記事は `/{category}/articles/{slug}` で表示します。既存の `ramen`、`beauty`、`cafe` は専用ルートを持つため、汎用記事ルートからは除外します。
+自由カテゴリの記事は `/{category}/{slug}` で表示します。旧形式の `/articles/{category}/{slug}` と `/{category}/articles/{slug}` は正規URLへリダイレクトします。既存の `ramen`、`beauty`、`cafe` は専用記事ルートを持つため、汎用記事ルートからは除外します。
+
+記事作成UIでは、カテゴリslugの使用可否、サムネイル、本文Markdown、公式情報・確認日・出典URL、関連記事・関連店舗リンク、FAQ、SEO項目を入力できます。公開時は記事パス、一覧、`/sitemap.xml` を再検証します。
 
 `npm run db:seed` は旧ローカル content から DB を上書きできるため、通常実行では停止します。初期投入・復旧など明確な目的がある場合だけ、PowerShell では次のように実行します。
 
@@ -107,16 +109,17 @@ root layout の既定 ISR は `app/layout.tsx` の `revalidate` で管理して�
 ## 実装済みの主な領域
 
 - `/`
+- `/search`
 - `/ramen`、`/ramen/[region]`、記事、ランキング、店舗詳細
 - `/protein`、目的別ページ、ランキング、商品詳細
 - `/beauty`、地域ページ、記事、ランキング、サロン詳細
-- `/cafe`、地域ページ、ランキング、店舗詳細
+- `/cafe`、地域ページ、記事、ランキング、店舗詳細
 - `/travel`、地域ページ、ランキング、宿詳細
 - `/travel-services`、地域ページ、旅行会社、旅行アプリ
 - `/leisure`、地域ページ、ランキング、スポット詳細
 - `/fortune`
 - `/auth/login`、`/auth/signup`、`/auth/callback`
-- `/account`、`/account/likes`
+- `/account`、`/account/likes`、`/account/articles/new`
 - `/contact`、`/about`、`/privacy`、`/disclaimer`
 
 ## 注意事項

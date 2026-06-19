@@ -5,7 +5,7 @@ import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
-  title: "運営者情報",
+  title: "運営者情報・編集方針｜比較と取材のポリシー",
   description: "Each Spirit 編集部の運営方針、情報収集方針、掲載基準、更新方針をまとめています。",
   path: routes.about,
 });

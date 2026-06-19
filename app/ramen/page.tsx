@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes";
 import { getRamenRegions, getRamenItemsByRegion, getRamenRankingsByRegion, getRamenArticles } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "ラーメンガイド",
+  title: "ラーメンおすすめ比較ガイド｜人気の名店ランキングと選び方・地域別まとめ",
   description: "新潟・山形など各県のラーメン店を地域・ジャンル・エリアで比較。エリアごとのスタイル、ランキング、店舗カードで整理しています。",
   path: routes.ramen,
 });

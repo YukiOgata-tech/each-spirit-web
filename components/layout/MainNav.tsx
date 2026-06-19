@@ -5,10 +5,11 @@ import { routes } from "@/lib/routes";
 const utilityLinks = [
   { href: routes.home, label: "トップ" },
   { href: routes.search, label: "検索" },
-  { href: routes.about, label: "方針" },
 ];
 
 export function MainNav({ categories }: { categories: Category[] }) {
+  const liveCategories = categories.filter((category) => category.status === "live");
+
   return (
     <nav className="hidden items-center gap-1 lg:flex" aria-label="メインナビゲーション">
       {utilityLinks.map((link) => (
@@ -22,18 +23,21 @@ export function MainNav({ categories }: { categories: Category[] }) {
         </Link>
         <div className="pointer-events-none absolute right-0 top-full w-[520px] translate-y-2 rounded-lg border border-slate-200 bg-white p-3 opacity-0 shadow-xl transition group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100">
           <div className="grid grid-cols-2 gap-2">
-            {categories.map((category) => (
+            {liveCategories.map((category) => (
               <Link key={category.slug} href={category.href} className="group rounded-md border border-slate-100 p-3 transition-all duration-150 hover:border-slate-200 hover:bg-slate-50 hover:shadow-sm active:scale-[0.98]">
                 <span className="text-sm font-bold text-slate-950 transition-colors duration-150 group-hover:text-[var(--primary)]">{category.name}</span>
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-bold text-slate-500">
-                  {category.status === "live" ? "公開中" : "準備中"}
-                </span>
                 <span className="mt-1 block text-xs leading-5 text-slate-500">{category.tagline}</span>
               </Link>
             ))}
           </div>
         </div>
       </div>
+      <Link
+        href={routes.fortune}
+        className="ml-1 inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 px-4 text-sm font-black text-white shadow-lg shadow-violet-500/25 ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/35 active:translate-y-0"
+      >
+        デイリー占い
+      </Link>
     </nav>
   );
 }

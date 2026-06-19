@@ -20,6 +20,8 @@
 
 外部 ChatGPT などへ調査を依頼する場合は、[docs/research-output-schema.md](file:///C:/projects/each-spirit/docs/research-output-schema.md) の JSON 形式で返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、content_type、metadata、sources の解釈コストが増えます。
 
+記事URLはカテゴリによって異なります。自由カテゴリは `/{category}/{slug}`、`ramen` は `/ramen/articles/{slug}`、`beauty` は `/beauty/{region}/articles/{slug}`、`cafe` は `/cafe/{region}/articles/{slug}` です。`beauty` と `cafe` は `region` 必須です。
+
 ### ③ sitemap.ts へのカテゴリ登録
 サイトマップ自動生成ファイルである [app/sitemap.ts](file:///C:/projects/each-spirit/app/sitemap.ts) は、Supabase から動的にデータを取得して生成を行っています。
 - `gadget` や `life` などの新しいカテゴリを「Live（公開中）」に変更する際は、[sitemap.ts](file:///C:/projects/each-spirit/app/sitemap.ts) にもそのカテゴリの静的/動的ルートの取得・生成ロジックを追加してください。
@@ -48,6 +50,10 @@
 ### ④ 一次情報の担保（E-E-A-T対策）
 競合サイトとの信頼性の差別化として、各データが持つ **`sources`（参照元リスト）** や **`lastVerifiedAt`（最終確認日）** の記述を徹底してください。
 - 官公庁の発表、地域の公式サイト、独自の実地検証情報などを [SourceList](file:///C:/projects/each-spirit/components/cards/SourceList.tsx) などを介して明記することで、Googleの「情報の透明性と信頼性（E-E-A-T）」の品質基準で高い評価を獲得できます。
+- 記事投稿UIでは、記事単位の `metadata.sources`、`metadata.faqs`、`metadata.related_links` を入力できます。FAQは公開ページに表示され、`FAQPage` JSON-LDにも反映されます。
+
+### ⑤ サイト内検索
+`/search` は記事、ランキング、店舗/商品、カテゴリを横断する検索ページです。`WebSite` schema の `SearchAction` は `/search?q={search_term_string}` を指します。ヘッダーとトップページの検索フォームもこのページに送信します。
 
 ---
 

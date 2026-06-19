@@ -36,7 +36,8 @@ export function pageMetadata({
   image?: string;
   keywords?: string[];
 }): Metadata {
-  const fullTitle = title === site.name || title === site.title ? title : title + " | " + site.name;
+  const fullTitle =
+    title === site.name || title === site.title ? title : title + " | " + site.titleSuffix;
   return {
     title: { absolute: fullTitle },
     description,

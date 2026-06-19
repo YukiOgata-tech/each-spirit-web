@@ -178,7 +178,7 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
                     </>
                   );
 
-                  const className = "group relative block min-h-24 rounded-lg border border-slate-200 bg-white p-4 pr-9 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 hover:shadow-md";
+                  const className = "group relative block min-h-20 rounded-lg border border-slate-200 bg-white p-4 pr-9 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 hover:shadow-md";
 
                   return link.href.startsWith("/") ? (
                     <Link key={link.href} href={link.href} className={className}>{content}</Link>
@@ -244,7 +244,7 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
             </ol>
           );
         }
-        return <p key={index} className="whitespace-pre-line leading-8 text-slate-700">{renderInline(block)}</p>;
+        return <p key={index} className="whitespace-pre-line leading-6 text-sm sm:text-base sm:leading-8 text-slate-700">{renderInline(block)}</p>;
       })}
     </div>
   );

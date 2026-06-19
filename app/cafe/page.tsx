@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes";
 import { getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "カフェガイド",
+  title: "カフェおすすめ比較ガイド｜人気カフェランキングと電源・WiFi・雰囲気の選び方",
   description: "新潟・山形のカフェをスタイル・エリア・こだわりで比較。スペシャルティコーヒー、古民家カフェ、フルーツスイーツカフェなど地域ごとの個性を整理。",
   path: routes.cafe,
   keywords: ["カフェ", "コーヒー", "新潟カフェ", "山形カフェ", "スペシャルティコーヒー"],

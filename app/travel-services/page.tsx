@@ -9,7 +9,7 @@ import { getTravelAgencies, getTravelApps, getTravelServiceRankings, getTravelSe
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
-  title: "旅行アプリ・旅行会社ガイド",
+  title: "旅行会社・旅行アプリおすすめ比較ガイド｜予約サイト・ツアーのランキングと選び方",
   description: "旅行計画に使えるアプリと、県ごとの地域密着型旅行会社を比較。地元発着ツアー、団体手配、移動アプリを実用目線で整理します。",
   path: routes.travelServices,
   keywords: ["旅行アプリ", "旅行会社", "地域旅行会社", "団体旅行", "バスツアー", "旅行計画"],

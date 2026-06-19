@@ -6,7 +6,7 @@ import { routes } from "@/lib/routes";
 import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "美容室ガイド",
+  title: "美容室・美容院おすすめ比較ガイド｜人気サロンランキングと失敗しない選び方",
   description: "新潟・山形など各県の美容室を年代・施術・エリアで比較。カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンをランキングと店舗カードで整理しています。",
   path: routes.beauty,
 });

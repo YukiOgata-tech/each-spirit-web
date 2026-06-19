@@ -50,8 +50,9 @@ const initialBody = `## 見出しを入力
 補足や注意書きをここに入れます。
 :::
 `;
-const inputClass = "w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
-const compactInputClass = "w-full rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
+const inputClass = "min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
+const compactInputClass = "min-h-11 w-full rounded-md border border-slate-200 bg-white px-2.5 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15 sm:text-xs";
+const sectionClass = "rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 max-sm:shadow-none";
 
 function today() {
   return new Date().toISOString().slice(0, 10);
@@ -169,9 +170,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   };
 
   return (
-    <form action={action} className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.8fr)]">
-      <div className="space-y-5">
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+    <form action={action} className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.8fr)] lg:gap-6">
+      <div className="space-y-4 sm:space-y-5">
+        <section className={sectionClass}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="カテゴリ">
               <input
@@ -219,7 +220,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                 className={inputClass}
                 placeholder="外部画像URLを入力、または右のボタンでアップロード"
               />
-              <Button type="button" variant="outline" disabled={coverUploading} onClick={() => coverFileRef.current?.click()}>
+              <Button type="button" variant="outline" disabled={coverUploading} className="max-sm:w-full" onClick={() => coverFileRef.current?.click()}>
                 <ImagePlus className="h-4 w-4" />
                 {coverUploading ? "アップロード中" : "サムネをアップロード"}
               </Button>
@@ -245,7 +246,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </Field>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className={sectionClass}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">カテゴリslug確認</h2>
@@ -295,7 +296,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white shadow-sm">
+        <section className="rounded-lg border border-slate-200 bg-white shadow-sm max-sm:shadow-none">
           <div className="flex flex-wrap items-center gap-2 border-b border-slate-200 p-3">
             <Tool icon={Type} label="H2" onClick={() => apply("\n\n## 見出し\n\n")} />
             <Tool icon={Pilcrow} label="H3" onClick={() => apply("\n\n### 小見出し\n\n")} />
@@ -303,9 +304,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
             <Tool icon={List} label="箇条書き" onClick={() => apply("\n- 項目\n- 項目\n")} />
             <Tool icon={Quote} label="引用" onClick={() => apply("\n\n> 引用または要点\n\n")} />
             <Tool icon={LinkIcon} label="リンク" onClick={() => apply("[リンクテキスト](/path/to/page)")} />
-            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/category/articles/slug) - 説明文\n:::\n\n")} />
+            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/category/slug) - 説明文\n:::\n\n")} />
             <Tool icon={ImagePlus} label="外部画像" onClick={() => apply("\n\n:::official-image\nsrc: https://example.com/image.webp\nalt: 画像の説明\ncaption: キャプション\nsource: 出典名\nsourceUrl: https://example.com/\n:::\n\n")} />
-            <Button type="button" variant="outline" size="sm" disabled={uploading} onClick={() => fileRef.current?.click()}>
+            <Button type="button" variant="outline" size="sm" disabled={uploading} className="max-sm:w-full" onClick={() => fileRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />
               {uploading ? "アップロード中" : "画像アップロード"}
             </Button>
@@ -327,11 +328,11 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
             required
             value={body}
             onChange={(event) => setBody(event.target.value)}
-            className="min-h-[680px] w-full resize-y border-0 bg-white p-5 font-mono text-sm leading-7 text-slate-800 outline-none"
+            className="min-h-[460px] w-full resize-y border-0 bg-white p-4 font-mono text-sm leading-7 text-slate-800 outline-none sm:min-h-[680px] sm:p-5"
           />
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className={sectionClass}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">公式情報・参照ソース</h2>
@@ -415,7 +416,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className={sectionClass}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">関連記事・関連店舗リンク</h2>
@@ -488,7 +489,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className={sectionClass}>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">FAQ</h2>
@@ -541,7 +542,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+        <section className={sectionClass}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="タグ">
               <textarea name="tags" rows={3} className={`${inputClass} resize-y`} placeholder="新潟, 食堂, 定食" />
@@ -567,9 +568,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           </div>
         </section>
 
-        <div className="sticky bottom-0 z-10 flex flex-wrap items-center justify-end gap-3 border-t border-slate-200 bg-white/95 px-4 py-4 backdrop-blur">
-          <Button type="submit" name="status" value="draft" variant="outline">下書き保存</Button>
-          <Button type="submit" name="status" value="published">
+        <div className="sticky bottom-0 z-10 grid gap-2 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 sm:px-4 sm:py-4">
+          <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto">下書き保存</Button>
+          <Button type="submit" name="status" value="published" className="w-full sm:w-auto">
             <Send className="h-4 w-4" />
             記事を公開
           </Button>

@@ -222,6 +222,7 @@ function mapLeisureItem(row: any): LeisureSpot {
     mapUrl: row.map_url ?? "",
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
+    imageUrl: row.image_url ?? undefined,
     lastVerifiedAt: toDateStr(row.last_verified_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
@@ -272,6 +273,9 @@ function mapRanking(row: any, items: any[]): Ranking {
     slug: row.slug,
     title: row.title,
     description: row.description,
+    contentType: row.content_type ?? undefined,
+    region: row.region ?? undefined,
+    target: m.target ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -323,6 +327,7 @@ function mapArticle(row: any): Article {
     title: row.title,
     description: row.description,
     category: row.category,
+    region: row.region ?? undefined,
     coverImageUrl: row.cover_image_url ?? undefined,
     tags: (row.tags ?? []) as string[],
     publishedAt: toDateStr(row.published_at),
@@ -476,6 +481,24 @@ export async function getArticleMarkdown(slug: string): Promise<string> {
 
 const dedicatedArticleCategories = ["ramen", "beauty", "cafe"];
 
+export function articleHref(article: Pick<Article, "category" | "region" | "slug">) {
+  if (article.category === "ramen") return routes.ramenArticle(article.slug);
+  if (article.category === "beauty" && article.region) return routes.beautyArticle(article.region, article.slug);
+  if (article.category === "cafe" && article.region) return routes.cafeArticle(article.region, article.slug);
+  return routes.genericArticle(article.category, article.slug);
+}
+
+export function rankingHref(ranking: Pick<Ranking, "contentType" | "region" | "slug" | "target">) {
+  if (ranking.contentType === "ramen") return routes.ramenRanking(ranking.slug);
+  if (ranking.contentType === "beauty" && ranking.region) return routes.beautyRanking(ranking.region, ranking.slug);
+  if (ranking.contentType === "cafe" && ranking.region) return routes.cafeRanking(ranking.region, ranking.slug);
+  if (ranking.contentType === "hotel" && ranking.region) return routes.travelRanking(ranking.region, ranking.slug);
+  if (ranking.contentType === "travel_agency" && ranking.region) return routes.travelServicesRanking(ranking.region, ranking.slug);
+  if (ranking.contentType === "leisure") return routes.leisureRanking(ranking.region ?? "niigata", ranking.slug);
+  if (ranking.contentType === "protein" && ranking.target) return routes.proteinRanking(ranking.target, ranking.slug);
+  return routes.ramenRanking(ranking.slug);
+}
+
 export async function getGenericArticles(): Promise<Article[]> {
   const sb = createServerClient();
   const { data } = await sb
@@ -515,7 +538,7 @@ export async function getGenericArticleMarkdown(category: string, slug: string):
 
 export async function getLatestArticles(limit?: number): Promise<Article[]> {
   const sb = createServerClient();
-  let q = sb.from("articles").select("*").eq("category", "ramen").eq("status", "published").order("updated_at", { ascending: false });
+  let q = sb.from("articles").select("*").eq("status", "published").order("updated_at", { ascending: false });
   if (typeof limit === "number") q = q.limit(limit);
   const { data } = await q;
   return (data ?? []).map(mapArticle);
@@ -607,7 +630,7 @@ export async function getRankingEntries(slug: string) {
 
 export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
   const sb = createServerClient();
-  let q = sb.from("rankings").select("*, ranking_items(*)").eq("content_type", "ramen");
+  let q = sb.from("rankings").select("*, ranking_items(*)").order("last_updated_at", { ascending: false });
   if (typeof limit === "number") q = q.limit(limit);
   const { data } = await q;
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
@@ -617,24 +640,29 @@ export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
 
 export async function getSearchResults(): Promise<SearchResult[]> {
   const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
-  const [articles, genericArticles, rankings, items, leisureRankings, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
-    getRamenArticles(),
-    getGenericArticles(),
-    getRamenRankings(),
+  const categoryLabelBySlug = new Map(categories.map((category) => [category.slug, category.name]));
+  const rankingCategoryLabel = (ranking: Ranking) => {
+    if (ranking.contentType === "hotel") return "旅行";
+    if (ranking.contentType === "travel_agency") return "旅行アプリ・旅行会社";
+    if (ranking.contentType === "leisure") return "レジャー";
+    if (ranking.contentType === "protein") return "プロテイン";
+    return categoryLabelBySlug.get(ranking.contentType ?? "") ?? ranking.contentType ?? "ランキング";
+  };
+  const [articles, rankings, items, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
+    getLatestArticles(),
+    getPopularRankings(),
     getRamenItems(),
-    getLeisureRankings("niigata"),
     getLeisureSpots("niigata"),
     Promise.all(
       travelServiceRegions.map(async (region) => ({
         region: region.slug,
         agencies: await getTravelAgencies(region.slug),
-        rankings: await getTravelServiceRankings(region.slug),
       }))
     ),
     getTravelApps(),
   ]);
 
-  const categoryResults: SearchResult[] = categories.map((category) => ({
+  const categoryResults: SearchResult[] = categories.filter((category) => category.status === "live").map((category) => ({
     id: "category-" + category.slug,
     type: "category",
     title: category.name,
@@ -642,28 +670,19 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     category: category.name,
     href: category.href,
     tags: [...category.searchFacets, ...category.contentTypes, category.status === "live" ? "公開中" : "準備中"],
+    imageUrl: category.images?.[0]?.url,
   }));
 
   const articleResults: SearchResult[] = articles.map((article) => ({
-    id: "article-" + article.slug,
-    type: "article",
-    title: article.title,
-    description: article.description,
-    category: article.category,
-    href: "/ramen/articles/" + article.slug,
-    tags: article.tags,
-    updatedAt: article.updatedAt,
-  }));
-
-  const genericArticleResults: SearchResult[] = genericArticles.map((article) => ({
     id: "article-" + article.category + "-" + article.slug,
     type: "article",
     title: article.title,
     description: article.description,
-    category: article.category,
-    href: routes.genericArticle(article.category, article.slug),
+    category: categoryLabelBySlug.get(article.category) ?? article.category,
+    href: articleHref(article),
     tags: article.tags,
     updatedAt: article.updatedAt,
+    imageUrl: article.coverImageUrl,
   }));
 
   const rankingResults: SearchResult[] = rankings.map((ranking) => ({
@@ -671,8 +690,8 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     type: "ranking",
     title: ranking.title,
     description: ranking.description,
-    category: "ラーメン",
-    href: "/ramen/rankings/" + ranking.slug,
+    category: rankingCategoryLabel(ranking),
+    href: rankingHref(ranking),
     tags: ranking.criteria,
     updatedAt: ranking.lastUpdatedAt,
   }));
@@ -686,17 +705,7 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     href: "/ramen/items/" + item.slug,
     tags: [item.area, item.genre, ...item.tags, item.parking ? "駐車場あり" : "駐車場要確認"],
     updatedAt: item.lastVerifiedAt,
-  }));
-
-  const leisureRankingResults: SearchResult[] = leisureRankings.map((ranking) => ({
-    id: "leisure-ranking-niigata-" + ranking.slug,
-    type: "ranking",
-    title: ranking.title,
-    description: ranking.description,
-    category: "レジャー",
-    href: routes.leisureRanking("niigata", ranking.slug),
-    tags: ranking.criteria,
-    updatedAt: ranking.lastUpdatedAt,
+    imageUrl: item.imageUrl,
   }));
 
   const leisureSpotResults: SearchResult[] = leisureSpots.map((spot) => ({
@@ -708,6 +717,7 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     href: routes.leisureSpot("niigata", spot.slug),
     tags: [spot.area, spot.genre, ...spot.tags, spot.parking ? "駐車場あり" : "駐車場要確認"],
     updatedAt: spot.lastVerifiedAt,
+    imageUrl: spot.imageUrl,
   }));
 
   const travelAgencyResults: SearchResult[] = travelServicePairs.flatMap(({ region, agencies }) => agencies.map((agency) => ({
@@ -719,17 +729,7 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     href: routes.travelAgency(region, agency.slug),
     tags: [agency.area, ...agency.services, ...agency.tags],
     updatedAt: agency.lastVerifiedAt,
-  })));
-
-  const travelServiceRankingResults: SearchResult[] = travelServicePairs.flatMap(({ region, rankings }) => rankings.map((ranking) => ({
-    id: "travel-service-ranking-" + region + "-" + ranking.slug,
-    type: "ranking",
-    title: ranking.title,
-    description: ranking.description,
-    category: "旅行アプリ・旅行会社",
-    href: routes.travelServicesRanking(region, ranking.slug),
-    tags: ranking.criteria,
-    updatedAt: ranking.lastUpdatedAt,
+    imageUrl: agency.imageUrl,
   })));
 
   const travelAppResults: SearchResult[] = travelApps.map((app) => ({
@@ -741,18 +741,16 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     href: routes.travelApps,
     tags: [app.useCase, ...app.platforms, ...app.features],
     updatedAt: app.lastVerifiedAt,
+    imageUrl: app.imageUrl,
   }));
 
   return [
     ...categoryResults,
     ...articleResults,
-    ...genericArticleResults,
     ...rankingResults,
     ...itemResults,
-    ...leisureRankingResults,
     ...leisureSpotResults,
     ...travelAgencyResults,
-    ...travelServiceRankingResults,
     ...travelAppResults,
   ];
 }

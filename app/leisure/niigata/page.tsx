@@ -14,7 +14,7 @@ import { routes } from "@/lib/routes";
 const region = "niigata";
 
 export const metadata = pageMetadata({
-  title: "新潟のおすすめレジャースポット",
+  title: "新潟のレジャー・お出かけスポットおすすめ比較｜人気の遊び場ランキングと穴場",
   description: "新潟県内のおすすめレジャースポットを、アウトドア、インドア、雨の日、子連れ、車なしで選べるように整理した地域ページです。",
   path: routes.leisureRegion(region),
 });

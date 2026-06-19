@@ -20,8 +20,8 @@ export function ArticleCard({ article, href }: { article: Article; href?: string
             {article.title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-7 text-slate-600">{article.description}</p>
+        <CardContent className="space-y-2 sm:space-y-4">
+          <p className="text-sm leading-5 sm:leading-7 text-slate-600">{article.description}</p>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
               <CalendarDays className="h-4 w-4" />

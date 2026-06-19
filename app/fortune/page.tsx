@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { createClient } from "@/lib/supabase/server";
-import { getRamenItems } from "@/lib/content";
-import { generateDailyFortune, jstToday, type FortuneResult, type LuckyItem } from "@/lib/fortune";
+import { jstToday, type FortuneResult, type FortuneInput, type FortuneGender } from "@/lib/fortune";
+import { buildLuckyItems, ensureUserDailyFortune } from "@/lib/fortune-server";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 import { FortuneReveal } from "@/components/fortune/FortuneReveal";
@@ -10,22 +10,11 @@ import { FortuneReveal } from "@/components/fortune/FortuneReveal";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = pageMetadata({
-  title: "今日の運勢",
+  title: "今日の運勢｜誕生日と性別で占う無料診断・総合運/恋愛運/金運/仕事運/健康運",
   description:
-    "総合運・恋愛運・金運・仕事運・健康運・対人運・おでかけ運を毎日チェック。今日のあなたの運勢を占います。",
+    "総合運・恋愛運・金運・仕事運・健康運・対人運・おでかけ運を毎日チェック。誕生日と性別であなただけの運勢を占います。",
   path: routes.fortune,
 });
-
-/** おでかけ・グルメ運の「今日のラッキースポット」候補プール（暫定: ラーメン店） */
-async function buildLuckyItems(): Promise<LuckyItem[]> {
-  const items = await getRamenItems();
-  return items.map((i) => ({
-    type: "ramen_item",
-    slug: i.slug,
-    name: i.name,
-    href: routes.ramenItem(i.slug),
-  }));
-}
 
 export default async function FortunePage() {
   const supabase = await createClient();
@@ -36,31 +25,28 @@ export default async function FortunePage() {
   const items = await buildLuckyItems();
   const isGuest = !user;
 
-  let result: FortuneResult;
+  let result: FortuneResult | null = null;
+  let needsInput = true;
   let renderMode: "2d" | "3d" = "2d";
   let awardedPoints: number | null = null;
 
   if (user) {
-    // 当日・本人の結果があれば再利用、なければ生成して保存（同日は固定）
-    const { data: existing } = await supabase
-      .schema("es")
-      .from("daily_fortunes")
-      .select("result")
-      .eq("user_id", user.id)
-      .eq("fortune_date", date)
-      .eq("fortune_type", "daily")
+    // 共有プロフィールから誕生日・性別を読み取り（あれば入力を省略）
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("birthday, gender")
+      .eq("id", user.id)
       .maybeSingle();
+    const birthday = profile?.birthday as string | null | undefined;
+    const gender = profile?.gender as FortuneGender | null | undefined;
+    const input: FortuneInput | null = birthday && gender ? { birthday, gender } : null;
 
-    if (existing?.result) {
-      result = existing.result as FortuneResult;
-    } else {
-      result = generateDailyFortune({ seed: `${user.id}|${date}`, date, items });
-      await supabase.schema("es").from("daily_fortunes").insert({
-        user_id: user.id,
-        fortune_date: date,
-        fortune_type: "daily",
-        result,
-      });
+    // 当日の結果があれば再利用、無く入力があれば生成して保存。どちらも無ければ入力を促す。
+    const res = await ensureUserDailyFortune(supabase, user.id, date, items, input);
+    if (res) {
+      result = res.result;
+      awardedPoints = res.awardedPoints;
+      needsInput = false;
     }
 
     // 占い演出設定（2D / 3D）— user_prefs.metadata.fortune_anim
@@ -72,16 +58,16 @@ export default async function FortunePage() {
       .maybeSingle();
     const anim = (prefs?.metadata as { fortune_anim?: string } | null)?.fortune_anim;
     renderMode = anim === "3d" ? "3d" : "2d";
-
-    // デイリーボーナス（サーバー制御RPC・1日1回・金額はサーバー固定）
-    const { data: awarded } = await supabase
-      .schema("es")
-      .rpc("claim_daily_bonus", { p_reason: "daily_fortune", p_reference: date });
-    if (typeof awarded === "number" && awarded > 0) awardedPoints = awarded;
-  } else {
-    // 未ログイン: 保存なしの当日共通フォーチュン（テスト・お試し用）
-    result = generateDailyFortune({ seed: `guest|${date}`, date, items });
   }
 
-  return <FortuneReveal result={result} isGuest={isGuest} renderMode={renderMode} awardedPoints={awardedPoints} />;
+  return (
+    <FortuneReveal
+      result={result}
+      isGuest={isGuest}
+      renderMode={renderMode}
+      awardedPoints={awardedPoints}
+      needsInput={needsInput}
+      date={date}
+    />
+  );
 }

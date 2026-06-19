@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes";
 import { getTravelRegions, getTravelHotels, getTravelRankings } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "旅行ガイド",
+  title: "旅行おすすめ比較ガイド｜温泉宿・ホテルのランキングと予約・選び方",
   description: "新潟・山形など各県の温泉旅館・宿泊施設を泉質・景観・旅スタイルで比較。ランキングと宿カードで整理しています。",
   path: routes.travel,
 });

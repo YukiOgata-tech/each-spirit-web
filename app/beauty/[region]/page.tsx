@@ -26,7 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
   const regionData = getBeautyRegion(region);
   if (!regionData) return {};
   return pageMetadata({
-    title: `${regionData.name}おすすめ美容室`,
+    title: `${regionData.name}の美容室・美容院おすすめ比較｜人気サロンランキングと選び方`,
     description: regionData.description,
     path: routes.beautyRegion(region),
   });

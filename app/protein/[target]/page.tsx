@@ -23,7 +23,7 @@ export async function generateMetadata({ params }: PageProps) {
   const info = getProteinTarget(target as ProteinTarget);
   if (!info) return {};
   return pageMetadata({
-    title: `${info.name}おすすめプロテイン`,
+    title: `${info.name}におすすめのプロテイン比較｜目的別ランキングと選び方`,
     description: info.description,
     path: routes.proteinTarget(target),
   });

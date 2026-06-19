@@ -33,11 +33,7 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [activeCategory, setActiveCategory] = useState("all");
-
-  const genreTags = useMemo(() => {
-    const tags = categories.flatMap((category) => [...category.searchFacets, ...category.contentTypes]);
-    return Array.from(new Set(tags)).slice(0, 12);
-  }, [categories]);
+  const liveCategories = useMemo(() => categories.filter((category) => category.status === "live"), [categories]);
 
   const filteredResults = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -77,7 +73,7 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.18, ease: "easeOut" }}
-            className="fixed inset-x-0 top-16 z-50 max-h-[calc(100dvh-64px)] overflow-y-auto border-t border-slate-200 bg-white shadow-2xl"
+            className="fixed inset-x-0 top-14 z-50 max-h-[calc(100dvh-56px)] overflow-y-auto border-t border-slate-200 bg-white shadow-2xl sm:top-16 sm:max-h-[calc(100dvh-64px)]"
           >
             <div className="mx-auto w-[calc(100%-32px)] max-w-2xl py-4">
               <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
@@ -102,7 +98,7 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
                   >
                     すべて
                   </button>
-                  {categories.map((category) => (
+                  {liveCategories.map((category) => (
                     <button
                       key={category.slug}
                       type="button"
@@ -117,6 +113,18 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
                   ))}
                 </div>
               </div>
+
+              <Link
+                href={routes.fortune}
+                onClick={closeMenu}
+                className="mt-3 flex min-h-14 items-center justify-between gap-3 rounded-lg bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 px-4 py-3 text-white shadow-lg shadow-violet-500/25"
+              >
+                <span>
+                  <span className="block text-sm font-black">デイリー占い</span>
+                  <span className="block text-xs font-semibold text-white/85">今日の運勢をチェック</span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0" />
+              </Link>
 
               <section className="mt-4" aria-label="検索結果">
                 <div className="mb-2 flex items-center justify-between">
@@ -160,7 +168,7 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
               <section className="mt-5" aria-label="カテゴリ">
                 <h2 className="text-sm font-bold text-slate-950">ジャンルから探す</h2>
                 <div className="mt-2 grid gap-2">
-                  {categories.map((category) => (
+                  {liveCategories.map((category) => (
                     <Link
                       key={category.slug}
                       href={category.href}
@@ -169,28 +177,9 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
                     >
                       <span className="flex items-center justify-between gap-3">
                         <span className="text-sm font-bold text-slate-950">{category.name}</span>
-                        <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold text-slate-600">
-                          {category.status === "live" ? "公開中" : "準備中"}
-                        </span>
                       </span>
                       <span className="mt-1 block text-xs leading-5 text-slate-500">{category.tagline}</span>
                     </Link>
-                  ))}
-                </div>
-              </section>
-
-              <section className="mt-5 pb-2" aria-label="検索タグ">
-                <h2 className="text-sm font-bold text-slate-950">よく使う切り口</h2>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {genreTags.map((tag) => (
-                    <button
-                      key={tag}
-                      type="button"
-                      onClick={() => setQuery(tag)}
-                      className="min-h-9 rounded-full border border-slate-200 bg-white px-3 text-xs font-bold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
-                    >
-                      {tag}
-                    </button>
                   ))}
                 </div>
               </section>

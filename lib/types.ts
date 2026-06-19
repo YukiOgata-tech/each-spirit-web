@@ -53,6 +53,7 @@ export type SearchResult = {
   href: string;
   tags: string[];
   updatedAt?: string;
+  imageUrl?: string;
 };
 
 export type Article = {
@@ -60,6 +61,7 @@ export type Article = {
   title: string;
   description: string;
   category: string;
+  region?: string;
   coverImageUrl?: string;
   tags: string[];
   publishedAt: string;
@@ -404,6 +406,9 @@ export type Ranking = {
   slug: string;
   title: string;
   description: string;
+  contentType?: string;
+  region?: string;
+  target?: string;
   criteria: string[];
   conclusion: string;
   quickTableLabel: string;
@@ -521,6 +526,7 @@ export type LeisureSpot = {
   mapUrl: string;
   officialLinks: OfficialLink[];
   editorComment: string;
+  imageUrl?: string;
   lastVerifiedAt: string;
   sources: Source[];
   faqs: FAQ[];

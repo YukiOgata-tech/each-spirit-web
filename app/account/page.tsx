@@ -7,17 +7,24 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
 import { FortuneAnimToggle } from "@/components/account/FortuneAnimToggle";
+import { ProfilePersonalInfo } from "@/components/account/ProfilePersonalInfo";
+import type { FortuneGender } from "@/lib/fortune";
 import { routes } from "@/lib/routes";
 import { getCurrentAdminUser } from "@/lib/admin";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "マイページ | Each Spirit",
+  title: "マイページ",
   robots: { index: false },
 };
 
 // ── 型定義 ────────────────────────────────────────────────
-type Profile = { display_name: string | null; avatar: string | null } | null;
+type Profile = {
+  display_name: string | null;
+  avatar: string | null;
+  birthday: string | null;
+  gender: FortuneGender | null;
+} | null;
 type LikeRow  = { like_type: string; content_type: string; content_id: string; created_at: string };
 type Notification = { id: string; title: string; body: string; action_url: string | null; created_at: string };
 type QuizResult   = { id: string; quiz_type: string; result: Record<string, unknown>; created_at: string };
@@ -56,7 +63,7 @@ export default async function AccountPage() {
   // データ並列取得（es スキーマを利用するには Supabase Dashboard の
   // Settings > API > Extra schemas に "es" を追加してください）
   const [profileRes, likesRes, notificationsRes, quizRes, pointsRes] = await Promise.allSettled([
-    supabase.from("profiles").select("display_name, avatar").eq("id", user.id).single(),
+    supabase.from("profiles").select("display_name, avatar, birthday, gender").eq("id", user.id).single(),
     supabase.schema("es").from("content_likes")
       .select("like_type, content_type, content_id, created_at")
       .eq("user_id", user.id)
@@ -138,6 +145,13 @@ export default async function AccountPage() {
               </div>
             </div>
           </div>
+
+          {/* 個人情報（誕生日・性別）の表示／編集 */}
+          <ProfilePersonalInfo
+            userId={user.id}
+            initialBirthday={profile?.birthday ?? null}
+            initialGender={profile?.gender ?? null}
+          />
 
           {/* 下段: 統計ストリップ */}
           <div className="mt-5 grid grid-cols-2 gap-3 sm:mt-6 sm:grid-cols-4">
