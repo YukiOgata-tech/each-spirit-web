@@ -322,6 +322,7 @@ function mapArticle(row: any): Article {
     title: row.title,
     description: row.description,
     category: row.category,
+    coverImageUrl: row.cover_image_url ?? undefined,
     tags: (row.tags ?? []) as string[],
     publishedAt: toDateStr(row.published_at),
     updatedAt: toDateStr(row.updated_at),
@@ -479,6 +480,18 @@ export async function getGenericArticles(): Promise<Article[]> {
     .from("articles")
     .select("*")
     .not("category", "in", `(${dedicatedArticleCategories.join(",")})`)
+    .eq("status", "published")
+    .order("updated_at", { ascending: false });
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getGenericArticlesByCategory(category: string): Promise<Article[]> {
+  if (dedicatedArticleCategories.includes(category)) return [];
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("articles")
+    .select("*")
+    .eq("category", category)
     .eq("status", "published")
     .order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);

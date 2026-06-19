@@ -7,59 +7,61 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/content/LikeButton";
 import { articleSchema, breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/seo";
-import { getCafeArticle, getCafeArticleMarkdown, getCafeArticles, getCafeRegions } from "@/lib/content";
+import { getGenericArticle, getGenericArticleMarkdown, getGenericArticles } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { site } from "@/content/site";
 
-type PageProps = { params: Promise<{ region: string; slug: string }> };
+type PageProps = { params: Promise<{ category: string; slug: string }> };
+
+function categoryLabel(category: string) {
+  return category
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 export async function generateStaticParams() {
-  const regions = getCafeRegions();
-  const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, articles: await getCafeArticles(r.slug) })));
-  return pairs.flatMap(({ region, articles }) => articles.map((article) => ({ region, slug: article.slug })));
+  const articles = await getGenericArticles();
+  return articles.map((article) => ({ category: article.category, slug: article.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { region, slug } = await params;
-  const article = await getCafeArticle(region, slug);
+  const { category, slug } = await params;
+  const article = await getGenericArticle(category, slug);
   if (!article) return {};
   return pageMetadata({
     title: article.title,
     description: article.description,
-    path: routes.cafeArticle(region, slug),
+    path: routes.genericArticle(category, slug),
     image: article.coverImageUrl ?? site.icon,
   });
 }
 
-export default async function CafeArticlePage({ params }: PageProps) {
-  const { region, slug } = await params;
-  const article = await getCafeArticle(region, slug);
-  const regionData = getCafeRegions().find((r) => r.slug === region);
-  if (!article || !regionData) notFound();
+export default async function GenericArticlePage({ params }: PageProps) {
+  const { category, slug } = await params;
+  const article = await getGenericArticle(category, slug);
+  if (!article) notFound();
 
-  const markdown = await getCafeArticleMarkdown(region, slug);
+  const markdown = await getGenericArticleMarkdown(category, slug);
+  const label = categoryLabel(category);
+  const path = routes.genericArticle(category, slug);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
-    { name: "カフェガイド", href: routes.cafe },
-    { name: regionData.name + "のカフェ", href: routes.cafeRegion(region) },
-    { name: article.title, href: routes.cafeArticle(region, slug) },
+    { name: label, href: routes.genericCategory(category) },
+    { name: article.title, href: path },
   ];
 
   return (
-    <article className="cafe-theme section-shell max-w-4xl">
-      <JsonLd data={articleSchema(article, routes.cafeArticle(region, slug))} />
+    <article className="section-shell max-w-4xl">
+      <JsonLd data={articleSchema(article, path)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(article.faqs)} />
-      <Breadcrumbs
-        items={breadcrumbs.map((item, index) => ({
-          label: item.name,
-          href: index === breadcrumbs.length - 1 ? undefined : item.href,
-        }))}
-      />
+      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
 
-      <div className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-soft sm:p-8">
+      <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-soft sm:p-8">
         <div className="flex flex-wrap gap-2">
-          <Badge>{article.category}</Badge>
+          <Badge>{label}</Badge>
           {article.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
         </div>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-5xl">{article.title}</h1>
@@ -70,11 +72,11 @@ export default async function CafeArticlePage({ params }: PageProps) {
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {article.category}</p>
         </div>
-        <LikeButton contentType="article" contentId={article.slug} regionSlug={region} className="mt-5" />
+        <LikeButton contentType="article" contentId={article.slug} className="mt-5" />
       </div>
 
       {article.summary.length > 0 && (
-        <section className="mt-6 rounded-lg border border-[var(--border)] bg-[var(--muted)] p-5">
+        <section className="mt-6 rounded-lg border border-slate-200 bg-slate-50 p-5">
           <h2 className="text-lg font-semibold text-slate-900">要点まとめ</h2>
           <ul className="mt-3 list-disc space-y-2 pl-6 text-sm leading-7 text-slate-700">
             {article.summary.map((point) => <li key={point}>{point}</li>)}

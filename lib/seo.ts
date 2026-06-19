@@ -174,6 +174,7 @@ export function articleSchema(article: Article, url: string) {
     author: { "@type": "Organization", name: article.author.name, url: absoluteUrl(routes.about) },
     publisher: organizationSchema(),
     mainEntityOfPage: absoluteUrl(url),
+    image: absoluteUrl(article.coverImageUrl ?? site.icon),
     about: article.tags,
     speakable: {
       "@type": "SpeakableSpecification",

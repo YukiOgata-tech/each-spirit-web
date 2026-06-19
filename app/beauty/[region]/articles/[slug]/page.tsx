@@ -8,6 +8,7 @@ import { articleSchema, breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/
 import { getBeautyArticle, getBeautyArticleMarkdown, getBeautyArticles, getBeautyRegions } from "@/lib/content";
 import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
+import { site } from "@/content/site";
 
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: article.title,
     description: article.description,
     path: routes.beautyArticle(region, slug),
+    image: article.coverImageUrl ?? site.icon,
   });
 }
 

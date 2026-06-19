@@ -53,6 +53,7 @@ export type Article = {
   title: string;
   description: string;
   category: string;
+  coverImageUrl?: string;
   tags: string[];
   publishedAt: string;
   updatedAt: string;

@@ -45,6 +45,9 @@ function listingPaths(category: string, region: string | null) {
     paths.push(routes.cafe);
     if (region) paths.push(routes.cafeRegion(region));
   }
+  if (!["ramen", "beauty", "cafe"].includes(category)) {
+    paths.push(routes.genericCategory(category));
+  }
   return paths;
 }
 

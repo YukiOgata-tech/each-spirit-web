@@ -9,6 +9,7 @@ import { articleSchema, breadcrumbSchema, faqSchema, pageMetadata } from "@/lib/
 import { getArticleMarkdown, getRamenArticle, getRamenArticles } from "@/lib/content";
 import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
+import { site } from "@/content/site";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -25,6 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: article.title,
     description: article.description,
     path: routes.ramenArticle(article.slug),
+    image: article.coverImageUrl ?? site.icon,
   });
 }
 

@@ -70,6 +70,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
+    ...Array.from(new Set(genericArticles.map((article) => article.category))).map((category) => ({ url: absoluteUrl(routes.genericCategory(category)), lastModified: new Date("2026-06-19") })),
     ...getRamenRegions().map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...ramenArticles.map((article) => ({ url: absoluteUrl(routes.ramenArticle(article.slug)), lastModified: new Date(article.updatedAt) })),
     ...genericArticles.map((article) => ({ url: absoluteUrl(routes.genericArticle(article.category, article.slug)), lastModified: new Date(article.updatedAt) })),
