@@ -6,6 +6,7 @@ export const routes = {
   contact: "/contact",
   privacy: "/privacy",
   disclaimer: "/disclaimer",
+  search: "/search",
   genericCategory: (category: string) => "/" + category,
   genericArticle: (category: string, slug: string) => "/" + category + "/" + slug,
   ramen: "/ramen",

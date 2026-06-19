@@ -4,7 +4,7 @@ import { routes } from "@/lib/routes";
 
 const utilityLinks = [
   { href: routes.home, label: "トップ" },
-  { href: "/#search", label: "検索" },
+  { href: routes.search, label: "検索" },
   { href: routes.about, label: "方針" },
 ];
 

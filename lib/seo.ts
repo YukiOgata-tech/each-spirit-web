@@ -72,7 +72,7 @@ export function websiteSchema() {
     publisher: organizationSchema(),
     potentialAction: {
       "@type": "SearchAction",
-      target: siteUrl + "/?q={search_term_string}",
+      target: siteUrl + routes.search + "?q={search_term_string}",
       "query-input": "required name=search_term_string",
     },
   };

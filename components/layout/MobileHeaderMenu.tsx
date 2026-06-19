@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Category, SearchResult } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { routes } from "@/lib/routes";
 
 const typeLabels: Record<SearchResult["type"], string> = {
   article: "記事",
@@ -120,7 +121,7 @@ export function MobileHeaderMenu({ categories, results }: MobileHeaderMenuProps)
               <section className="mt-4" aria-label="検索結果">
                 <div className="mb-2 flex items-center justify-between">
                   <h2 className="text-sm font-bold text-slate-950">すぐ探す</h2>
-                  <Link href="/#search" onClick={closeMenu} className="text-xs font-bold text-[var(--primary)]">
+                  <Link href={routes.search} onClick={closeMenu} className="text-xs font-bold text-[var(--primary)]">
                     詳細検索へ
                   </Link>
                 </div>

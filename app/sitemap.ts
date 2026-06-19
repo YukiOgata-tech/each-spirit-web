@@ -66,7 +66,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getProteinRankings(),
   ]);
 
-  const staticRoutes = [routes.home, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein];
+  const staticRoutes = [routes.home, routes.search, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein];
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),

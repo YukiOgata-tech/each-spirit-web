@@ -27,6 +27,7 @@ const unavailableCategorySlugs = new Set([
   "privacy",
   "protein",
   "robots.txt",
+  "search",
   "sitemap.xml",
   "travel",
   "travel-services",

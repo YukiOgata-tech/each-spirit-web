@@ -4,6 +4,7 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { HomeVisualStory } from "@/components/home/HomeVisualStory";
 import { DiscoverySearch } from "@/components/search/DiscoverySearch";
+import { SearchForm } from "@/components/search/SearchForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getCategories, getLatestArticles, getPopularRankings, getSearchResults } from "@/lib/content";
@@ -47,12 +48,13 @@ export default async function HomePage() {
             </p>
             <div className="mt-6 flex flex-wrap gap-2.5 sm:gap-3">
               <Button asChild size="lg">
-                <Link href="#search">横断検索を使う<SearchArrow /></Link>
+                <Link href={routes.search}>検索ページを開く<SearchArrow /></Link>
               </Button>
               <Button asChild variant="outline" size="lg">
                 <Link href={routes.ramen}>公開中カテゴリへ</Link>
               </Button>
             </div>
+            <SearchForm className="mt-5 max-w-2xl rounded-lg border border-slate-200 bg-white/90 p-2 shadow-sm" placeholder="店名・地域・ジャンル・記事テーマで検索" />
           </div>
 
           <HomeVisualStory categories={categories} />

@@ -18,15 +18,21 @@ const typeLabels: Record<SearchResult["type"], string> = {
 export function DiscoverySearch({
   categories,
   results,
+  initialQuery = "",
+  maxResults = 8,
+  expanded = false,
 }: {
   categories: Category[];
   results: SearchResult[];
+  initialQuery?: string;
+  maxResults?: number;
+  expanded?: boolean;
 }) {
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<SearchResult["type"] | "all">("all");
 
-  const filtered = useMemo(() => {
+  const matched = useMemo(() => {
     const normalized = query.trim().toLowerCase();
     return results
       .filter((result) => category === "all" || result.category === category)
@@ -37,9 +43,9 @@ export function DiscoverySearch({
           .join(" ")
           .toLowerCase()
           .includes(normalized);
-      })
-      .slice(0, 8);
+      });
   }, [category, query, results, type]);
+  const filtered = useMemo(() => matched.slice(0, maxResults), [matched, maxResults]);
 
   // カテゴリ名 → 背景画像・テーマ色（カテゴリデータの実URLを利用）
   const catVisual = useMemo(() => {
@@ -100,11 +106,11 @@ export function DiscoverySearch({
         <div className="flex items-center justify-between gap-3 text-sm text-slate-500">
           <span className="inline-flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {filtered.length}件を表示
+            {matched.length}件中 {filtered.length}件を表示
           </span>
-          <span>カテゴリ追加後も同じ検索UIに統合</span>
+          <span>{expanded ? "検索ページで詳細に絞り込み" : "カテゴリ追加後も同じ検索UIに統合"}</span>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={expanded ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid gap-3 sm:grid-cols-2"}>
           {filtered.map((result, index) => {
             const v = visualFor(result.category);
             return (

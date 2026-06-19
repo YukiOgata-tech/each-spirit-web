@@ -37,6 +37,7 @@ export default async function NewArticlePage() {
     "opengraph-image",
     "privacy",
     "robots.txt",
+    "search",
     "sitemap.xml",
   ];
   const reservedSlugSet = new Set(reservedSlugs);
