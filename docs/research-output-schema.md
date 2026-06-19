@@ -13,7 +13,7 @@
 - `sources` と `last_verified_at` / `last_updated_at` は必須です。
 - 各 `item` は最低 2 件以上の `sources` を持たせてください。ランキングは最低 1 件以上の `sources` を持たせてください。
 - `articles` は最低 1 件以上必須です。本文は詳細な記事として作成してください。
-- 記事本文は `body_md` に入れるか、別 `.md` ファイルとして同梱してください。別ファイルの場合、JSON の `body_md` には該当 Markdown ファイル名を入れてください。
+- 記事本文は最終的に Supabase `es.articles.body_md` に保存します。返却時は `body_md` に Markdown 本文を直接入れるか、別 `.md` ファイルとして同梱してください。
 - 公式情報、自治体・観光協会、店舗/会社公式 SNS を優先し、口コミサイトや個人ブログは補助情報として扱ってください。
 - PR、広告、アフィリエイト、掲載料の関係が分かる場合は必ず `is_pr` または `metadata.disclosure` に明記してください。
 
@@ -393,7 +393,7 @@
 本文は次のどちらかで返却できます。
 
 - JSON 内の `body_md` に Markdown 本文を直接入れる。
-- 記事本文を別 `.md` ファイルで作成し、JSON の `body_md` にファイル名を入れる。
+- 記事本文を別 `.md` ファイルで作成し、JSON の `body_md` にファイル名を入れる。取り込み時に本文を読み込み、DB の `body_md` に保存します。
 
 `.md` ファイルを分ける場合は、JSON と Markdown ファイルをまとめた zip で返却しても構いません。
 
@@ -404,7 +404,7 @@
   "region": "niigata",
   "title": "新潟ラーメンの選び方ガイド",
   "description": "記事カードやSEOで使う説明文。",
-  "body_md": "niigata-ramen-first-guide.md",
+  "body_md": "# 見出し\n\nMarkdown本文",
   "cover_image_url": null,
   "author_name": "Each Spirit 編集部",
   "tags": ["新潟", "ラーメン", "初めて"],

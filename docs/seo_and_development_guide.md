@@ -11,10 +11,12 @@
 - 新しいドメインから画像を読み込む際は、[next.config.ts](file:///C:/projects/each-spirit/next.config.ts) の `images.remotePatterns` にドメインの許可設定を追加してください。
 - 登録を忘れると、ページビルド時または本番稼働時に画像のロードエラー（400 Bad Request 等）が発生します。
 
-### ② シードデータの依存関係（登録順序）
-[scripts/seed-supabase.ts](file:///C:/projects/each-spirit/scripts/seed-supabase.ts) では、ローカルの `content/**` から Supabase DB（`es` スキーマ）へデータを upsert します。
+### ② Supabase 正のコンテンツ登録
+公開コンテンツの正は Supabase DB（`es` スキーマ）です。新しい記事、店舗、ランキングは調査 JSON / Markdown を確認したうえで、import script や SQL で `es.articles`、`es.items`、`es.rankings`、`es.ranking_items` へ登録します。
 - ランキング（`rankings` テーブル）は、登録された店舗・商品（`items` テーブル）の `slug` を参照します。
-- ローカルで新しいランキングを定義する際は、必ず**「そのランキングに紐づく店舗（Item/Product）データ」も定義されていること**を確認してください。参照先の店舗が存在しない場合、シードやビルドの段階で外部キー整合性エラーになります。
+- 新しいランキングを登録する際は、必ず**「そのランキングに紐づく店舗（Item/Product）データ」も DB に存在すること**を確認してください。参照先の店舗が存在しない場合、登録時に外部キー整合性エラーになります。
+
+[scripts/seed-supabase.ts](file:///C:/projects/each-spirit/scripts/seed-supabase.ts) は旧ローカル `content/**` から DB を upsert・洗い替えする復旧/初期投入用 script です。通常実行はブロックされ、`ALLOW_LEGACY_CONTENT_SEED=1` を明示した場合だけ動きます。
 
 外部 ChatGPT などへ調査を依頼する場合は、[docs/research-output-schema.md](file:///C:/projects/each-spirit/docs/research-output-schema.md) の JSON 形式で返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、content_type、metadata、sources の解釈コストが増えます。
 

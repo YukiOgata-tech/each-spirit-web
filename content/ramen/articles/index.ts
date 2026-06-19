@@ -25,7 +25,6 @@ export const ramenArticles: Article[] = [
       "エリア別・ジャンル別の選び方",
       "店舗詳細で確認すべき営業時間・駐車場・公式情報",
     ],
-    markdownFile: "niigata-ramen-first-guide.md",
     sources: [
       { title: "新潟市ラーメンガイド", url: "https://niigatacity-ramen.jp/", sourceType: "official", collectedAt, note: "新潟市内の店舗情報とカテゴリ文脈の確認。" },
       { title: "新潟市ラーメンガイドブック", url: "https://www.city.niigata.lg.jp/kanko/kanko/oshirase/ramen.files/guidebook.pdf", sourceType: "government", collectedAt, note: "新潟5大ラーメンと掲載店舗の確認。" },
@@ -57,7 +56,6 @@ export const ramenArticles: Article[] = [
       "代表店の選び方",
       "県内ページを拡張する時の情報整理方針",
     ],
-    markdownFile: "niigata-five-ramen-guide.md",
     sources: [
       { title: "新潟市ラーメンガイドブック", url: "https://www.city.niigata.lg.jp/kanko/kanko/oshirase/ramen.files/guidebook.pdf", sourceType: "government", collectedAt, note: "新潟5大ラーメンの分類と掲載店舗確認。" },
       { title: "燕背脂ラーメンMAP", url: "https://ra-men.tsubame-kankou.jp/", sourceType: "tourism", collectedAt, note: "燕背脂ラーメンの地域文脈確認。" },
@@ -89,7 +87,6 @@ export const ramenArticles: Article[] = [
       "駐車場情報の読み方",
       "県内ラーメン巡りの注意点",
     ],
-    markdownFile: "niigata-ramen-car-access.md",
     sources: [
       { title: "新潟市ラーメンガイド", url: "https://niigatacity-ramen.jp/", sourceType: "official", collectedAt, note: "駐車場掲載のある新潟市内店舗確認。" },
       { title: "燕背脂ラーメンMAP 杭州飯店", url: "https://ra-men.tsubame-kankou.jp/stores/entry-27.html", sourceType: "tourism", collectedAt, note: "杭州飯店の駐車場有と営業時間確認。" },
@@ -120,7 +117,6 @@ export const ramenArticles: Article[] = [
       "からみそ・冷やしラーメン発祥・酒田ラーメンの背景",
       "訪問前に確認すべき営業時期・時間・駐車場",
     ],
-    markdownFile: "yamagata-ramen-first-guide.md",
     sources: [
       { title: "山形市公式 ラーメン消費額日本一", url: "https://www.city.yamagata-yamagata.lg.jp/jigyosya/miryoku/brand/1017939.html", sourceType: "government", collectedAt: collectedAtYamagata, note: "山形市のラーメン消費額日本一の確認。" },
       { title: "龍上海 公式サイト", url: "https://ryushanhai.com/group/", sourceType: "official", collectedAt: collectedAtYamagata, note: "からみそラーメン発祥・龍上海の店舗情報確認。" },

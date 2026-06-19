@@ -24,7 +24,6 @@ export const beautyArticles: Article[] = [
       "施術内容で候補を絞る方法",
       "カウンセリング前の準備と確認事項",
     ],
-    markdownFile: "niigata-beauty-salon-guide.md",
     sources: [
       { title: "ホットペッパービューティー 新潟", url: "https://beauty.hotpepper.jp/svcSH/macHA/salon/", sourceType: "local-media", collectedAt, note: "新潟市内の各施術カテゴリの人気サロン傾向を確認。" },
       { title: "楽天ビューティ 新潟市 口コミ", url: "https://beauty.rakuten.co.jp/addr15101/sort4/", sourceType: "local-media", collectedAt, note: "口コミ数・評価の高いサロン傾向を確認。" },
@@ -56,7 +55,6 @@ export const beautyArticles: Article[] = [
       "ブリーチ系カラーのリスクと対策",
       "カラーとトリートメントの費用目安",
     ],
-    markdownFile: "niigata-hair-color-guide.md",
     sources: [
       { title: "ホットペッパービューティー 新潟 カラー人気", url: "https://beauty.hotpepper.jp/genre/gkw008/pre15/city15100001/", sourceType: "local-media", collectedAt, note: "新潟市カラー人気サロンとメニュー傾向を確認。" },
       { title: "Beauty Park 新潟 カラー特集", url: "https://www.beauty-park.jp/niigata/niigata/color/", sourceType: "editorial", collectedAt, note: "カラー施術人気サロンのメニュー情報を参考。" },

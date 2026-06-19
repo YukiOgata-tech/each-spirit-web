@@ -1,6 +1,8 @@
 /**
- * Supabase データ移行スクリプト
- * ローカル TypeScript コンテンツファイルを es.* テーブルに upsert します。
+ * Legacy Supabase seed script.
+ * Supabase es.* を正とするため、通常実行では DB を更新しません。
+ * 既存のローカル TypeScript コンテンツを初期投入・復旧に使う場合だけ、
+ * ALLOW_LEGACY_CONTENT_SEED=1 を明示して実行してください。
  *
  * 実行前の準備:
  *   1. Supabase Dashboard → Settings → API → Extra schemas に "es" を追加
@@ -9,18 +11,26 @@
  *      （ダッシュボード → Settings → API → service_role の値）
  *
  * 実行方法:
- *   npm run db:seed
+ *   PowerShell: $env:ALLOW_LEGACY_CONTENT_SEED='1'; npm run db:seed
  *
- * 冪等: 何度実行しても安全（upsert）
+ * 注意:
+ *   この script は es.items / es.rankings / es.ranking_items をローカル定義で
+ *   upsert・洗い替えします。通常のコンテンツ更新には使わないでください。
  */
 
 import { config } from "dotenv"
 config({ path: ".env.local" })
 
+if (process.env.ALLOW_LEGACY_CONTENT_SEED !== "1") {
+  console.error("❌ npm run db:seed は通常実行できません。")
+  console.error("   現在は Supabase es.* をコンテンツの正としています。")
+  console.error("   ローカル content/** から DB を上書きする必要がある初期投入・復旧時のみ、")
+  console.error("   ALLOW_LEGACY_CONTENT_SEED=1 を明示して実行してください。")
+  process.exit(1)
+}
+
 import { createClient } from "@supabase/supabase-js"
 import ws from "ws"
-import { readFileSync } from "fs"
-import { join } from "path"
 
 // ── コンテンツ import ──────────────────────────────────────
 import { ramenArticles }         from "@/content/ramen/articles"
@@ -84,14 +94,6 @@ function err(label: string, error: unknown) {
   console.error(`  ❌ ${label}:`, error)
 }
 
-function readMd(dir: string, file: string): string {
-  try {
-    return readFileSync(join(process.cwd(), "content", dir, file), "utf8")
-  } catch {
-    return ""
-  }
-}
-
 /** region を slug プレフィックスから推定 */
 function inferRegion(slug: string): string | null {
   if (slug.startsWith("niigata"))  return "niigata"
@@ -117,7 +119,6 @@ async function migrateArticles() {
       region:          inferRegion(a.slug),
       title:           a.title,
       description:     a.description,
-      body_md:         readMd("ramen/articles", a.markdownFile),
       tags:            a.tags,
       author_name:     a.author.name,
       status:          "published" as const,
@@ -137,7 +138,6 @@ async function migrateArticles() {
       region:          "niigata",
       title:           a.title,
       description:     a.description,
-      body_md:         readMd("beauty/niigata/articles", a.markdownFile),
       tags:            a.tags,
       author_name:     a.author.name,
       status:          "published" as const,
@@ -157,7 +157,6 @@ async function migrateArticles() {
       region:          "yamagata",
       title:           a.title,
       description:     a.description,
-      body_md:         readMd("beauty/yamagata/articles", a.markdownFile),
       tags:            a.tags,
       author_name:     a.author.name,
       status:          "published" as const,

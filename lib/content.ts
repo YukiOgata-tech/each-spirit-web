@@ -328,7 +328,6 @@ function mapArticle(row: any): Article {
     author: m.author ?? { name: row.author_name ?? "", role: "", url: "" },
     summary: (m.summary ?? []) as string[],
     whatYouLearn: (m.what_you_learn ?? []) as string[],
-    markdownFile: "",
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedSlugs: (m.related_slugs ?? []) as string[],

@@ -2,9 +2,6 @@
  * Generate INSERT SQL for all es.* tables.
  * Run: tsx --tsconfig scripts/tsconfig.json scripts/gen-sql.ts > scripts/out.sql
  */
-import { readFileSync } from "fs";
-import { join } from "path";
-
 import { ramenArticles }            from "@/content/ramen/articles";
 import { ramenItems }               from "@/content/ramen/items";
 import { ramenRankings }            from "@/content/ramen/rankings";
@@ -28,6 +25,7 @@ import { beautyRankings as yamagataBeautyRankings } from "@/content/beauty/yamag
 import { beautyArticles as yamagataBeautyArticles } from "@/content/beauty/yamagata/articles";
 import { proteinProducts }          from "@/content/protein/products";
 import { proteinRankings }          from "@/content/protein/rankings";
+import type { CafeRanking, ProteinRanking, Ranking } from "@/lib/types";
 
 // ── helpers ─────────────────────────────────────────────────────────────────
 
@@ -43,14 +41,6 @@ function j(v: unknown): string {
 
 function arr(items: string[]): string {
   return "ARRAY[" + items.map(s).join(", ") + "]::text[]";
-}
-
-function readMd(dir: string, file: string): string {
-  try {
-    return readFileSync(join(process.cwd(), "content", dir, file), "utf8");
-  } catch {
-    return "";
-  }
 }
 
 function inferRegion(slug: string): string | null {
@@ -70,7 +60,6 @@ function genArticles() {
       region:       inferRegion(a.slug),
       title:        a.title,
       description:  a.description,
-      body_md:      readMd("ramen/articles", a.markdownFile),
       tags:         a.tags,
       author_name:  a.author.name,
       published_at: a.publishedAt,
@@ -85,7 +74,6 @@ function genArticles() {
       region:       "niigata",
       title:        a.title,
       description:  a.description,
-      body_md:      readMd("beauty/niigata/articles", a.markdownFile),
       tags:         a.tags,
       author_name:  a.author.name,
       published_at: a.publishedAt,
@@ -100,7 +88,6 @@ function genArticles() {
       region:       "yamagata",
       title:        a.title,
       description:  a.description,
-      body_md:      readMd("beauty/yamagata/articles", a.markdownFile),
       tags:         a.tags,
       author_name:  a.author.name,
       published_at: a.publishedAt,
@@ -113,21 +100,36 @@ function genArticles() {
 
   console.log("-- ========== ARTICLES ==========");
   for (const r of rows) {
-    console.log(`INSERT INTO es.articles (slug, category, region, title, description, body_md, tags, author_name, status, published_at, metadata) VALUES (
+    console.log(`INSERT INTO es.articles (slug, category, region, title, description, tags, author_name, status, published_at, metadata) VALUES (
   ${s(r.slug)}, ${s(r.category)}, ${s(r.region)},
-  ${s(r.title)}, ${s(r.description)}, ${s(r.body_md)},
+  ${s(r.title)}, ${s(r.description)},
   ${arr(r.tags)}, ${s(r.author_name)}, 'published', ${s(r.published_at)},
   ${j(r.metadata)}
 ) ON CONFLICT (slug) DO UPDATE SET
-  title=EXCLUDED.title, description=EXCLUDED.description, body_md=EXCLUDED.body_md,
+  title=EXCLUDED.title, description=EXCLUDED.description,
   tags=EXCLUDED.tags, metadata=EXCLUDED.metadata, updated_at=NOW();`);
   }
 }
 
 // ── items ────────────────────────────────────────────────────────────────────
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function itemRow(slug: string, content_type: string, region: string | null, x: any, metadata: unknown) {
+type SqlItemInput = {
+  name: string;
+  description: string;
+  imageUrl?: string | null;
+  address?: string | null;
+  area?: string | null;
+  phone?: string | null;
+  priceRange?: string | null;
+  price_range?: string | null;
+  officialUrl?: string | null;
+  mapUrl?: string | null;
+  tags?: string[];
+  lastVerifiedAt?: string | null;
+  editorComment?: string | null;
+};
+
+function itemRow(slug: string, content_type: string, region: string | null, x: SqlItemInput, metadata: unknown) {
   return `INSERT INTO es.items (slug, content_type, region, name, description, image_url, address, area, phone, price_range, official_url, map_url, tags, last_verified_at, editor_comment, metadata) VALUES (
   ${s(slug)}, ${s(content_type)}, ${s(region)},
   ${s(x.name)}, ${s(x.description)}, ${s(x.imageUrl ?? null)},
@@ -157,33 +159,33 @@ function genItems() {
   for (const c of niigataCafeItems) {
     console.log(itemRow(c.slug, "cafe", "niigata", c, {
       style: c.style, wifi: c.wifi, power: c.power, parking: c.parking,
-      parking_note: c.parkingNote, pet_friendly: (c as any).petFriendly,
+      parking_note: c.parkingNote, pet_friendly: c.petFriendly,
       reservation: c.reservation, signature_menu: c.signatureMenu,
       highlight: c.highlight, business_hours: c.businessHours,
       closed_days: c.closedDays, official_links: c.officialLinks,
-      instagram_url: (c as any).instagramUrl, sources: c.sources, faqs: c.faqs,
+      instagram_url: c.instagramUrl, sources: c.sources, faqs: c.faqs,
       related_ranking_slugs: c.relatedRankingSlugs,
     }));
   }
   for (const c of yamagataCafeItems) {
     console.log(itemRow(c.slug, "cafe", "yamagata", c, {
       style: c.style, wifi: c.wifi, power: c.power, parking: c.parking,
-      parking_note: c.parkingNote, pet_friendly: (c as any).petFriendly,
+      parking_note: c.parkingNote, pet_friendly: c.petFriendly,
       reservation: c.reservation, signature_menu: c.signatureMenu,
       highlight: c.highlight, business_hours: c.businessHours,
       closed_days: c.closedDays, official_links: c.officialLinks,
-      instagram_url: (c as any).instagramUrl, sources: c.sources, faqs: c.faqs,
+      instagram_url: c.instagramUrl, sources: c.sources, faqs: c.faqs,
       related_ranking_slugs: c.relatedRankingSlugs,
     }));
   }
   for (const c of toyamaCafeItems) {
     console.log(itemRow(c.slug, "cafe", "toyama", c, {
       style: c.style, wifi: c.wifi, power: c.power, parking: c.parking,
-      parking_note: c.parkingNote, pet_friendly: (c as any).petFriendly,
+      parking_note: c.parkingNote, pet_friendly: c.petFriendly,
       reservation: c.reservation, signature_menu: c.signatureMenu,
       highlight: c.highlight, business_hours: c.businessHours,
       closed_days: c.closedDays, official_links: c.officialLinks,
-      instagram_url: (c as any).instagramUrl, sources: c.sources, faqs: c.faqs,
+      instagram_url: c.instagramUrl, sources: c.sources, faqs: c.faqs,
       related_ranking_slugs: c.relatedRankingSlugs,
     }));
   }
@@ -259,7 +261,6 @@ function genItems() {
       carbs: p.carbs, fat: p.fat, package_weight: p.packageWeight,
       price_per_kg: p.pricePerKg, flavors: p.flavors,
       pros: p.pros, cons: p.cons, sources: p.sources, faqs: p.faqs,
-      related_ranking_slugs: (p as any).relatedRankingSlugs,
     }));
   }
 }
@@ -279,22 +280,35 @@ type RankingRow = {
   last_updated_at: string;
   sources: unknown;
   faqs: unknown;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   items: Array<{ rank: number; itemSlug: string; score: number; reason: string; isPr: boolean }>;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function normalize(r: any, ct: string, ict: string, region: string | null, itemKey = "itemSlug"): RankingRow {
+type SourceRanking = Ranking | CafeRanking | ProteinRanking;
+type SourceRankingItem = SourceRanking["items"][number];
+
+function getRankingItemSlug(item: SourceRankingItem, itemKey: "itemSlug" | "cafeSlug" | "productSlug") {
+  if (itemKey === "cafeSlug" && "cafeSlug" in item) return item.cafeSlug;
+  if (itemKey === "productSlug" && "productSlug" in item) return item.productSlug;
+  if ("itemSlug" in item) return item.itemSlug;
+  return "";
+}
+
+function normalize(
+  r: SourceRanking,
+  ct: string,
+  ict: string,
+  region: string | null,
+  itemKey: "itemSlug" | "cafeSlug" | "productSlug" = "itemSlug",
+): RankingRow {
   return {
     slug: r.slug, content_type: ct, region, item_content_type: ict,
     title: r.title, description: r.description,
     conclusion: r.conclusion ?? "", quick_table_label: r.quickTableLabel ?? "",
     criteria: r.criteria ?? [], last_updated_at: r.lastUpdatedAt,
     sources: r.sources ?? [], faqs: r.faqs ?? [],
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    items: (r.items ?? []).map((i: any) => ({
-      rank: i.rank, itemSlug: i[itemKey] ?? i.itemSlug ?? i.productSlug ?? "",
-      score: i.score ?? 0, reason: i.reason ?? "", isPr: i.isPr ?? false,
+    items: r.items.map((i) => ({
+      rank: i.rank, itemSlug: getRankingItemSlug(i, itemKey),
+      score: i.score ?? 0, reason: i.reason ?? "", isPr: "isPr" in i ? i.isPr : false,
     })),
   };
 }

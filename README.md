@@ -33,13 +33,13 @@ npm run build
 - `npm run typecheck`: `tsc --noEmit` を実行します。
 - `npm run build`: production build を作成します。
 - `npm run start`: build 済みアプリを起動します。
-- `npm run db:seed`: `content/**` の入力データを Supabase `es` スキーマへ upsert します。
+- `npm run db:seed`: 旧ローカル content から Supabase `es` スキーマへ upsert する復旧・初期投入用 script です。通常実行はブロックされ、`ALLOW_LEGACY_CONTENT_SEED=1` が必要です。
 
 ## ディレクトリ構成
 
 - `app/`: App Router の route、layout、metadata、loading UI、`sitemap.ts`、`robots.ts`、route handler。
 - `components/`: 再利用 UI。`layout/`、`cards/`、`seo/`、`ui/`、カテゴリ別 UI など。
-- `content/`: コンテンツの入力ソース。記事 Markdown、カテゴリ・地域・ランキング・店舗/商品データを管理します。
+- `content/`: カテゴリ・地域などの設定と、旧 seed 用の型付きデータを置きます。記事本文・店舗/商品・ランキングの公開データは Supabase `es` スキーマを正とします。
 - `lib/`: 型、route 定義、SEO 補助、コンテンツ取得関数、Supabase client、共通 utility。
 - `supabase/`: `es` スキーマ用 migration と運用ドキュメント。
 - `scripts/`: Supabase seed、SQL 生成などの運用スクリプト。
@@ -49,12 +49,18 @@ UI コンポーネントでは `content/**` を直接 import せず、原則と�
 
 ## コンテンツ配信の流れ
 
-現在、記事・店舗/商品・ランキングの配信データは Supabase の `es` スキーマから読み取ります。
+現在、記事・店舗/商品・ランキングの配信データは Supabase の `es` スキーマから読み取ります。公開コンテンツの正は Supabase です。
 
-1. 開発時に `content/**` の Markdown / TypeScript データを編集します。
-2. `npm run db:seed` を実行します。
-3. `scripts/seed-supabase.ts` が `es.articles`、`es.items`、`es.rankings`、`es.ranking_items` へ upsert します。
+1. 調査 JSON / Markdown を確認します。
+2. import script や SQL で Supabase `es.articles`、`es.items`、`es.rankings`、`es.ranking_items` へ反映します。
+3. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
 4. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
+
+`npm run db:seed` は旧ローカル content から DB を上書きできるため、通常実行では停止します。初期投入・復旧など明確な目的がある場合だけ、PowerShell では次のように実行します。
+
+```powershell
+$env:ALLOW_LEGACY_CONTENT_SEED='1'; npm run db:seed
+```
 
 カテゴリ、地域、ターゲットなどの設定系データは `content/**` の TypeScript を直接参照しています。
 
@@ -83,7 +89,7 @@ REVALIDATE_SECRET=
 
 root layout の既定 ISR は `app/layout.tsx` の `revalidate` で管理しています。コンテンツ更新直後に即時反映したい場合は `app/api/revalidate/route.ts` の on-demand revalidate を使います。
 
-`npm run db:seed` は、`SITE_REVALIDATE_URL` と `REVALIDATE_SECRET` が設定されている場合に再検証リクエストを送信します。
+旧 seed script は、`SITE_REVALIDATE_URL` と `REVALIDATE_SECRET` が設定されている場合に再検証リクエストを送信します。通常の DB 直接更新後は、必要に応じて `POST /api/revalidate` を実行してください。
 
 ## SEO / AI 検索対策
 

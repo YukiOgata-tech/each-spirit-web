@@ -59,7 +59,6 @@ export type Article = {
   author: Author;
   summary: string[];
   whatYouLearn: string[];
-  markdownFile: string;
   sources: Source[];
   faqs: FAQ[];
   relatedSlugs: string[];

@@ -24,7 +24,6 @@ export const beautyArticles: Article[] = [
       "施術内容で候補を絞る方法",
       "山形の移動事情を踏まえたサロン選び",
     ],
-    markdownFile: "yamagata-beauty-salon-guide.md",
     sources: [
       { title: "ホットペッパービューティー 山形市", url: "https://beauty.hotpepper.jp/svcSE/macED/salon/sacX413/", sourceType: "local-media", collectedAt, note: "山形市内のサロン傾向を確認。" },
       { title: "楽天ビューティ 山形市 口コミ", url: "https://beauty.rakuten.co.jp/addr06201/sort4/", sourceType: "local-media", collectedAt, note: "口コミ数・評価の高いサロン傾向を確認。" },
@@ -56,7 +55,6 @@ export const beautyArticles: Article[] = [
       "酸性系トリートメントの特徴",
       "オーガニック・グレイカラーの活用場面",
     ],
-    markdownFile: "yamagata-hair-color-guide.md",
     sources: [
       { title: "Beauty Park 山形市 カラー", url: "https://www.beauty-park.jp/yamagata/yamagata-shi/", sourceType: "editorial", collectedAt, note: "山形市カラー人気サロンとメニュー傾向を確認。" },
       { title: "ヘアログ 山形市 人気美容室", url: "https://hairlog.jp/yamagata/C6201", sourceType: "local-media", collectedAt, note: "山形の人気スタイルとトレンドを確認。" },
