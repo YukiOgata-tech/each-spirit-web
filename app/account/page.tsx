@@ -2,12 +2,13 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy, Sparkles, ArrowRight,
+  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
 import { FortuneAnimToggle } from "@/components/account/FortuneAnimToggle";
 import { routes } from "@/lib/routes";
+import { getCurrentAdminUser } from "@/lib/admin";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -50,6 +51,7 @@ export default async function AccountPage() {
   if (!user) {
     redirect(`${routes.authLogin}?next=${routes.account}`);
   }
+  const admin = await getCurrentAdminUser();
 
   // データ並列取得（es スキーマを利用するには Supabase Dashboard の
   // Settings > API > Extra schemas に "es" を追加してください）
@@ -192,6 +194,24 @@ export default async function AccountPage() {
               </ul>
             )}
           </DashboardCard>
+
+          {admin && (
+            <DashboardCard title="管理メニュー">
+              <Link
+                href="/account/articles/new"
+                className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+              >
+                <span className="inline-flex items-center gap-2">
+                  <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                  記事を作成する
+                </span>
+                <ArrowRight className="h-4 w-4 text-slate-400" />
+              </Link>
+              <p className="mt-3 text-xs leading-5 text-slate-500">
+                公開時は記事ページと関連一覧のキャッシュを自動更新します。
+              </p>
+            </DashboardCard>
+          )}
 
           {/* ── ポイント ────────────────────────────── */}
           <DashboardCard title="ポイント">

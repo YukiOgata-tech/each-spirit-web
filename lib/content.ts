@@ -455,19 +455,19 @@ export async function getProteinRankingEntries(slug: string) {
 
 export async function getRamenArticles(): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "ramen").order("updated_at", { ascending: false });
+  const { data } = await sb.from("articles").select("*").eq("category", "ramen").eq("status", "published").order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
 }
 
 export async function getRamenArticle(slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "ramen").maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "ramen").eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getArticleMarkdown(slug: string): Promise<string> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
@@ -479,6 +479,7 @@ export async function getGenericArticles(): Promise<Article[]> {
     .from("articles")
     .select("*")
     .not("category", "in", `(${dedicatedArticleCategories.join(",")})`)
+    .eq("status", "published")
     .order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
 }
@@ -486,20 +487,20 @@ export async function getGenericArticles(): Promise<Article[]> {
 export async function getGenericArticle(category: string, slug: string): Promise<Article | undefined> {
   if (dedicatedArticleCategories.includes(category)) return undefined;
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", category).maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", category).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getGenericArticleMarkdown(category: string, slug: string): Promise<string> {
   if (dedicatedArticleCategories.includes(category)) return "";
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", category).maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", category).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
 export async function getLatestArticles(limit?: number): Promise<Article[]> {
   const sb = createServerClient();
-  let q = sb.from("articles").select("*").eq("category", "ramen").order("updated_at", { ascending: false });
+  let q = sb.from("articles").select("*").eq("category", "ramen").eq("status", "published").order("updated_at", { ascending: false });
   if (typeof limit === "number") q = q.limit(limit);
   const { data } = await q;
   return (data ?? []).map(mapArticle);
@@ -507,37 +508,37 @@ export async function getLatestArticles(limit?: number): Promise<Article[]> {
 
 export async function getBeautyArticles(region: string): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "beauty").eq("region", region);
+  const { data } = await sb.from("articles").select("*").eq("category", "beauty").eq("region", region).eq("status", "published");
   return (data ?? []).map(mapArticle);
 }
 
 export async function getBeautyArticle(region: string, slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "beauty").eq("region", region).maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "beauty").eq("region", region).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getBeautyArticleMarkdown(region: string, slug: string): Promise<string> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "beauty").eq("region", region).maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "beauty").eq("region", region).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
 export async function getCafeArticles(region: string): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "cafe").eq("region", region).order("updated_at", { ascending: false });
+  const { data } = await sb.from("articles").select("*").eq("category", "cafe").eq("region", region).eq("status", "published").order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
 }
 
 export async function getCafeArticle(region: string, slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "cafe").eq("region", region).maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "cafe").eq("region", region).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getCafeArticleMarkdown(region: string, slug: string): Promise<string> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "cafe").eq("region", region).maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "cafe").eq("region", region).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
