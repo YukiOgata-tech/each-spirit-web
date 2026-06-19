@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
 import { createServerClient } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
+import type { FAQ, RelatedLink, Source, SourceType } from "@/lib/types";
 
 type ArticleStatus = "draft" | "published";
 
@@ -42,6 +43,10 @@ function list(formData: FormData, key: string) {
     .filter(Boolean);
 }
 
+function listAll(formData: FormData, key: string) {
+  return formData.getAll(key).map((value) => String(value ?? "").trim());
+}
+
 function slugify(input: string) {
   return input
     .toLowerCase()
@@ -74,7 +79,7 @@ function listingPaths(category: string, region: string | null) {
   return paths;
 }
 
-function collectOfficialImageSources(markdown: string) {
+function collectOfficialImageSources(markdown: string): Source[] {
   const blocks = markdown.match(/:::official-image[\s\S]*?:::/g) ?? [];
   return blocks.flatMap((block) => {
     const source = block.match(/\nsource:\s*(.+)/)?.[1]?.trim();
@@ -87,6 +92,55 @@ function collectOfficialImageSources(markdown: string) {
       sourceType: "official",
       collectedAt: new Date().toISOString().slice(0, 10),
     }];
+  });
+}
+
+function collectManualSources(formData: FormData): Source[] {
+  const titles = listAll(formData, "source_title");
+  const urls = listAll(formData, "source_url");
+  const sourceTypes = listAll(formData, "source_type");
+  const collectedDates = listAll(formData, "source_collected_at");
+  const notes = listAll(formData, "source_note");
+
+  return titles.flatMap((title, index): Source[] => {
+    const url = urls[index];
+    if (!title || !url) return [];
+    return [{
+      title,
+      url,
+      sourceType: (sourceTypes[index] || "official") as SourceType,
+      collectedAt: collectedDates[index] || new Date().toISOString().slice(0, 10),
+      note: notes[index] || "記事作成UIで参照ソースとして登録。",
+    }];
+  });
+}
+
+function collectRelatedLinks(formData: FormData): RelatedLink[] {
+  const titles = listAll(formData, "related_link_title");
+  const urls = listAll(formData, "related_link_url");
+  const types = listAll(formData, "related_link_type");
+  const notes = listAll(formData, "related_link_note");
+
+  return titles.flatMap((title, index): RelatedLink[] => {
+    const url = urls[index];
+    if (!title || !url) return [];
+    return [{
+      title,
+      url,
+      type: (types[index] || "article") as RelatedLink["type"],
+      note: notes[index] || undefined,
+    }];
+  });
+}
+
+function collectFaqs(formData: FormData): FAQ[] {
+  const questions = listAll(formData, "faq_question");
+  const answers = listAll(formData, "faq_answer");
+
+  return questions.flatMap((question, index): FAQ[] => {
+    const answer = answers[index];
+    if (!question || !answer) return [];
+    return [{ question, answer }];
   });
 }
 
@@ -122,6 +176,8 @@ export async function saveArticle(formData: FormData) {
   const summary = list(formData, "summary");
   const whatYouLearn = list(formData, "what_you_learn");
   const tags = list(formData, "tags");
+  const sources = [...collectManualSources(formData), ...collectOfficialImageSources(bodyMd)];
+  const faqs = collectFaqs(formData);
   const metadata = {
     author: {
       name: text(formData, "author_name") || "Each Spirit 編集部",
@@ -130,9 +186,10 @@ export async function saveArticle(formData: FormData) {
     },
     summary,
     what_you_learn: whatYouLearn,
-    sources: collectOfficialImageSources(bodyMd),
-    faqs: [],
+    sources,
+    faqs,
     related_slugs: list(formData, "related_slugs"),
+    related_links: collectRelatedLinks(formData),
   };
 
   const { error } = await service.from("articles").upsert({

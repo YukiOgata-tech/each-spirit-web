@@ -27,6 +27,7 @@ import type {
   ProteinTarget,
   Ranking,
   RankingItem,
+  RelatedLink,
   Salon,
   SearchResult,
   Source,
@@ -332,6 +333,7 @@ function mapArticle(row: any): Article {
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedSlugs: (m.related_slugs ?? []) as string[],
+    relatedLinks: (m.related_links ?? []) as RelatedLink[],
   };
 }
 

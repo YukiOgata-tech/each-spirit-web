@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { ImagePlus, LinkIcon, List, Pilcrow, Quote, Send, Sparkles, Type, Underline } from "lucide-react";
+import { ImagePlus, LinkIcon, List, Pilcrow, Plus, Quote, Send, Sparkles, Trash2, Type, Underline } from "lucide-react";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
 
@@ -19,6 +19,29 @@ type CategoryOption = {
   note: string;
 };
 
+type SourceInput = {
+  id: string;
+  title: string;
+  url: string;
+  sourceType: string;
+  collectedAt: string;
+  note: string;
+};
+
+type RelatedLinkInput = {
+  id: string;
+  title: string;
+  url: string;
+  type: string;
+  note: string;
+};
+
+type FaqInput = {
+  id: string;
+  question: string;
+  answer: string;
+};
+
 const initialBody = `## 見出しを入力
 
 本文を書きます。文章内リンクは[表示テキスト](/path/to/page)の形式で挿入できます。
@@ -28,6 +51,15 @@ const initialBody = `## 見出しを入力
 :::
 `;
 const inputClass = "w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
+const compactInputClass = "w-full rounded-md border border-slate-200 bg-white px-2.5 py-2 text-xs text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
+
+function today() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function id() {
+  return Math.random().toString(36).slice(2);
+}
 
 async function optimizeImage(file: File) {
   if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
@@ -61,6 +93,15 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   const [uploading, setUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
+  const [sources, setSources] = useState<SourceInput[]>([
+    { id: id(), title: "", url: "", sourceType: "official", collectedAt: today(), note: "" },
+  ]);
+  const [relatedLinks, setRelatedLinks] = useState<RelatedLinkInput[]>([
+    { id: id(), title: "", url: "", type: "article", note: "" },
+  ]);
+  const [faqs, setFaqs] = useState<FaqInput[]>([
+    { id: id(), question: "", answer: "" },
+  ]);
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
   const normalizedCategory = category.trim().toLowerCase();
@@ -291,11 +332,221 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
         </section>
 
         <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">公式情報・参照ソース</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">記事の根拠にした公式ページ、地図、SNS、自治体情報などを登録します。記事下部の参照ソース一覧に表示されます。</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setSources((current) => [...current, { id: id(), title: "", url: "", sourceType: "official", collectedAt: today(), note: "" }])}
+            >
+              <Plus className="h-4 w-4" />
+              ソース追加
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {sources.map((source, index) => (
+              <div key={source.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-2 sm:grid-cols-[1.1fr_1.5fr_0.8fr_0.8fr_auto]">
+                  <input
+                    name="source_title"
+                    value={source.title}
+                    onChange={(event) => setSources((current) => current.map((item) => item.id === source.id ? { ...item, title: event.target.value } : item))}
+                    className={compactInputClass}
+                    placeholder="公式サイト / Google Map"
+                    aria-label={`参照ソース${index + 1}の名称`}
+                  />
+                  <input
+                    name="source_url"
+                    value={source.url}
+                    onChange={(event) => setSources((current) => current.map((item) => item.id === source.id ? { ...item, url: event.target.value } : item))}
+                    className={compactInputClass}
+                    placeholder="https://..."
+                    aria-label={`参照ソース${index + 1}のURL`}
+                  />
+                  <select
+                    name="source_type"
+                    value={source.sourceType}
+                    onChange={(event) => setSources((current) => current.map((item) => item.id === source.id ? { ...item, sourceType: event.target.value } : item))}
+                    className={compactInputClass}
+                    aria-label={`参照ソース${index + 1}の種別`}
+                  >
+                    <option value="official">公式</option>
+                    <option value="map">地図</option>
+                    <option value="sns">SNS</option>
+                    <option value="government">自治体</option>
+                    <option value="tourism">観光</option>
+                    <option value="local-media">地域メディア</option>
+                    <option value="editorial">編集部</option>
+                    <option value="other">その他</option>
+                  </select>
+                  <input
+                    name="source_collected_at"
+                    type="date"
+                    value={source.collectedAt}
+                    onChange={(event) => setSources((current) => current.map((item) => item.id === source.id ? { ...item, collectedAt: event.target.value } : item))}
+                    className={compactInputClass}
+                    aria-label={`参照ソース${index + 1}の確認日`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSources((current) => current.length === 1 ? current.map((item) => item.id === source.id ? { ...item, title: "", url: "", note: "" } : item) : current.filter((item) => item.id !== source.id))}
+                    title="ソース削除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">ソース削除</span>
+                  </Button>
+                </div>
+                <input
+                  name="source_note"
+                  value={source.note}
+                  onChange={(event) => setSources((current) => current.map((item) => item.id === source.id ? { ...item, note: event.target.value } : item))}
+                  className={`${compactInputClass} mt-2`}
+                  placeholder="営業時間・メニュー・住所確認など"
+                  aria-label={`参照ソース${index + 1}のメモ`}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">関連記事・関連店舗リンク</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">記事下部にカード表示する内部導線です。関連店舗は `/ramen/items/slug` などのURLを入力します。</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setRelatedLinks((current) => [...current, { id: id(), title: "", url: "", type: "article", note: "" }])}
+            >
+              <Plus className="h-4 w-4" />
+              リンク追加
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {relatedLinks.map((link, index) => (
+              <div key={link.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-2 sm:grid-cols-[1.1fr_1.5fr_0.8fr_auto]">
+                  <input
+                    name="related_link_title"
+                    value={link.title}
+                    onChange={(event) => setRelatedLinks((current) => current.map((item) => item.id === link.id ? { ...item, title: event.target.value } : item))}
+                    className={compactInputClass}
+                    placeholder="表示タイトル"
+                    aria-label={`関連リンク${index + 1}のタイトル`}
+                  />
+                  <input
+                    name="related_link_url"
+                    value={link.url}
+                    onChange={(event) => setRelatedLinks((current) => current.map((item) => item.id === link.id ? { ...item, url: event.target.value } : item))}
+                    className={compactInputClass}
+                    placeholder="/ramen/items/example または https://..."
+                    aria-label={`関連リンク${index + 1}のURL`}
+                  />
+                  <select
+                    name="related_link_type"
+                    value={link.type}
+                    onChange={(event) => setRelatedLinks((current) => current.map((item) => item.id === link.id ? { ...item, type: event.target.value } : item))}
+                    className={compactInputClass}
+                    aria-label={`関連リンク${index + 1}の種別`}
+                  >
+                    <option value="article">記事</option>
+                    <option value="item">店舗/商品</option>
+                    <option value="ranking">ランキング</option>
+                    <option value="category">カテゴリ</option>
+                    <option value="external">外部</option>
+                  </select>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setRelatedLinks((current) => current.length === 1 ? current.map((item) => item.id === link.id ? { ...item, title: "", url: "", note: "" } : item) : current.filter((item) => item.id !== link.id))}
+                    title="関連リンク削除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">関連リンク削除</span>
+                  </Button>
+                </div>
+                <input
+                  name="related_link_note"
+                  value={link.note}
+                  onChange={(event) => setRelatedLinks((current) => current.map((item) => item.id === link.id ? { ...item, note: event.target.value } : item))}
+                  className={`${compactInputClass} mt-2`}
+                  placeholder="このリンクを見る理由・補足"
+                  aria-label={`関連リンク${index + 1}の補足`}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-sm font-bold text-slate-900">FAQ</h2>
+              <p className="mt-1 text-xs leading-5 text-slate-500">記事下部のFAQとして表示し、FAQPageのJSON-LDにも反映します。検索意図に近い質問を入れてください。</p>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setFaqs((current) => [...current, { id: id(), question: "", answer: "" }])}
+            >
+              <Plus className="h-4 w-4" />
+              FAQ追加
+            </Button>
+          </div>
+          <div className="space-y-3">
+            {faqs.map((faq, index) => (
+              <div key={faq.id} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+                <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
+                  <input
+                    name="faq_question"
+                    value={faq.question}
+                    onChange={(event) => setFaqs((current) => current.map((item) => item.id === faq.id ? { ...item, question: event.target.value } : item))}
+                    className={compactInputClass}
+                    placeholder="例: 駐車場はありますか？"
+                    aria-label={`FAQ${index + 1}の質問`}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setFaqs((current) => current.length === 1 ? current.map((item) => item.id === faq.id ? { ...item, question: "", answer: "" } : item) : current.filter((item) => item.id !== faq.id))}
+                    title="FAQ削除"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">FAQ削除</span>
+                  </Button>
+                </div>
+                <textarea
+                  name="faq_answer"
+                  value={faq.answer}
+                  onChange={(event) => setFaqs((current) => current.map((item) => item.id === faq.id ? { ...item, answer: event.target.value } : item))}
+                  rows={3}
+                  className={`${compactInputClass} mt-2 resize-y leading-6`}
+                  placeholder="回答を入力します。必要に応じて確認時点や公式情報への誘導も含めます。"
+                  aria-label={`FAQ${index + 1}の回答`}
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="タグ">
               <textarea name="tags" rows={3} className={`${inputClass} resize-y`} placeholder="新潟, 食堂, 定食" />
             </Field>
-            <Field label="関連slug">
+            <Field label="関連slug（旧形式）">
               <textarea name="related_slugs" rows={3} className={`${inputClass} resize-y`} placeholder="niigata-ramen-first-guide" />
             </Field>
             <Field label="要点まとめ">

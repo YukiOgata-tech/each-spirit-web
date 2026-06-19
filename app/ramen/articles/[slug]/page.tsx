@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
+import { RelatedLinks } from "@/components/cards/RelatedLinks";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
@@ -77,6 +78,7 @@ export default async function ArticlePage({ params }: PageProps) {
         <MarkdownRenderer markdown={markdown} />
       </div>
       <div className="mt-8 grid gap-6">
+        <RelatedLinks links={article.relatedLinks} />
         <FaqSection faqs={article.faqs} />
         <SourceList sources={article.sources} />
       </div>

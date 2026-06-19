@@ -13,6 +13,13 @@ export type FAQ = {
   answer: string;
 };
 
+export type RelatedLink = {
+  title: string;
+  url: string;
+  type: "article" | "item" | "ranking" | "category" | "external";
+  note?: string;
+};
+
 export type Author = {
   name: string;
   role: string;
@@ -63,6 +70,7 @@ export type Article = {
   sources: Source[];
   faqs: FAQ[];
   relatedSlugs: string[];
+  relatedLinks?: RelatedLink[];
 };
 
 export type OfficialLink = {

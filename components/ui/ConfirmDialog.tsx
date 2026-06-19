@@ -1,11 +1,16 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/lib/utils";
 
 /**
  * 軽量な確認モーダル。誤操作防止用（ログアウト等）。
  * open=false の間は何もレンダリングしない。Esc / 背景クリックでキャンセル。
+ *
+ * 描画は `document.body` 直下への Portal で行う。これにより、`backdrop-filter` や
+ * `transform` を持つ祖先（例: sticky なヘッダー）が `position: fixed` の含有ブロックを
+ * 生成しても影響を受けず、常にビューポート全体へオーバーレイされる。
  */
 export function ConfirmDialog({
   open,
@@ -26,6 +31,12 @@ export function ConfirmDialog({
   onConfirm: () => void;
   onCancel: () => void;
 }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
@@ -39,9 +50,9 @@ export function ConfirmDialog({
     };
   }, [open, onCancel]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-label={title}>
       <button aria-label="閉じる" onClick={onCancel} className="absolute inset-0 cursor-default bg-slate-950/50 backdrop-blur-sm" />
       <div className="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white p-6 shadow-2xl">
@@ -67,6 +78,7 @@ export function ConfirmDialog({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
