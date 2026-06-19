@@ -34,6 +34,7 @@ npm run build
 - `npm run build`: production build を作成します。
 - `npm run start`: build 済みアプリを起動します。
 - `npm run db:seed`: 旧ローカル content から Supabase `es` スキーマへ upsert する復旧・初期投入用 script です。通常実行はブロックされ、`ALLOW_LEGACY_CONTENT_SEED=1` が必要です。
+- `npm run db:import:articles -- <json-path>`: `articles[]` JSON / 同梱 Markdown を Supabase `es.articles` へ upsert します。
 
 ## ディレクトリ構成
 
@@ -52,9 +53,12 @@ UI コンポーネントでは `content/**` を直接 import せず、原則と�
 現在、記事・店舗/商品・ランキングの配信データは Supabase の `es` スキーマから読み取ります。公開コンテンツの正は Supabase です。
 
 1. 調査 JSON / Markdown を確認します。
-2. import script や SQL で Supabase `es.articles`、`es.items`、`es.rankings`、`es.ranking_items` へ反映します。
-3. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
-4. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
+2. 記事だけなら `npm run db:import:articles -- <json-path>` で Supabase `es.articles` へ反映します。
+3. 店舗やランキングも含む場合は import script や SQL で `es.items`、`es.rankings`、`es.ranking_items` へ反映します。
+4. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
+5. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
+
+自由カテゴリの記事は `/{category}/articles/{slug}` で表示します。既存の `ramen`、`beauty`、`cafe` は専用ルートを持つため、汎用記事ルートからは除外します。
 
 `npm run db:seed` は旧ローカル content から DB を上書きできるため、通常実行では停止します。初期投入・復旧など明確な目的がある場合だけ、PowerShell では次のように実行します。
 

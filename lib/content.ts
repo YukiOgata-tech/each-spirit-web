@@ -471,6 +471,32 @@ export async function getArticleMarkdown(slug: string): Promise<string> {
   return data?.body_md ?? "";
 }
 
+const dedicatedArticleCategories = ["ramen", "beauty", "cafe"];
+
+export async function getGenericArticles(): Promise<Article[]> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("articles")
+    .select("*")
+    .not("category", "in", `(${dedicatedArticleCategories.join(",")})`)
+    .order("updated_at", { ascending: false });
+  return (data ?? []).map(mapArticle);
+}
+
+export async function getGenericArticle(category: string, slug: string): Promise<Article | undefined> {
+  if (dedicatedArticleCategories.includes(category)) return undefined;
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", category).maybeSingle();
+  return data ? mapArticle(data) : undefined;
+}
+
+export async function getGenericArticleMarkdown(category: string, slug: string): Promise<string> {
+  if (dedicatedArticleCategories.includes(category)) return "";
+  const sb = createServerClient();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", category).maybeSingle();
+  return data?.body_md ?? "";
+}
+
 export async function getLatestArticles(limit?: number): Promise<Article[]> {
   const sb = createServerClient();
   let q = sb.from("articles").select("*").eq("category", "ramen").order("updated_at", { ascending: false });
@@ -575,8 +601,9 @@ export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
 
 export async function getSearchResults(): Promise<SearchResult[]> {
   const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
-  const [articles, rankings, items, leisureRankings, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
+  const [articles, genericArticles, rankings, items, leisureRankings, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
     getRamenArticles(),
+    getGenericArticles(),
     getRamenRankings(),
     getRamenItems(),
     getLeisureRankings("niigata"),
@@ -608,6 +635,17 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     description: article.description,
     category: article.category,
     href: "/ramen/articles/" + article.slug,
+    tags: article.tags,
+    updatedAt: article.updatedAt,
+  }));
+
+  const genericArticleResults: SearchResult[] = genericArticles.map((article) => ({
+    id: "article-" + article.category + "-" + article.slug,
+    type: "article",
+    title: article.title,
+    description: article.description,
+    category: article.category,
+    href: routes.genericArticle(article.category, article.slug),
     tags: article.tags,
     updatedAt: article.updatedAt,
   }));
@@ -692,6 +730,7 @@ export async function getSearchResults(): Promise<SearchResult[]> {
   return [
     ...categoryResults,
     ...articleResults,
+    ...genericArticleResults,
     ...rankingResults,
     ...itemResults,
     ...leisureRankingResults,

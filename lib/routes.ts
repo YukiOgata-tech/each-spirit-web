@@ -6,6 +6,7 @@ export const routes = {
   contact: "/contact",
   privacy: "/privacy",
   disclaimer: "/disclaimer",
+  genericArticle: (category: string, slug: string) => "/" + category + "/articles/" + slug,
   ramen: "/ramen",
   ramenRegion: (region: string) => "/ramen/" + region,
   ramenArticle: (slug: string) => "/ramen/articles/" + slug,

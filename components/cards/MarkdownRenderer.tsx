@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 function stripFrontmatter(markdown: string) {
@@ -42,6 +43,12 @@ function isTable(block: string) {
   return lines.length >= 2 && lines[0].startsWith("|") && /^\|?\s*:?-{3,}:?\s*(\|\s*:?-{3,}:?\s*)+\|?$/.test(lines[1]);
 }
 
+function parseImage(block: string) {
+  const match = block.match(/^!\[([^\]]*)\]\((\S+)(?:\s+"([^"]+)")?\)$/);
+  if (!match) return null;
+  return { alt: match[1], src: match[2], caption: match[3] };
+}
+
 function renderTable(block: string, index: number) {
   const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
   const rows = lines.filter((_, rowIndex) => rowIndex !== 1).map((line) =>
@@ -80,6 +87,18 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
     <div className="space-y-7">
       {blocks.map((block, index) => {
         if (isTable(block)) return renderTable(block, index);
+
+        const image = parseImage(block);
+        if (image) {
+          return (
+            <figure key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
+              <Image src={image.src} alt={image.alt} width={1200} height={800} className="h-auto w-full object-cover" />
+              {(image.caption || image.alt) && (
+                <figcaption className="px-4 py-3 text-sm leading-6 text-slate-600">{image.caption || image.alt}</figcaption>
+              )}
+            </figure>
+          );
+        }
 
         if (block.startsWith("# ")) {
           return <h1 key={index} className="pt-2 text-3xl font-bold leading-tight tracking-normal text-slate-950">{renderInline(block.replace(/^#\s+/, ""))}</h1>;

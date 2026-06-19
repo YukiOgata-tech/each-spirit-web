@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export const revalidate = 2592000;
-import { getBeautyArticles, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeArticles, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
+import { getBeautyArticles, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeArticles, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getGenericArticles, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenArticles, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -12,8 +12,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const beautyRegions = getBeautyRegions().filter((r) => r.status === "live");
   const proteinTargets = getProteinTargets().filter((t) => t.status === "live");
 
-  const [ramenArticles, ramenRankings, ramenItems] = await Promise.all([
+  const [ramenArticles, genericArticles, ramenRankings, ramenItems] = await Promise.all([
     getRamenArticles(),
+    getGenericArticles(),
     getRamenRankings(),
     getRamenItems(),
   ]);
@@ -71,6 +72,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
     ...getRamenRegions().map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...ramenArticles.map((article) => ({ url: absoluteUrl(routes.ramenArticle(article.slug)), lastModified: new Date(article.updatedAt) })),
+    ...genericArticles.map((article) => ({ url: absoluteUrl(routes.genericArticle(article.category, article.slug)), lastModified: new Date(article.updatedAt) })),
     ...ramenRankings.map((ranking) => ({ url: absoluteUrl(routes.ramenRanking(ranking.slug)), lastModified: new Date(ranking.lastUpdatedAt) })),
     ...ramenItems.map((item) => ({ url: absoluteUrl(routes.ramenItem(item.slug)), lastModified: new Date(item.lastVerifiedAt) })),
     ...leisurePairs.map(({ region }) => ({ url: absoluteUrl(routes.leisureRegion(region)), lastModified: new Date("2026-06-08") })),
