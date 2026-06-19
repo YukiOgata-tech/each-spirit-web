@@ -47,6 +47,18 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "uende.jp",
       },
+      {
+        protocol: "https",
+        hostname: "delightdesignersworks.com",
+      },
+      {
+        protocol: "https",
+        hostname: "seabyluvism.jp",
+      },
+      {
+        protocol: "https",
+        hostname: "agu-hair.com",
+      },
     ],
   },
 };

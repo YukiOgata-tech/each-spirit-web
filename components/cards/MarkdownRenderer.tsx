@@ -1,9 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { ArrowUpRight, ExternalLink, ImageIcon, Sparkles } from "lucide-react";
 
 function stripFrontmatter(markdown: string) {
-  return markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "").trim();
+  return markdown
+    .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "")
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .trim();
 }
 
 function renderInline(text: string): ReactNode[] {
@@ -49,6 +53,41 @@ function parseImage(block: string) {
   return { alt: match[1], src: match[2], caption: match[3] };
 }
 
+function parseDirective(block: string, name: string) {
+  const trimmed = block.trim();
+  const prefix = ":::" + name;
+  if (!trimmed.startsWith(prefix) || !trimmed.endsWith(":::")) return null;
+  return trimmed.slice(prefix.length, -3).trim();
+}
+
+function parseFields(content: string) {
+  return Object.fromEntries(
+    content
+      .split("\n")
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .map((line) => {
+        const separator = line.indexOf(":");
+        if (separator === -1) return null;
+        return [line.slice(0, separator).trim(), line.slice(separator + 1).trim()] as const;
+      })
+      .filter((entry): entry is readonly [string, string] => Boolean(entry)),
+  );
+}
+
+function parseLinkCards(content: string) {
+  return content
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const match = line.match(/^-\s+\[([^\]]+)\]\(([^)]+)\)(?:\s*-\s*(.+))?$/);
+      if (!match) return null;
+      return { label: match[1], href: match[2], description: match[3] ?? "" };
+    })
+    .filter((entry): entry is { label: string; href: string; description: string } => Boolean(entry));
+}
+
 function renderTable(block: string, index: number) {
   const lines = block.split("\n").map((line) => line.trim()).filter(Boolean);
   const rows = lines.filter((_, rowIndex) => rowIndex !== 1).map((line) =>
@@ -86,6 +125,81 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
   return (
     <div className="space-y-7">
       {blocks.map((block, index) => {
+        const officialImage = parseDirective(block, "official-image");
+        if (officialImage) {
+          const fields = parseFields(officialImage);
+          const src = fields.src;
+          const alt = fields.alt ?? fields.caption ?? "記事内画像";
+          const source = fields.source;
+          const sourceUrl = fields.sourceUrl;
+
+          if (!src) return null;
+
+          return (
+            <figure key={index} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+              <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
+                <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 820px, 100vw" className="object-cover transition duration-500 group-hover:scale-[1.02]" />
+                <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
+                  <ImageIcon className="h-3.5 w-3.5 text-[var(--primary)]" />
+                  公式画像
+                </div>
+              </div>
+              <figcaption className="space-y-2 px-4 py-4">
+                {fields.caption && <p className="text-sm leading-6 text-slate-700">{renderInline(fields.caption)}</p>}
+                {source && sourceUrl && (
+                  <a href={sourceUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 underline decoration-slate-300 underline-offset-4 hover:text-[var(--primary)]">
+                    画像出典: {source}
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </figcaption>
+            </figure>
+          );
+        }
+
+        const linkCards = parseDirective(block, "link-cards");
+        if (linkCards) {
+          const links = parseLinkCards(linkCards);
+          if (links.length === 0) return null;
+
+          return (
+            <aside key={index} className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+              <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-950">
+                <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+                関連コンテンツ
+              </div>
+              <div className="grid gap-3 sm:grid-cols-2">
+                {links.map((link) => {
+                  const content = (
+                    <>
+                      <span className="text-sm font-bold text-slate-950">{link.label}</span>
+                      {link.description && <span className="mt-1 line-clamp-2 text-xs leading-5 text-slate-600">{renderInline(link.description)}</span>}
+                      <ArrowUpRight className="absolute right-3 top-3 h-4 w-4 text-slate-400 transition group-hover:text-[var(--primary)]" />
+                    </>
+                  );
+
+                  const className = "group relative block min-h-24 rounded-lg border border-slate-200 bg-white p-4 pr-9 transition hover:-translate-y-0.5 hover:border-[var(--primary)]/40 hover:shadow-md";
+
+                  return link.href.startsWith("/") ? (
+                    <Link key={link.href} href={link.href} className={className}>{content}</Link>
+                  ) : (
+                    <a key={link.href} href={link.href} target="_blank" rel="noreferrer" className={className}>{content}</a>
+                  );
+                })}
+              </div>
+            </aside>
+          );
+        }
+
+        const note = parseDirective(block, "note");
+        if (note) {
+          return (
+            <aside key={index} className="rounded-xl border border-[var(--primary)]/20 bg-[var(--primary)]/5 px-5 py-4 text-sm leading-7 text-slate-700">
+              {note.split("\n").map((line, lineIndex) => <p key={lineIndex}>{renderInline(line.replace(/^>\s?/, ""))}</p>)}
+            </aside>
+          );
+        }
+
         if (isTable(block)) return renderTable(block, index);
 
         const image = parseImage(block);
