@@ -1,3 +1,4 @@
+
 # ChatGPT / Supabase MCP コンテンツ投入エージェント向け指示文
 
 この文章は、ChatGPT から Supabase MCP を使って Each Spirit のコンテンツ調査・作成・DB 書き込みを行う AI に渡すための指示です。
