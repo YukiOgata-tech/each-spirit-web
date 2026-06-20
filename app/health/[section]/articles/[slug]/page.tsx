@@ -1,4 +1,5 @@
 import { SectionArticleDetail } from "@/components/articles/SectionArticleRoutes";
+import { getGenericSectionConfig } from "@/components/generic/GenericSectionPages";
 import { getArticleBySection } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
@@ -18,6 +19,8 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function ProteinArticlePage({ params }: PageProps) {
   const { section, slug } = await params;
-  if (section !== "protein") notFound();
-  return <SectionArticleDetail config={config} slug={slug} />;
+  if (section === "protein") return <SectionArticleDetail config={config} slug={slug} />;
+  const genericConfig = await getGenericSectionConfig("health", section);
+  if (!genericConfig) notFound();
+  return <SectionArticleDetail config={genericConfig} slug={slug} />;
 }

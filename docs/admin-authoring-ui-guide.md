@@ -24,7 +24,11 @@
 
 ## 1. 店舗・商品エディタ（items）
 
-カテゴリ(section)を選ぶと入力項目が切り替わる汎用フォーム（新規時は選択可、編集時は section 固定）。
+大カテゴリを選び、その中の既存カテゴリ(section)を選ぶか、新しい section を作成してから item を投入する汎用フォーム（新規時は選択/作成可、編集時は大カテゴリ / section 固定）。
+
+新規 section 作成時は、大カテゴリは既存のものから選び、section slug / 表示名 / item_kind / item URL segment / region の扱いを入力する。保存時に `es.content_sections` へ section を upsert してから `es.items` を作成する。section 固有の詳細項目は `lib/admin-item-schema.ts` に定義がある既存 section のみ表示され、新規 section は共通項目から開始する。
+
+既存 major 配下の新規 section は、公開側では汎用 section ページと汎用 item 詳細ページで表示される。既存 section（ramen / protein / hair-salon など）のような専用デザイン、地域/target 導線、専用比較表が必要な場合は、後から section 固有ページとして実装する。
 
 ### 共通項目（全 section）
 - **slug**（必須・`^[a-z0-9]+(?:-[a-z0-9]+)*$`）、**名称**（必須）、説明

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, MapPinned } from "lucide-react";
+import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getCategory, getLeisureRegions } from "@/lib/content";
+import { getCategory, getLeisureRegions, getContentSections } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -26,7 +27,7 @@ const regionImages: Record<string, { src: string; alt: string }> = {
 
 export default async function LeisurePage() {
   const category = getCategory("leisure");
-  const regions = await getLeisureRegions();
+  const [regions, sections] = await Promise.all([getLeisureRegions(), getContentSections("leisure")]);
 
   return (
     <div className="leisure-theme">
@@ -59,6 +60,12 @@ export default async function LeisurePage() {
       </section>
 
       <section id="regions" className="section-shell">
+        <MajorSectionDirectory
+          title="レジャーカテゴリ"
+          description="スポットなど、レジャー内の公開中カテゴリを横断できます。"
+          sections={sections}
+        />
+
         <div className="mb-5">
           <p className="section-kicker">Regions</p>
           <h2 className="section-heading mt-2">公開中の地域</h2>

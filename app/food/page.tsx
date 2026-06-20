@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
+import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import { articleHref, getArticlesByMajorCategory, getContentSections, getRamenRankings, rankingHref } from "@/lib/content";
@@ -37,6 +38,12 @@ export default async function FoodPage() {
           ))}
         </div>
       </section>
+
+      <MajorSectionDirectory
+        title="グルメカテゴリ"
+        description="ラーメン・カフェなど、グルメ内の公開中カテゴリを横断できます。"
+        sections={sections}
+      />
 
       <section className="mt-8">
         <h2 className="text-2xl font-bold tracking-normal text-slate-950">ランキング</h2>

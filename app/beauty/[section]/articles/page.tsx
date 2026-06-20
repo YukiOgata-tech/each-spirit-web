@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SectionArticlesIndex } from "@/components/articles/SectionArticleRoutes";
+import { getGenericSectionConfig } from "@/components/generic/GenericSectionPages";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string }> };
@@ -11,6 +12,8 @@ export function generateStaticParams() {
 
 export default async function BeautySectionArticlesPage({ params }: PageProps) {
   const { section } = await params;
-  if (section !== "hair-salon") notFound();
-  return <SectionArticlesIndex config={config} />;
+  if (section === "hair-salon") return <SectionArticlesIndex config={config} />;
+  const genericConfig = await getGenericSectionConfig("beauty", section);
+  if (!genericConfig) notFound();
+  return <SectionArticlesIndex config={genericConfig} />;
 }

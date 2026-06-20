@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import ProteinRankingPage from "@/app/health/[section]/[target]/rankings/[slug]/page";
+import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getProteinRanking, getProteinRankings } from "@/lib/content";
@@ -25,7 +26,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function HealthSectionRankingPage({ params }: PageProps) {
   const { section, slug } = await params;
-  if (section !== "protein") notFound();
+  if (section !== "protein") return <GenericRankingDetailPage majorCategory="health" sectionSlug={section} slug={slug} />;
   const ranking = await getProteinRanking(slug);
   if (!ranking) notFound();
   return <ProteinRankingPage params={Promise.resolve({ section, target: ranking.target, slug })} />;

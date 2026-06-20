@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
+import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Button } from "@/components/ui/button";
 import { articleHref, getArticlesByMajorCategory, getContentSections, getProteinProducts, getProteinRankings } from "@/lib/content";
@@ -37,6 +38,12 @@ export default async function HealthPage() {
           ))}
         </div>
       </section>
+
+      <MajorSectionDirectory
+        title="健康カテゴリ"
+        description="プロテインなど、健康内の公開中カテゴリを横断できます。"
+        sections={sections}
+      />
 
       <section className="mt-8 grid gap-4 md:grid-cols-2">
         <div className="rounded-lg border border-slate-200 bg-white p-5">

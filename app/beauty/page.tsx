@@ -1,18 +1,19 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
+import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles } from "@/lib/content";
+import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles, getContentSections } from "@/lib/content";
 
 export const metadata = pageMetadata({
   title: "美容室・美容院おすすめ比較ガイド｜人気サロンランキングと失敗しない選び方",
-  description: "新潟・山形など各県の美容室を年代・施術・エリアで比較。カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンをランキングと店舗カードで整理しています。",
+  description: "各県の美容室を年代・施術・エリアで比較。カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンをランキングと店舗カードで整理しています。",
   path: routes.beauty,
 });
 
 export default async function BeautyIndexPage() {
-  const regions = await getBeautyRegions();
+  const [regions, sections] = await Promise.all([getBeautyRegions(), getContentSections("beauty")]);
   const regionData = await Promise.all(
     regions.map(async (region) => ({
       ...region,
@@ -39,7 +40,13 @@ export default async function BeautyIndexPage() {
         </div>
       </section>
 
-      <section className="section-shell mx-auto max-w-4xl">
+      <section className="section-shell mx-auto max-w-5xl">
+        <MajorSectionDirectory
+          title="美容カテゴリ"
+          description="美容室を中心に、美容内の公開中カテゴリを横断できます。"
+          sections={sections}
+        />
+
         <p className="section-kicker" style={{ color: "#8b3a7e" }}>REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">

@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import RamenRankingPage from "@/components/legacy-pages/food/ramen/rankings/[slug]/page";
 import CafeRankingPage from "@/components/legacy-pages/food/cafe/[region]/rankings/[slug]/page";
+import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { getCafeRankingsByRegion, getCafeRegions, getRamenRankings } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
@@ -25,7 +26,7 @@ export default async function FoodSectionRankingPage({ params }: PageProps) {
     if (!match) notFound();
     return <CafeRankingPage params={Promise.resolve({ region: match.region, slug })} />;
   }
-  notFound();
+  return <GenericRankingDetailPage majorCategory="food" sectionSlug={section} slug={slug} />;
 }
 
 async function getCafeRankingBySlug(region: string, slug: string) {

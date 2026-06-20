@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Thermometer } from "lucide-react";
+import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getTravelRegions, getTravelHotels, getTravelRankings } from "@/lib/content";
+import { getTravelRegions, getTravelHotels, getTravelRankings, getContentSections } from "@/lib/content";
 
 export const metadata = pageMetadata({
   title: "旅行おすすめ比較ガイド｜温泉宿・ホテルのランキングと予約・選び方",
@@ -13,7 +14,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function TravelIndexPage() {
-  const regions = await getTravelRegions();
+  const [regions, sections] = await Promise.all([getTravelRegions(), getContentSections("travel")]);
   const regionStats = await Promise.all(
     regions.map(async (region) => ({
       region,
@@ -41,6 +42,12 @@ export default async function TravelIndexPage() {
       </section>
 
       <section className="section-shell mx-auto max-w-4xl">
+        <MajorSectionDirectory
+          title="旅行カテゴリ"
+          description="宿・旅行サービスなど、旅行内の公開中カテゴリを横断できます。"
+          sections={sections}
+        />
+
         <p className="section-kicker" style={{ color: "var(--primary)" }}>REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
         <div className="mt-6 grid gap-6 sm:grid-cols-2">

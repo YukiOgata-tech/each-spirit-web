@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { SectionRankingsIndex } from "@/components/articles/SectionRankingRoutes";
+import { getGenericSectionConfig } from "@/components/generic/GenericSectionPages";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string }> };
@@ -12,6 +13,8 @@ export function generateStaticParams() {
 
 export default async function BeautySectionRankingsPage({ params }: PageProps) {
   const { section } = await params;
-  if (section !== "hair-salon") notFound();
-  return <SectionRankingsIndex config={config} />;
+  if (section === "hair-salon") return <SectionRankingsIndex config={config} />;
+  const genericConfig = await getGenericSectionConfig("beauty", section);
+  if (!genericConfig) notFound();
+  return <SectionRankingsIndex config={genericConfig} />;
 }

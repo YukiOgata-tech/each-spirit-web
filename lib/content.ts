@@ -37,6 +37,7 @@ import type {
   SearchResult,
   Source,
   FAQ,
+  GenericItem,
   TravelAgency,
   TravelApp,
   TravelServiceRegion,
@@ -76,6 +77,35 @@ function mapContentSection(row: any): ContentSection {
     displayConfig: row.display_config ?? {},
     seoConfig: row.seo_config ?? {},
     metadata: row.metadata ?? {},
+  };
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapGenericItem(row: any): GenericItem {
+  const m = row.metadata ?? {};
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description ?? "",
+    majorCategory: row.major_category,
+    sectionSlug: row.section_slug,
+    itemKind: row.item_kind ?? "item",
+    canonicalPath: row.canonical_path ?? undefined,
+    region: row.region ?? undefined,
+    area: row.area ?? "",
+    address: row.address ?? "",
+    phone: row.phone ?? undefined,
+    imageUrl: row.image_url ?? undefined,
+    tags: (row.tags ?? []) as string[],
+    priceRange: row.price_range ?? "",
+    officialUrl: row.official_url ?? "",
+    mapUrl: row.map_url ?? "",
+    editorComment: row.editor_comment ?? "",
+    lastVerifiedAt: toDateStr(row.last_verified_at),
+    metadata: m,
+    sources: (m.sources ?? []) as Source[],
+    faqs: (m.faqs ?? []) as FAQ[],
   };
 }
 
@@ -484,6 +514,49 @@ export async function getContentSections(majorCategory?: string): Promise<Conten
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }
   return (data ?? []).map(mapContentSection);
+}
+
+export async function getContentSection(majorCategory: string, sectionSlug: string): Promise<ContentSection | undefined> {
+  const sections = await getContentSections(majorCategory);
+  return sections.find((section) => section.sectionSlug === sectionSlug);
+}
+
+export async function getGenericItemsBySection(majorCategory: string, sectionSlug: string): Promise<GenericItem[]> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("items")
+    .select("*")
+    .eq("major_category", majorCategory)
+    .eq("section_slug", sectionSlug)
+    .eq("status", "published")
+    .order("name", { ascending: true });
+  return (data ?? []).map(mapGenericItem);
+}
+
+export async function getGenericItemBySection(majorCategory: string, sectionSlug: string, slug: string): Promise<GenericItem | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("items")
+    .select("*")
+    .eq("major_category", majorCategory)
+    .eq("section_slug", sectionSlug)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
+  return data ? mapGenericItem(data) : undefined;
+}
+
+export async function getRankingBySection(majorCategory: string, sectionSlug: string, slug: string): Promise<Ranking | undefined> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("rankings")
+    .select("*, ranking_items(*)")
+    .eq("major_category", majorCategory)
+    .eq("section_slug", sectionSlug)
+    .eq("slug", slug)
+    .eq("status", "published")
+    .maybeSingle();
+  return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 // region / target は es.content_regions / es.content_targets を正とし、
 // 取得失敗・空のときだけ静的 content/** にフォールバックする（静的=seed入力 / DB=配信）。

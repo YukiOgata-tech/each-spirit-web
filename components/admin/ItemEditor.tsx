@@ -28,6 +28,34 @@ const inputClass =
   "min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary)]/15";
 const labelClass = "mb-1 block text-xs font-bold text-slate-600";
 const sectionClass = "rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 max-sm:shadow-none";
+const majorCategoryLabels: Record<string, string> = {
+  food: "グルメ",
+  health: "健康",
+  beauty: "美容",
+  travel: "旅行",
+  leisure: "レジャー",
+};
+const NEW_SECTION_SCHEMA_KEY = "__new_section__";
+
+const itemKindOptions = [
+  { value: "shop", label: "店舗(shop)" },
+  { value: "product", label: "商品(product)" },
+  { value: "spot", label: "スポット(spot)" },
+  { value: "service", label: "サービス(service)" },
+  { value: "agency", label: "旅行会社(agency)" },
+  { value: "app", label: "アプリ(app)" },
+  { value: "item", label: "汎用(item)" },
+];
+
+const itemPathSegmentOptions = [
+  { value: "shops", label: "shops" },
+  { value: "products", label: "products" },
+  { value: "spots", label: "spots" },
+  { value: "services", label: "services" },
+  { value: "agencies", label: "agencies" },
+  { value: "apps", label: "apps" },
+  { value: "items", label: "items" },
+];
 
 function asString(v: unknown): string {
   if (v == null) return "";
@@ -38,10 +66,22 @@ function asString(v: unknown): string {
 export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEditorProps) {
   const isEdit = !!initial;
   const [schemaKey, setSchemaKey] = useState(initial?.schemaKey ?? schemas[0]?.key ?? "");
+  const isNewSection = !isEdit && schemaKey === NEW_SECTION_SCHEMA_KEY;
   const schema = useMemo(() => schemas.find((s) => s.key === schemaKey), [schemas, schemaKey]);
+  const majorCategories = useMemo(
+    () => Array.from(new Set(schemas.map((s) => s.majorCategory))),
+    [schemas],
+  );
+  const [majorCategory, setMajorCategory] = useState(schema?.majorCategory ?? majorCategories[0] ?? "");
+  const [newRegionMode, setNewRegionMode] = useState<"none" | "optional" | "required">("optional");
+  const sectionSchemas = useMemo(
+    () => schemas.filter((s) => s.majorCategory === majorCategory),
+    [schemas, majorCategory],
+  );
 
   const regionKey = schema ? `${schema.majorCategory}:${schema.sectionSlug}` : "";
   const regions = regionOptions.find((r) => r.key === regionKey)?.regions ?? [];
+  const effectiveRegionMode = schema?.regionMode ?? (isNewSection ? newRegionMode : "none");
 
   const md = initial?.metadata ?? {};
   const common = initial?.common ?? {};
@@ -101,15 +141,79 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
         <h2 className="mb-3 text-sm font-black text-slate-800">基本</h2>
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
+            <label className={labelClass}>大カテゴリ *</label>
+            {isEdit ? (
+              <input className={inputClass} value={schema ? majorCategoryLabels[schema.majorCategory] ?? schema.majorCategory : majorCategory} disabled />
+            ) : (
+              <select
+                className={inputClass}
+                value={majorCategory}
+                onChange={(e) => {
+                  const nextMajor = e.target.value;
+                  const nextSchema = schemas.find((s) => s.majorCategory === nextMajor);
+                  setMajorCategory(nextMajor);
+                  if (nextSchema) setSchemaKey(nextSchema.key);
+                }}
+              >
+                {majorCategories.map((major) => (
+                  <option key={major} value={major}>{majorCategoryLabels[major] ?? major}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div>
             <label className={labelClass}>カテゴリ(section) *</label>
             {isEdit ? (
               <input className={inputClass} value={schema?.label ?? schemaKey} disabled />
             ) : (
               <select className={inputClass} value={schemaKey} onChange={(e) => setSchemaKey(e.target.value)}>
-                {schemas.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                {sectionSchemas.map((s) => <option key={s.key} value={s.key}>{s.label}</option>)}
+                <option value={NEW_SECTION_SCHEMA_KEY}>新しいカテゴリ(section)を追加</option>
               </select>
             )}
           </div>
+          {isNewSection && (
+            <>
+              <input type="hidden" name="new_major_category" value={majorCategory} />
+              <div>
+                <label className={labelClass}>新規 section slug *</label>
+                <input name="new_section_slug" className={inputClass} placeholder="sushi" required />
+              </div>
+              <div>
+                <label className={labelClass}>新規 section 表示名 *</label>
+                <input name="new_section_label" className={inputClass} placeholder="寿司" required />
+              </div>
+              <div className="sm:col-span-2">
+                <label className={labelClass}>新規 section 説明</label>
+                <textarea name="new_section_description" rows={2} className={inputClass} placeholder="カテゴリ一覧やSEOで使う短い説明" />
+              </div>
+              <div>
+                <label className={labelClass}>item kind *</label>
+                <select name="new_item_kind" defaultValue="shop" className={inputClass} required>
+                  {itemKindOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>item URL segment *</label>
+                <select name="new_item_path_segment" defaultValue="shops" className={inputClass} required>
+                  {itemPathSegmentOptions.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelClass}>地域(region)の扱い</label>
+                <select
+                  name="new_region_mode"
+                  value={newRegionMode}
+                  onChange={(event) => setNewRegionMode(event.target.value as "none" | "optional" | "required")}
+                  className={inputClass}
+                >
+                  <option value="none">使わない</option>
+                  <option value="optional">任意</option>
+                  <option value="required">必須</option>
+                </select>
+              </div>
+            </>
+          )}
           <div>
             <label className={labelClass}>slug *</label>
             <input name="slug" defaultValue={initial?.slug ?? ""} className={inputClass} placeholder="niigata-ramen-ishiguro" required />
@@ -122,10 +226,10 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
             <label className={labelClass}>説明</label>
             <textarea name="description" defaultValue={common.description ?? ""} rows={3} className={inputClass} />
           </div>
-          {schema && schema.regionMode !== "none" && (
+          {effectiveRegionMode !== "none" && (
             <div>
-              <label className={labelClass}>地域(region){schema.regionMode === "required" && " *"}</label>
-              {regions.length > 0 ? (
+              <label className={labelClass}>地域(region){effectiveRegionMode === "required" && " *"}</label>
+              {!isNewSection && regions.length > 0 ? (
                 <select name="region" defaultValue={common.region ?? ""} className={inputClass}>
                   <option value="">（未選択）</option>
                   {regions.map((r) => <option key={r.slug} value={r.slug}>{r.name}（{r.slug}）</option>)}

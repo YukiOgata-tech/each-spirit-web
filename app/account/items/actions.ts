@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
 import { createServerClient } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
-import { getSectionItemSchema, type ItemField } from "@/lib/admin-item-schema";
+import { getSectionItemSchema, SECTION_ITEM_SCHEMAS, type ItemField, type SectionItemSchema } from "@/lib/admin-item-schema";
+
+const NEW_SECTION_SCHEMA_KEY = "__new_section__";
+const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
+const regionModes = new Set(["none", "optional", "required"]);
+const majorCategories = new Set(SECTION_ITEM_SCHEMAS.map((schema) => schema.majorCategory));
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -24,6 +29,61 @@ function slugify(input: string) {
     .replace(/[^a-z0-9-]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-{2,}/g, "-");
+}
+
+function schemaFromNewSectionForm(formData: FormData): SectionItemSchema {
+  const majorCategory = slugify(text(formData, "new_major_category"));
+  const sectionSlug = slugify(text(formData, "new_section_slug"));
+  const label = text(formData, "new_section_label");
+  const itemKind = slugify(text(formData, "new_item_kind")) || "item";
+  const itemPathSegment = slugify(text(formData, "new_item_path_segment")) || "items";
+  const regionModeInput = text(formData, "new_region_mode");
+  const regionMode = regionModes.has(regionModeInput) ? regionModeInput as SectionItemSchema["regionMode"] : "none";
+
+  if (!majorCategories.has(majorCategory)) throw new Error("不明な大カテゴリです: " + majorCategory);
+  if (!sectionSlug || !label) throw new Error("新規 section の slug と表示名は必須です");
+  if (!slugPattern.test(sectionSlug)) throw new Error("section slug は英小文字・数字・ハイフンのみです");
+  if (!slugPattern.test(itemKind)) throw new Error("item kind は英小文字・数字・ハイフンのみです");
+  if (!slugPattern.test(itemPathSegment)) throw new Error("item path segment は英小文字・数字・ハイフンのみです");
+
+  return {
+    key: `${majorCategory}:${sectionSlug}:${itemKind}`,
+    majorCategory,
+    sectionSlug,
+    itemKind,
+    itemPathSegment,
+    label,
+    regionMode,
+    fields: [],
+  };
+}
+
+async function upsertNewContentSection(
+  service: ReturnType<typeof createServerClient>,
+  schema: SectionItemSchema,
+  formData: FormData,
+) {
+  const description = text(formData, "new_section_description");
+  const { error } = await service.from("content_sections").upsert({
+    major_category: schema.majorCategory,
+    section_slug: schema.sectionSlug,
+    label: schema.label,
+    description,
+    href: `/${schema.majorCategory}/${schema.sectionSlug}`,
+    content_model: "directory",
+    item_path_segment: schema.itemPathSegment,
+    region_mode: schema.regionMode,
+    target_mode: "none",
+    status: "published",
+    sort_order: 100,
+    display_config: {},
+    seo_config: {},
+    metadata: {
+      created_from: "admin_item_editor",
+      item_kind: schema.itemKind,
+    },
+  }, { onConflict: "major_category,section_slug" });
+  if (error) throw error;
 }
 
 /** schema フィールド1件を FormData から読んで metadata 値へ変換（空は undefined） */
@@ -51,7 +111,8 @@ export async function saveItem(formData: FormData) {
   const service = createServerClient();
 
   const schemaKey = text(formData, "schema_key");
-  const schema = getSectionItemSchema(schemaKey);
+  const isNewSection = schemaKey === NEW_SECTION_SCHEMA_KEY;
+  const schema = isNewSection ? schemaFromNewSectionForm(formData) : getSectionItemSchema(schemaKey);
   if (!schema) throw new Error("不明な section です: " + schemaKey);
 
   const id = text(formData, "id") || null;
@@ -62,8 +123,12 @@ export async function saveItem(formData: FormData) {
   const region = schema.regionMode === "none" ? null : slugify(text(formData, "region")) || null;
 
   if (!slug || !name) throw new Error("slug と name は必須です");
-  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug)) throw new Error("slug は英小文字・数字・ハイフンのみです");
+  if (!slugPattern.test(slug)) throw new Error("slug は英小文字・数字・ハイフンのみです");
   if (schema.regionMode === "required" && !region) throw new Error("この section では地域(region)が必須です");
+
+  if (isNewSection) {
+    await upsertNewContentSection(service, schema, formData);
+  }
 
   // section 固有フィールド → metadata
   const managed: Record<string, unknown> = {};

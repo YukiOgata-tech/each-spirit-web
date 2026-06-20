@@ -129,6 +129,31 @@ export type Item = {
   relatedRankingSlugs: string[];
 };
 
+export type GenericItem = {
+  id?: string;
+  slug: string;
+  name: string;
+  description: string;
+  majorCategory: string;
+  sectionSlug: string;
+  itemKind: string;
+  canonicalPath?: string;
+  region?: string;
+  area: string;
+  address: string;
+  phone?: string;
+  imageUrl?: string;
+  tags: string[];
+  priceRange: string;
+  officialUrl: string;
+  mapUrl: string;
+  editorComment: string;
+  lastVerifiedAt: string;
+  metadata: Record<string, unknown>;
+  sources: Source[];
+  faqs: FAQ[];
+};
+
 export type RankingItem = {
   rank: number;
   itemSlug: string;

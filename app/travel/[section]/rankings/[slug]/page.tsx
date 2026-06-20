@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import TravelRankingPage from "@/components/legacy-pages/travel/stays/[region]/rankings/[slug]/page";
 import TravelServiceRankingPage from "@/components/legacy-pages/travel/services/[region]/rankings/[slug]/page";
+import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
@@ -27,5 +28,5 @@ export default async function TravelSectionRankingPage({ params }: PageProps) {
     if (!match) notFound();
     return <TravelServiceRankingPage params={Promise.resolve({ region: match.region, slug })} />;
   }
-  notFound();
+  return <GenericRankingDetailPage majorCategory="travel" sectionSlug={section} slug={slug} />;
 }

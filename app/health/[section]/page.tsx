@@ -1,20 +1,24 @@
 import Image from "next/image";
 import Link from "next/link";
-import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { ProteinHero } from "@/components/protein/ProteinHero";
 import { ProductCard } from "@/components/protein/ProductCard";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getProteinProducts, getProteinRankings, getProteinTargets } from "@/lib/content";
-
-export const metadata = pageMetadata({
-  title: "プロテインおすすめ比較完全ガイド｜目的別ランキングと選び方（ホエイ・ソイ）",
-  description: "女性・男性・ダイエット・初心者・トレーナー・大学生など目的別に、タンパク質量・カロリー・価格の実データでプロテインを比較するガイドサイト。",
-  path: routes.protein,
-});
+import { GenericSectionIndex, genericSectionMetadata } from "@/components/generic/GenericSectionPages";
 
 type PageProps = { params: Promise<{ section: string }> };
+
+export async function generateMetadata({ params }: PageProps) {
+  const { section } = await params;
+  if (section !== "protein") return genericSectionMetadata("health", section);
+  return pageMetadata({
+    title: "プロテインおすすめ比較完全ガイド｜目的別ランキングと選び方（ホエイ・ソイ）",
+    description: "女性・男性・ダイエット・初心者・トレーナー・大学生など目的別に、タンパク質量・カロリー・価格の実データでプロテインを比較するガイドサイト。",
+    path: routes.protein,
+  });
+}
 
 const TARGET_COLORS: Record<string, { bg: string; text: string; border: string }> = {
   women:   { bg: "#fdf2f8", text: "#be185d", border: "#fbcfe8" },
@@ -31,7 +35,7 @@ export function generateStaticParams() {
 
 export default async function ProteinIndexPage({ params }: PageProps) {
   const { section } = await params;
-  if (section !== "protein") notFound();
+  if (section !== "protein") return <GenericSectionIndex majorCategory="health" sectionSlug={section} />;
 
   const targets = await getProteinTargets();
   const [products, rankings] = await Promise.all([getProteinProducts(), getProteinRankings()]);

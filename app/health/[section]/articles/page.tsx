@@ -1,4 +1,5 @@
 import { SectionArticlesIndex } from "@/components/articles/SectionArticleRoutes";
+import { getGenericSectionConfig } from "@/components/generic/GenericSectionPages";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { notFound } from "next/navigation";
@@ -18,6 +19,8 @@ export function generateStaticParams() {
 
 export default async function ProteinArticlesPage({ params }: PageProps) {
   const { section } = await params;
-  if (section !== "protein") notFound();
-  return <SectionArticlesIndex config={config} />;
+  if (section === "protein") return <SectionArticlesIndex config={config} />;
+  const genericConfig = await getGenericSectionConfig("health", section);
+  if (!genericConfig) notFound();
+  return <SectionArticlesIndex config={genericConfig} />;
 }
