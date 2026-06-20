@@ -53,6 +53,7 @@ function toDateStr(v: string | null | undefined): string {
 const fallbackContentSections: ContentSection[] = [
   { majorCategory: "food", sectionSlug: "ramen", label: "ラーメン", description: "地域、味、移動手段で選べるラーメンガイド。", href: routes.foodRamen, contentModel: "restaurant", itemPathSegment: "shops", regionMode: "optional", targetMode: "none", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "food", sectionSlug: "cafe", label: "カフェ", description: "雰囲気、コーヒー、作業環境で選べるカフェガイド。", href: routes.foodCafe, contentModel: "restaurant", itemPathSegment: "shops", regionMode: "required", targetMode: "none", status: "published", sortOrder: 20, displayConfig: {}, seoConfig: {}, metadata: {} },
+  { majorCategory: "food", sectionSlug: "teishoku", label: "定食", description: "地域、ボリューム、価格帯で選べる定食ガイド。", href: "/food/teishoku", contentModel: "restaurant", itemPathSegment: "shops", regionMode: "optional", targetMode: "none", status: "published", sortOrder: 30, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "health", sectionSlug: "protein", label: "プロテイン", description: "目的、成分、価格帯で選べるプロテイン比較。", href: routes.healthProtein, contentModel: "product", itemPathSegment: "products", regionMode: "none", targetMode: "optional", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "beauty", sectionSlug: "hair-salon", label: "美容室", description: "年代、施術、エリアで選べる美容室ガイド。", href: routes.beautyHairSalon, contentModel: "salon", itemPathSegment: "salons", regionMode: "required", targetMode: "none", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "travel", sectionSlug: "stays", label: "宿・温泉", description: "温泉旅館や宿泊施設を旅スタイルで選べる旅行ガイド。", href: routes.travelStays, contentModel: "hotel", itemPathSegment: "hotels", regionMode: "required", targetMode: "none", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
@@ -517,8 +518,20 @@ export async function getContentSections(majorCategory?: string): Promise<Conten
 }
 
 export async function getContentSection(majorCategory: string, sectionSlug: string): Promise<ContentSection | undefined> {
-  const sections = await getContentSections(majorCategory);
-  return sections.find((section) => section.sectionSlug === sectionSlug);
+  const sb = createServerClient();
+  const { data, error } = await sb
+    .from("content_sections")
+    .select("*")
+    .eq("major_category", majorCategory)
+    .eq("section_slug", sectionSlug)
+    .eq("status", "published")
+    .maybeSingle();
+
+  if (!error && data) return mapContentSection(data);
+
+  return fallbackContentSections.find(
+    (section) => section.majorCategory === majorCategory && section.sectionSlug === sectionSlug,
+  );
 }
 
 export async function getGenericItemsBySection(majorCategory: string, sectionSlug: string): Promise<GenericItem[]> {
