@@ -79,8 +79,7 @@ item 詳細       /{major}/{section}/{item_path_segment}/{slug}  ← region は�
 
 - **D1 地域(region)を DB 化 → 実施済み**：`es.content_regions`（major/section/region_slug/status/sort_order/data jsonb）を新設。`content/*/regions.ts`＋leisure を seed（`scripts/seed-regions-targets.ts`、15行）。`lib/content.ts` の region getter を **async DB 読み取り（static フォールバック）** へ移行済み。
 - **D2 protein targets を DB 化 → 実施済み**：`es.content_targets` を新設・seed（6行）。`getProteinTargets/getProteinTarget` を async DB 読み取りへ。
-- **D3 旧互換カラム整理 → 実施済み**：`items/rankings.content_type`・`ranking_items.item_content_type` を nullable 化、旧 unique index（`items_content_type_slug_key` / `rankings_content_type_slug_key`）撤去（`20260620000001`）。section ベース unique は維持。
-  - ※ 投稿UIは当面 content_type も section から導出して入れる（旧 like トリガ互換のため）。content_type→slug マッピング: ramen→`ramen_item` / cafe→`cafe` / protein→`protein` / hair-salon→`beauty_salon` / stays→`hotel` / services(agency)→`travel_agency` / services(app)→`travel_app` / spots→`leisure_spot`。
+- **D3 旧互換カラム整理 → 実施済み**：`items/rankings.content_type`・`ranking_items.item_content_type` を nullable 化し、旧 unique index（`items_content_type_slug_key` / `rankings_content_type_slug_key`）を撤去（`20260620000001`）。その後、保存・読み取り経路を `major_category + section_slug + item_kind + item_id` ベースへ移行し、旧3カラムは削除 migration（`20260620074642`）で撤去。
 - **D4 protein ranking のURL**：canonical は `/health/protein/rankings/{slug}`（section形）で確定。`/health/protein/{target}/rankings/{slug}` ルートは当面残すが二次的。target別は一覧フィルタで表現する方針。
 
 ## 4b. region/target の編集方針（投稿UI）

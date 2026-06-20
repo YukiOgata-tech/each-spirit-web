@@ -139,7 +139,7 @@ major_category + section_slug + item_kind + slug
 - `item_kind` in `es.items`
 - `item_id` in `es.ranking_items`
 
-`content_type` / `item_content_type` は旧互換カラムであり、新規実装の正にはしない。最終的には参照を外し、削除候補にする。
+旧 `content_type` / `item_content_type` は新規実装の正にしない。保存・読み取り経路を section ベースへ移行し、`20260620074642_remove_legacy_content_type_columns.sql` で削除する。
 
 ## content_sections
 
@@ -169,6 +169,7 @@ major_category + section_slug + item_kind + slug
 - `articles/items/rankings` に `major_category`, `section_slug`, `canonical_path` を追加
 - `items/rankings` に `major_category + section_slug + slug` の一意indexを追加
 - `ranking_items.item_id` を追加
+- `items.content_type` / `rankings.content_type` / `ranking_items.item_content_type` の書き込み・読み取り依存を撤去
 - item/ranking canonical URL を region なしの形へ更新
 - `items.item_kind` を追加し、既存主要 item を backfill
 - 新canonical詳細routeを追加
@@ -180,10 +181,7 @@ major_category + section_slug + item_kind + slug
 
 ## 残タスク
 
-- `lib/content.ts` の travel services item query を `content_type` ではなく `major_category + section_slug + item_kind` へ移行する
-- likes/reviews/counts の識別設計を `content_type + content_id` から canonical content key へ移行する
-- seed/import scripts を新DB構成へ更新する
-- `/account/items/new`, `/account/items/{id}/edit`, `/account/rankings/new`, `/account/rankings/{id}/edit` を実装する
+- reviews / business_accounts の旧 `content_type + content_id` 系 index/unique を `content_kind + target_id` 系へ移行する
 
 ## 失われるもの・使えなくなるもの
 

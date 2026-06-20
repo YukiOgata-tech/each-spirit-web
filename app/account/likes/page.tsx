@@ -20,15 +20,25 @@ const TYPES: { key: LikeType; label: string; icon: React.ElementType; color: str
   { key: "want_to_visit", label: "行きたい", icon: MapPin, color: "text-amber-500" },
 ];
 
-const CONTENT_LABEL: Record<string, string> = {
-  cafe: "カフェ",
-  ramen_item: "ラーメン",
-  beauty_salon: "美容サロン",
-  hotel: "ホテル",
-  leisure_spot: "レジャー",
+const SECTION_LABEL: Record<string, string> = {
+  "food:ramen": "ラーメン",
+  "food:cafe": "カフェ",
+  "health:protein": "プロテイン",
+  "beauty:hair-salon": "美容サロン",
+  "travel:stays": "宿・ホテル",
+  "travel:services": "旅行サービス",
+  "leisure:spots": "レジャー",
   article: "記事",
   ranking: "ランキング",
 };
+
+function itemLabel(item: { major_category?: string | null; section_slug?: string | null; item_kind?: string | null }) {
+  if (item.major_category && item.section_slug) {
+    const sectionLabel = SECTION_LABEL[`${item.major_category}:${item.section_slug}`];
+    if (sectionLabel) return item.item_kind === "app" ? "旅行アプリ" : sectionLabel;
+  }
+  return "店舗・商品";
+}
 
 type PageProps = { searchParams: Promise<{ type?: string }> };
 
@@ -57,30 +67,30 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
 
   const es = supabase.schema("es");
   const [itemsRes, articlesRes, rankingsRes] = await Promise.all([
-    itemIds.length ? es.from("items").select("id, content_type, name, canonical_path").in("id", itemIds) : Promise.resolve({ data: [] }),
+    itemIds.length ? es.from("items").select("id, major_category, section_slug, item_kind, name, canonical_path").in("id", itemIds) : Promise.resolve({ data: [] }),
     articleIds.length ? es.from("articles").select("id, title, canonical_path").in("id", articleIds) : Promise.resolve({ data: [] }),
     rankingIds.length ? es.from("rankings").select("id, title, canonical_path").in("id", rankingIds) : Promise.resolve({ data: [] }),
   ]);
 
-  const resolved = new Map<string, { name: string; href: string | null; contentType: string }>();
+  const resolved = new Map<string, { name: string; href: string | null; label: string }>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const it of (itemsRes.data ?? []) as any[]) {
-    resolved.set(`item:${it.id}`, { name: it.name, href: it.canonical_path ?? null, contentType: it.content_type ?? "item" });
+    resolved.set(`item:${it.id}`, { name: it.name, href: it.canonical_path ?? null, label: itemLabel(it) });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of (articlesRes.data ?? []) as any[]) {
-    resolved.set(`article:${a.id}`, { name: a.title, href: a.canonical_path ?? null, contentType: "article" });
+    resolved.set(`article:${a.id}`, { name: a.title, href: a.canonical_path ?? null, label: SECTION_LABEL.article });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (rankingsRes.data ?? []) as any[]) {
-    resolved.set(`ranking:${r.id}`, { name: r.title, href: r.canonical_path ?? null, contentType: "ranking" });
+    resolved.set(`ranking:${r.id}`, { name: r.title, href: r.canonical_path ?? null, label: SECTION_LABEL.ranking });
   }
 
   const rows = likes.map((l) => {
     const r = resolved.get(`${l.content_kind}:${l.target_id}`);
     return {
       created_at: l.created_at,
-      content_type: r?.contentType ?? l.content_kind,
+      label: r?.label ?? l.content_kind,
       name: r?.name ?? l.target_id,
       href: r?.href ?? null,
     };
@@ -137,7 +147,7 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-bold text-slate-800">{row.name}</p>
                     <p className="mt-0.5 text-xs text-slate-400">
-                      {CONTENT_LABEL[row.content_type] ?? row.content_type}
+                      {row.label}
                       {" ・ "}
                       {new Date(row.created_at).toLocaleDateString("ja-JP", { year: "numeric", month: "numeric", day: "numeric" })}
                     </p>
@@ -147,7 +157,7 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
               );
               const cls = "flex items-center gap-3 rounded-xl border border-[var(--border)] bg-white px-4 py-3";
               return (
-                <li key={`${row.content_type}-${row.name}-${i}`}>
+                <li key={`${row.label}-${row.name}-${i}`}>
                   {row.href ? (
                     <Link href={row.href} className={`${cls} transition hover:border-[var(--primary)]/40 hover:shadow-sm`}>
                       {inner}

@@ -95,7 +95,6 @@ export async function saveItem(formData: FormData) {
 
   const payload = {
     slug,
-    content_type: schema.contentType, // 旧 like トリガ互換のため導出して保存
     major_category: schema.majorCategory,
     section_slug: schema.sectionSlug,
     item_kind: schema.itemKind,

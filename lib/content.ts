@@ -100,27 +100,6 @@ function sectionSlugFromArticleCategory(category: string | null | undefined): st
   return undefined;
 }
 
-function majorCategoryFromContentType(contentType: string | null | undefined): string | undefined {
-  if (!contentType) return undefined;
-  if (["ramen", "ramen_item", "cafe"].includes(contentType)) return "food";
-  if (contentType === "protein") return "health";
-  if (contentType === "beauty" || contentType === "beauty_salon") return "beauty";
-  if (["hotel", "travel_agency", "travel_app"].includes(contentType)) return "travel";
-  if (contentType === "leisure" || contentType === "leisure_spot") return "leisure";
-  return undefined;
-}
-
-function sectionSlugFromContentType(contentType: string | null | undefined): string | undefined {
-  if (contentType === "ramen" || contentType === "ramen_item") return "ramen";
-  if (contentType === "cafe") return "cafe";
-  if (contentType === "protein") return "protein";
-  if (contentType === "beauty" || contentType === "beauty_salon") return "hair-salon";
-  if (contentType === "hotel") return "stays";
-  if (contentType === "travel_agency" || contentType === "travel_app") return "services";
-  if (contentType === "leisure" || contentType === "leisure_spot") return "spots";
-  return undefined;
-}
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRamenItem(row: any): Item {
   const m = row.metadata ?? {};
@@ -352,14 +331,12 @@ function mapSalonItem(row: any): Salon {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRanking(row: any, items: any[]): Ranking {
   const m = row.metadata ?? {};
-  const majorCategory = row.major_category ?? majorCategoryFromContentType(row.content_type);
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
-    contentType: row.content_type ?? undefined,
-    majorCategory,
-    sectionSlug: row.section_slug ?? sectionSlugFromContentType(row.content_type),
+    majorCategory: row.major_category ?? undefined,
+    sectionSlug: row.section_slug ?? undefined,
     canonicalPath: row.canonical_path ?? undefined,
     region: row.region ?? undefined,
     target: m.target ?? undefined,
@@ -644,33 +621,12 @@ export function articleHref(article: Pick<Article, "category" | "region" | "slug
   return majorCategory && sectionSlug ? routes.sectionArticle(majorCategory, sectionSlug, a.slug) : routes.article(a.slug);
 }
 
-export function rankingHref(ranking: Pick<Ranking, "contentType" | "region" | "slug" | "target">) {
-  const r = ranking as Pick<Ranking, "contentType" | "region" | "slug" | "target" | "canonicalPath" | "majorCategory" | "sectionSlug">;
+export function rankingHref(ranking: Pick<Ranking, "region" | "slug" | "target">) {
+  const r = ranking as Pick<Ranking, "region" | "slug" | "target" | "canonicalPath" | "majorCategory" | "sectionSlug">;
   if (r.canonicalPath) return r.canonicalPath;
-  const majorCategory = r.majorCategory ?? majorCategoryFromContentType(r.contentType);
-  const sectionSlug = r.sectionSlug ?? sectionSlugFromContentType(r.contentType);
-  if (majorCategory && sectionSlug) return routes.sectionRanking(majorCategory, sectionSlug, r.slug);
-  if (ranking.contentType === "protein" && ranking.target) return routes.proteinRanking(ranking.target, ranking.slug);
+  if (r.majorCategory && r.sectionSlug) return routes.sectionRanking(r.majorCategory, r.sectionSlug, r.slug);
+  if (r.target) return routes.proteinRanking(r.target, r.slug);
   return routes.ramenRanking(ranking.slug);
-}
-
-function itemPathSegmentFromContentType(contentType: string | null | undefined): string | undefined {
-  if (contentType === "ramen_item" || contentType === "cafe") return "shops";
-  if (contentType === "protein") return "products";
-  if (contentType === "beauty_salon") return "salons";
-  if (contentType === "hotel") return "hotels";
-  if (contentType === "travel_agency") return "agencies";
-  if (contentType === "leisure_spot") return "spots";
-  return undefined;
-}
-
-export function itemHrefByContentType(contentType: string, region: string | null | undefined, slug: string) {
-  const majorCategory = majorCategoryFromContentType(contentType);
-  const sectionSlug = sectionSlugFromContentType(contentType);
-  const itemPathSegment = itemPathSegmentFromContentType(contentType);
-  if (majorCategory && sectionSlug && itemPathSegment) return routes.sectionItem(majorCategory, sectionSlug, itemPathSegment, slug);
-  if (contentType === "travel_app") return routes.travelApps;
-  return routes.search;
 }
 
 export async function getGenericArticles(): Promise<Article[]> {
@@ -884,11 +840,7 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     if (ranking.majorCategory && ranking.sectionSlug) {
       return sectionLabelByKey.get(`${ranking.majorCategory}:${ranking.sectionSlug}`) ?? "ランキング";
     }
-    if (ranking.contentType === "hotel") return "旅行";
-    if (ranking.contentType === "travel_agency") return "旅行アプリ・旅行会社";
-    if (ranking.contentType === "leisure") return "レジャー";
-    if (ranking.contentType === "protein") return "プロテイン";
-    return categoryLabelBySlug.get(ranking.contentType ?? "") ?? ranking.contentType ?? "ランキング";
+    return categoryLabelBySlug.get(ranking.majorCategory ?? "") ?? "ランキング";
   };
   const [articles, rankings, items, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
     getLatestArticles(),

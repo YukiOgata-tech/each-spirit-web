@@ -41,7 +41,7 @@ export default async function FoodPage() {
       <section className="mt-8">
         <h2 className="text-2xl font-bold tracking-normal text-slate-950">ランキング</h2>
         <div className="mt-4 grid gap-4 md:grid-cols-2">
-          {rankings.map((ranking) => <RankingCard key={`${ranking.contentType}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />)}
+          {rankings.map((ranking) => <RankingCard key={`${ranking.majorCategory ?? ""}-${ranking.sectionSlug ?? ""}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />)}
         </div>
       </section>
 

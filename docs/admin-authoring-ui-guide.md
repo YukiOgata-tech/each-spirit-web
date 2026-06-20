@@ -15,7 +15,7 @@
 
 共通の仕組み:
 - ネイティブ `<form action={サーバーアクション}>`（`saveArticle` / `saveItem` / `saveRanking`）。
-- 保存時に **canonical_path / major_category / section_slug / item_kind / content_type を自動導出**。
+- 保存時に **canonical_path / major_category / section_slug / item_kind** を自動導出。
 - slug 重複チェック → upsert → 関連ページ revalidate → リダイレクト（公開=詳細ページ / 下書き=マイページ）。
 - セクション定義: `lib/admin-item-schema.ts`（items）、`lib/admin-ranking-schema.ts`（rankings）。
 - フォーム本体: `components/admin/ItemEditor.tsx` / `RankingEditor.tsx` / `ArticleEditor.tsx`。
@@ -86,7 +86,7 @@
    - item: `/{major}/{section}/{item_path_segment}/{slug}`（travel_app のみ `/travel/services/apps`）
    - ranking: `/{major}/{section}/rankings/{slug}`
    - article: `/{major}/{section}/articles/{slug}`（独立記事は `/articles/{slug}`）
-2. **major_category / section_slug / item_kind / content_type** を section から導出して保存（content_type は旧いいねトリガ互換のため当面保持）。
+2. **major_category / section_slug / item_kind** を section から導出して保存。
 3. **slug 重複チェック**（items/rankings は `major_category+section_slug` スコープ・編集時は自分を除外、記事は全体一意）。
 4. **revalidate**（詳細・一覧・地域ページ・`/sitemap.xml`）で即時反映。
 5. 公開→詳細ページ / 下書き→マイページへリダイレクト。
@@ -98,7 +98,7 @@
 UI は1件ずつの作成・編集経路。大量投入は同じ DB 構造へ CLI で行える（AI のリミットを使わない運用）:
 - 記事: `npm run db:import:articles <json>`（`scripts/import-articles-json.ts`）
 - 店舗・ランキング: `scripts/import-research-json.ts`
-- いずれも `lib/section-map.ts` のマッピングで canonical / major / section / item_kind / item_id を自動付与。
+- いずれも `lib/section-map.ts` のマッピングで canonical / major / section / item_kind / item_id を自動付与し、旧 `content_type` 系カラムは保存しない。
 
 ## 補足: region / target の供給元
 

@@ -41,18 +41,19 @@ es.*                ← each-spirit 専用スキーマ
 |---------|------|--------|
 | `20260611000001_es_initial.sql` | `es` スキーマ初期構築（全テーブル・RLS・トリガー・インデックス） | 2026-06-11 |
 | `20260611000002_es_extensible.sql` | `like_type` PK 拡張・reviews・notifications・business_accounts・user_points・point_ledger・user_follows・content_reports | 2026-06-11 |
-| `20260611000003_es_items.sql` | `es.items` 汎用アイテムテーブル・content_type CHECK 制約緩和（無限ジャンル対応）| 2026-06-11 |
+| `20260611000003_es_items.sql` | `es.items` 汎用アイテムテーブル追加（旧 `content_type` ベースの初期実装）| 2026-06-11 |
 | `20260611000004_es_rankings.sql` | `es.rankings` / `es.ranking_items` ランキングテーブル・like_count トリガー・逆引きインデックス | 2026-06-11 |
 | `20260619214911_major_category_canonical_paths.sql` | `major_category` / `section_slug` / `canonical_path` 追加、`es.content_sections` 中カテゴリ管理テーブル追加 | 2026-06-19 |
 | `20260619222405_section_slug_primary_urls.sql` | item/ranking の canonical URL を大カテゴリ/中カテゴリ基準へ更新、`ranking_items.item_id` 追加 | 2026-06-19 |
 | `20260619225244_item_kind_for_section_items.sql` | `es.items.item_kind` 追加、主要 item の kind backfill、kind 別 index 追加 | 2026-06-20 |
+| `20260620074642_remove_legacy_content_type_columns.sql` | `es.items.content_type` / `es.rankings.content_type` / `es.ranking_items.item_content_type` 削除、section ベース index へ置換 | 2026-06-20 |
 
 ## es スキーマ テーブル一覧
 
 | テーブル | 用途 |
 |---------|------|
 | `es.user_prefs` | each-spirit ユーザー設定（お気に入りカテゴリ・地域など） |
-| `es.content_likes` | 全コンテンツ統一いいね／ブックマーク／行きたい（PK: user_id + content_type + content_id + like_type） |
+| `es.content_likes` | 全コンテンツ統一いいね／ブックマーク／行きたい（PK: user_id + content_kind + target_id + like_type） |
 | `es.content_like_counts` | いいねカウントキャッシュ（trigger 自動更新） |
 | `es.articles` | 記事（TypeScript ファイルから段階的移行） |
 | `es.daily_fortunes` | デイリー占い結果キャッシュ（同日同タイプは UNIQUE） |
@@ -70,17 +71,13 @@ es.*                ← each-spirit 専用スキーマ
 | `es.ranking_items` | ランキング内の順位リスト（ranking_id FK + rank UNIQUE）。`item_id` で `es.items` へ参照 |
 | `es.content_sections` | 大カテゴリ配下の中カテゴリ管理。`food/ramen`、`health/protein` などの表示名、URL、content model、地域/ターゲット要否を保持 |
 
-## content_likes の content_type 値
+## content_likes の content_kind 値
 
 | 値 | 対象コンテンツ |
 |----|--------------|
-| `cafe` | カフェ店舗 |
-| `ramen_item` | ラーメン店舗 |
+| `item` | 店舗・商品・スポットなど `es.items` の行 |
 | `article` | 記事 |
 | `ranking` | ランキング |
-| `leisure_spot` | レジャースポット |
-| `hotel` | ホテル |
-| `beauty_salon` | 美容サロン |
 
 ## content_likes の like_type 値
 

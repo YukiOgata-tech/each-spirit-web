@@ -431,7 +431,6 @@ export type Ranking = {
   slug: string;
   title: string;
   description: string;
-  contentType?: string;
   majorCategory?: string;
   sectionSlug?: string;
   canonicalPath?: string;

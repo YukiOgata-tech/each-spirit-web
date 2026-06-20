@@ -59,7 +59,6 @@ type ResearchRanking = {
   };
   items: Array<{
     rank: number;
-    item_content_type: string;
     item_slug: string;
     score: number;
     reason: string;
@@ -195,7 +194,6 @@ async function main() {
     if (!meta) throw new Error(`未知の item content_type: ${item.content_type}（${item.slug}）`);
     return {
       slug: item.slug,
-      content_type: item.content_type,
       major_category: meta.majorCategory,
       section_slug: meta.sectionSlug,
       item_kind: meta.itemKind,
@@ -231,14 +229,16 @@ async function main() {
 
   let rankingItemCount = 0;
   for (const ranking of rankings) {
+    const rankingMeta = RANKING_CONTENT_TYPE_TO_SECTION[ranking.content_type];
+    if (!rankingMeta) throw new Error(`未知の ranking content_type: ${ranking.content_type}（${ranking.slug}）`);
+
     const { data: rankingRow, error: rankingError } = await es
       .from("rankings")
       .upsert(
         {
           slug: ranking.slug,
-          content_type: ranking.content_type,
-          major_category: RANKING_CONTENT_TYPE_TO_SECTION[ranking.content_type]?.majorCategory ?? null,
-          section_slug: RANKING_CONTENT_TYPE_TO_SECTION[ranking.content_type]?.sectionSlug ?? null,
+          major_category: rankingMeta.majorCategory,
+          section_slug: rankingMeta.sectionSlug,
           canonical_path: rankingCanonicalPath(ranking.content_type, ranking.slug),
           region: ranking.region,
           title: ranking.title,
@@ -262,7 +262,6 @@ async function main() {
     const rows = ranking.items.map((item) => ({
       ranking_id: rankingRow.id,
       rank: item.rank,
-      item_content_type: item.item_content_type,
       item_slug: item.item_slug,
       item_id: itemIdBySlug.get(item.item_slug) ?? null,
       score: item.score,

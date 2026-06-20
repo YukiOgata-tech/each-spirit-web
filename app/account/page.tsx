@@ -25,20 +25,16 @@ type Profile = {
   birthday: string | null;
   gender: FortuneGender | null;
 } | null;
-type LikeRow  = { like_type: string; content_type: string; content_id: string; created_at: string };
+type LikeRow  = { like_type: string; content_kind: string; target_id: string; created_at: string };
 type Notification = { id: string; title: string; body: string; action_url: string | null; created_at: string };
 type QuizResult   = { id: string; quiz_type: string; result: Record<string, unknown>; created_at: string };
 type Points = { balance: number; lifetime: number } | null;
 
-// ── コンテンツタイプの日本語ラベル ────────────────────────
-const CONTENT_TYPE_LABELS: Record<string, string> = {
-  cafe: "カフェ",
-  ramen_item: "ラーメン",
+// ── コンテンツ種別の日本語ラベル ────────────────────────
+const CONTENT_KIND_LABELS: Record<string, string> = {
+  item: "店舗・商品",
   article: "記事",
   ranking: "ランキング",
-  leisure_spot: "レジャー",
-  hotel: "ホテル",
-  beauty_salon: "美容サロン",
 };
 const LIKE_TYPE_LABELS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   like:          { label: "いいね",   icon: Heart,    color: "text-rose-500" },
@@ -65,7 +61,7 @@ export default async function AccountPage() {
   const [profileRes, likesRes, notificationsRes, quizRes, pointsRes] = await Promise.allSettled([
     supabase.from("profiles").select("display_name, avatar, birthday, gender").eq("id", user.id).single(),
     supabase.schema("es").from("content_likes")
-      .select("like_type, content_type, content_id, created_at")
+      .select("like_type, content_kind, target_id, created_at")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(20),
@@ -191,12 +187,12 @@ export default async function AccountPage() {
                   const LikeIcon = LIKE_TYPE_LABELS[like.like_type]?.icon ?? Heart;
                   const likeColor = LIKE_TYPE_LABELS[like.like_type]?.color ?? "text-slate-400";
                   const likeLabel = LIKE_TYPE_LABELS[like.like_type]?.label ?? like.like_type;
-                  const contentLabel = CONTENT_TYPE_LABELS[like.content_type] ?? like.content_type;
+                  const contentLabel = CONTENT_KIND_LABELS[like.content_kind] ?? like.content_kind;
                   return (
                     <li key={i} className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/50 px-3 py-2.5">
                       <LikeIcon className={`h-4 w-4 shrink-0 ${likeColor}`} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-800">{like.content_id}</p>
+                        <p className="truncate text-sm font-medium text-slate-800">{like.target_id}</p>
                         <p className="mt-0.5 text-xs text-slate-400">{contentLabel} · {likeLabel}</p>
                       </div>
                       <span className="shrink-0 text-[11px] tabular-nums text-slate-400">

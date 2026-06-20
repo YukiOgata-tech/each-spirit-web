@@ -55,7 +55,6 @@ export async function saveRanking(formData: FormData) {
   const canonical = routes.sectionRanking(section.majorCategory, section.sectionSlug, slug);
   const payload = {
     slug,
-    content_type: section.rankingContentType,
     major_category: section.majorCategory,
     section_slug: section.sectionSlug,
     canonical_path: canonical,
@@ -94,10 +93,10 @@ export async function saveRanking(formData: FormData) {
 
   const slugs = rows.map((r) => r.itemSlug);
   const { data: itemRows } = await service
-    .from("items").select("id, slug, content_type")
+    .from("items").select("id, slug")
     .eq("major_category", section.majorCategory).eq("section_slug", section.sectionSlug)
     .in("slug", slugs.length ? slugs : ["__none__"]);
-  const bySlug = new Map((itemRows ?? []).map((r) => [r.slug as string, { id: r.id as string, contentType: r.content_type as string | null }]));
+  const bySlug = new Map((itemRows ?? []).map((r) => [r.slug as string, r.id as string]));
 
   const insertRows = rows
     .filter((r) => bySlug.has(r.itemSlug))
@@ -105,8 +104,7 @@ export async function saveRanking(formData: FormData) {
       ranking_id: rankingId,
       rank: Number(r.rank) || index + 1,
       item_slug: r.itemSlug,
-      item_id: bySlug.get(r.itemSlug)!.id,
-      item_content_type: bySlug.get(r.itemSlug)!.contentType ?? section.itemContentType,
+      item_id: bySlug.get(r.itemSlug)!,
       score: r.score === null || r.score === undefined || Number.isNaN(Number(r.score)) ? null : Number(r.score),
       reason: r.reason ?? "",
       is_pr: !!r.isPr,

@@ -102,8 +102,10 @@ function ok(label: string, count: number) {
 function withItemSection<T extends { content_type: string; slug: string }>(rows: T[]) {
   return rows.map((r) => {
     const m = ITEM_CONTENT_TYPE_TO_SECTION[r.content_type]
-    if (!m) return r
-    return { ...r, major_category: m.majorCategory, section_slug: m.sectionSlug, item_kind: m.itemKind, canonical_path: itemCanonicalPath(r.content_type, r.slug) }
+    if (!m) throw new Error(`Unknown legacy item mapping for ${r.content_type}`)
+    const { content_type: _contentType, ...row } = r
+    void _contentType
+    return { ...row, major_category: m.majorCategory, section_slug: m.sectionSlug, item_kind: m.itemKind, canonical_path: itemCanonicalPath(r.content_type, r.slug) }
   })
 }
 
@@ -373,7 +375,6 @@ async function migrateRankings() {
     content_type: string
     region: string | null
     target: string | null
-    item_content_type: string
     slug: string
     title: string
     description: string
@@ -387,20 +388,20 @@ async function migrateRankings() {
   }
 
   const allRankings: RankingInput[] = [
-    ...ramenRankings.map(r         => normalizeRanking(r,                "ramen",        "ramen_item",    "niigata")),
-    ...yamagataRamenRankings.map(r => normalizeRanking(r,                "ramen",        "ramen_item",    "yamagata")),
-    ...chibaRamenRankings.map(r    => normalizeRanking(r,                "ramen",        "ramen_item",    "chiba")),
-    ...fukushimaRamenRankings.map(r => normalizeRanking(r,               "ramen",        "ramen_item",    "fukushima")),
-    ...niigataCafeRankings.map(r   => normalizeCafeRanking(r,           "cafe",          "cafe",          "niigata")),
-    ...yamagataCafeRankings.map(r  => normalizeCafeRanking(r,           "cafe",          "cafe",          "yamagata")),
-    ...toyamaCafeRankings.map(r    => normalizeCafeRanking(r,           "cafe",          "cafe",          "toyama")),
-    ...niigataHotelRankings.map(r  => normalizeRanking(r,               "hotel",         "hotel",         "niigata")),
-    ...niigataTravelAgencyRankings.map(r => normalizeRanking(r,          "travel_agency", "travel_agency", "niigata")),
-    ...shizuokaTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "travel_agency", "shizuoka")),
-    ...yamagataTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "travel_agency", "yamagata")),
-    ...niigataLeisureRankings.map(r => normalizeRanking(r,              "leisure",       "leisure_spot",  "niigata")),
-    ...niigataBeautyRankings.map(r => normalizeRanking(r,               "beauty",        "beauty_salon",  "niigata")),
-    ...yamagataBeautyRankings.map(r => normalizeRanking(r,              "beauty",        "beauty_salon",  "yamagata")),
+    ...ramenRankings.map(r         => normalizeRanking(r,                "ramen",         "niigata")),
+    ...yamagataRamenRankings.map(r => normalizeRanking(r,                "ramen",         "yamagata")),
+    ...chibaRamenRankings.map(r    => normalizeRanking(r,                "ramen",         "chiba")),
+    ...fukushimaRamenRankings.map(r => normalizeRanking(r,               "ramen",         "fukushima")),
+    ...niigataCafeRankings.map(r   => normalizeCafeRanking(r,            "cafe",          "niigata")),
+    ...yamagataCafeRankings.map(r  => normalizeCafeRanking(r,            "cafe",          "yamagata")),
+    ...toyamaCafeRankings.map(r    => normalizeCafeRanking(r,            "cafe",          "toyama")),
+    ...niigataHotelRankings.map(r  => normalizeRanking(r,                "hotel",         "niigata")),
+    ...niigataTravelAgencyRankings.map(r => normalizeRanking(r,          "travel_agency", "niigata")),
+    ...shizuokaTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "shizuoka")),
+    ...yamagataTravelAgencyRankings.map(r => normalizeRanking(r,         "travel_agency", "yamagata")),
+    ...niigataLeisureRankings.map(r => normalizeRanking(r,               "leisure",       "niigata")),
+    ...niigataBeautyRankings.map(r => normalizeRanking(r,                "beauty",        "niigata")),
+    ...yamagataBeautyRankings.map(r => normalizeRanking(r,               "beauty",        "yamagata")),
     ...proteinRankings.map(r       => normalizeProteinRanking(r)),
   ]
 
@@ -409,13 +410,18 @@ async function migrateRankings() {
   const itemIdBySlug = new Map((allItemIdRows ?? []).map((r: { id: string; slug: string }) => [r.slug, r.id]))
 
   for (const r of allRankings) {
+    const rankingMeta = RANKING_CONTENT_TYPE_TO_SECTION[r.content_type]
+    if (!rankingMeta) {
+      err(`ranking ${r.slug}`, new Error(`Unknown legacy ranking mapping for ${r.content_type}`))
+      continue
+    }
+
     // 1. ranking 行を upsert
     const { data: rankingRow, error: re } = await es.from("rankings")
       .upsert({
         slug:              r.slug,
-        content_type:      r.content_type,
-        major_category:    RANKING_CONTENT_TYPE_TO_SECTION[r.content_type]?.majorCategory ?? null,
-        section_slug:      RANKING_CONTENT_TYPE_TO_SECTION[r.content_type]?.sectionSlug ?? null,
+        major_category:    rankingMeta.majorCategory,
+        section_slug:      rankingMeta.sectionSlug,
         canonical_path:    rankingCanonicalPath(r.content_type, r.slug),
         region:            r.region,
         title:             r.title,
@@ -438,7 +444,6 @@ async function migrateRankings() {
     const itemRows = r.items.map(item => ({
       ranking_id:        rankingRow.id,
       rank:              item.rank,
-      item_content_type: r.item_content_type,
       item_slug:         item.itemSlug,
       item_id:           itemIdBySlug.get(item.itemSlug) ?? null,
       score:             item.score,
@@ -554,9 +559,9 @@ function travelAgencyToRow(a: (typeof niigataTravelAgencies)[number], region: st
 }
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
-function normalizeRanking(r: any, content_type: string, item_content_type: string, region: string | null) {
+function normalizeRanking(r: any, content_type: string, region: string | null) {
   return {
-    slug: r.slug, content_type, region, target: null as string | null, item_content_type,
+    slug: r.slug, content_type, region, target: null as string | null,
     title: r.title, description: r.description,
     conclusion: r.conclusion ?? "", quick_table_label: r.quickTableLabel ?? "",
     criteria: r.criteria ?? [], last_updated_at: r.lastUpdatedAt,
@@ -568,9 +573,9 @@ function normalizeRanking(r: any, content_type: string, item_content_type: strin
   }
 }
 
-function normalizeCafeRanking(r: any, content_type: string, item_content_type: string, region: string) {
+function normalizeCafeRanking(r: any, content_type: string, region: string) {
   return {
-    ...normalizeRanking(r, content_type, item_content_type, region),
+    ...normalizeRanking(r, content_type, region),
     // CafeRankingItem は cafeSlug を使う
     items: (r.items ?? []).map((i: any) => ({
       rank: i.rank, itemSlug: i.cafeSlug, score: i.score ?? 0,
@@ -582,7 +587,6 @@ function normalizeCafeRanking(r: any, content_type: string, item_content_type: s
 function normalizeProteinRanking(r: any) {
   return {
     slug: r.slug, content_type: "protein", region: null, target: r.target,
-    item_content_type: "protein",
     title: r.title, description: r.description,
     conclusion: r.conclusion ?? "", quick_table_label: r.quickTableLabel ?? "",
     criteria: r.criteria ?? [], last_updated_at: r.lastUpdatedAt,

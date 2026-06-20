@@ -98,7 +98,7 @@ export default async function HomePage() {
             <h2 className="section-heading">ランキング</h2>
           </div>
           <div className="grid gap-3 sm:gap-4">
-            {rankings.map((ranking) => <RankingCard key={(ranking.contentType ?? "") + ranking.slug} ranking={ranking} href={rankingHref(ranking)} />)}
+            {rankings.map((ranking) => <RankingCard key={`${ranking.majorCategory ?? ""}-${ranking.sectionSlug ?? ""}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />)}
           </div>
         </div>
       </section>
