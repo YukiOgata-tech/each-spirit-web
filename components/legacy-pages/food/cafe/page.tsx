@@ -14,7 +14,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function CafeIndexPage() {
-  const regions = getCafeRegions();
+  const regions = await getCafeRegions();
   const regionStats = await Promise.all(
     regions.map(async (region) => ({
       region,

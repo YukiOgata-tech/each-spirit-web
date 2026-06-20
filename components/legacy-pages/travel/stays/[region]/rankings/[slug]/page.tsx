@@ -15,7 +15,7 @@ type PageProps = { params: Promise<{ region: string; slug: string }> };
 
 export async function generateStaticParams() {
   return await Promise.all(
-    getTravelRegions().map(async (r) => {
+    (await getTravelRegions()).map(async (r) => {
       const rankings = await getTravelRankings(r.slug);
       return rankings.map((ranking) => ({ region: r.slug, slug: ranking.slug }));
     })

@@ -14,13 +14,13 @@ import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ region: string }> };
 
-export function generateStaticParams() {
-  return getTravelServiceRegions().map((r) => ({ region: r.slug }));
+export async function generateStaticParams() {
+  return (await getTravelServiceRegions()).map((r) => ({ region: r.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getTravelServiceRegion(region);
+  const regionData = await getTravelServiceRegion(region);
   if (!regionData) return {};
   return pageMetadata({
     title: regionData.seoTitle,
@@ -32,7 +32,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function TravelServicesRegionPage({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getTravelServiceRegion(region);
+  const regionData = await getTravelServiceRegion(region);
   if (!regionData) notFound();
 
   const [agencies, rankings] = await Promise.all([getTravelAgencies(region), getTravelServiceRankings(region)]);

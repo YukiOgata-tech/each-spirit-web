@@ -17,7 +17,7 @@ type PageProps = { params: Promise<{ region: string; slug: string }> };
 
 export async function generateStaticParams() {
   return await Promise.all(
-    getCafeRegions().map(async (r) => {
+    (await getCafeRegions()).map(async (r) => {
       const items = await getCafeItemsByRegion(r.slug);
       return items.map((c) => ({ region: r.slug, slug: c.slug }));
     })
@@ -150,7 +150,7 @@ export default async function CafeItemPage({ params }: PageProps) {
             ))}
           </div>
 
-          <LikeButton contentType="cafe" contentId={cafe.slug} regionSlug={region} className="mt-5" />
+          <LikeButton contentKind="item" targetId={cafe.id} regionSlug={region} className="mt-5" />
         </div>
       </section>
 

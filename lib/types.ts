@@ -74,6 +74,7 @@ export type SearchResult = {
 };
 
 export type Article = {
+  id?: string;
   slug: string;
   title: string;
   description: string;
@@ -102,6 +103,7 @@ export type OfficialLink = {
 };
 
 export type Item = {
+  id?: string;
   slug: string;
   name: string;
   description: string;
@@ -163,6 +165,7 @@ export type HotelStyle =
 export type MealPlan = "両食" | "朝食のみ" | "素泊まり" | "選択可";
 
 export type Hotel = {
+  id?: string;
   slug: string;
   name: string;
   description: string;
@@ -246,6 +249,7 @@ export type TravelAgencyService =
   | "佐渡旅行";
 
 export type TravelAgency = {
+  id?: string;
   slug: string;
   name: string;
   tagline: string;
@@ -391,6 +395,7 @@ export type Treatment =
 export type AgeGroup = "teens" | "twenties" | "thirties" | "forties" | "fifties";
 
 export type Salon = {
+  id?: string;
   slug: string;
   name: string;
   tagline: string;
@@ -452,6 +457,7 @@ export type CafeStyle =
   | "ロースタリー";
 
 export type CafeItem = {
+  id?: string;
   slug: string;
   name: string;
   description: string;
@@ -528,6 +534,7 @@ export type CafeRegion = {
 export type LeisureKind = "outdoor" | "indoor" | "hybrid";
 
 export type LeisureSpot = {
+  id?: string;
   slug: string;
   name: string;
   description: string;

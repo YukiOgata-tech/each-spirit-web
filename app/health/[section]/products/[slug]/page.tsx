@@ -10,7 +10,7 @@ import { MacroBars } from "@/components/protein/MacroBars";
 import { NutritionTypeBadge, MacroChip } from "@/components/protein/NutritionBadge";
 import { breadcrumbSchema, faqSchema, pageMetadata, productSchema, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getProteinProduct, getProteinProducts, getProteinRankings, getProteinTarget } from "@/lib/content";
+import { getProteinProduct, getProteinProducts, getProteinRankings, getProteinTargets } from "@/lib/content";
 import type { ProteinTarget } from "@/lib/types";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
@@ -47,6 +47,8 @@ export default async function ProteinProductPage({ params }: PageProps) {
     .flatMap((r) => r.items)
     .find((entry) => entry.productSlug === product.slug)
     ?.score;
+
+  const targetSlugs = new Set((await getProteinTargets()).map((t) => t.slug));
 
   const breadcrumbs = [
     { name: "トップ",     href: routes.home },
@@ -173,7 +175,7 @@ export default async function ProteinProductPage({ params }: PageProps) {
               <h2 className="text-lg font-bold text-slate-800">こんな方におすすめ</h2>
               <div className="mt-4 flex flex-wrap gap-2">
                 {product.targets.map((t) => {
-                  const info = getProteinTarget(t);
+                  const info = targetSlugs.has(t);
                   return (
                     <Link key={t} href={routes.proteinTarget(t)} className="flex items-center gap-1.5 rounded-full border border-orange-200 bg-orange-50 px-3 py-1.5 text-xs font-bold text-orange-700 transition-all hover:bg-orange-100">
                       {TARGET_LABEL[t]}

@@ -5,10 +5,11 @@ import { getTravelRegions, getTravelServiceRegions } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; region: string }> };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const [stays, services] = await Promise.all([getTravelRegions(), getTravelServiceRegions()]);
   return [
-    ...getTravelRegions().map((region) => ({ section: "stays", region: region.slug })),
-    ...getTravelServiceRegions().map((region) => ({ section: "services", region: region.slug })),
+    ...stays.map((region) => ({ section: "stays", region: region.slug })),
+    ...services.map((region) => ({ section: "services", region: region.slug })),
   ];
 }
 

@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function TravelIndexPage() {
-  const regions = getTravelRegions();
+  const regions = await getTravelRegions();
   const regionStats = await Promise.all(
     regions.map(async (region) => ({
       region,

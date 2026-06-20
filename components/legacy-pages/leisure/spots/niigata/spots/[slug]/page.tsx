@@ -87,7 +87,7 @@ export default async function LeisureSpotPage({ params }: PageProps) {
             <p><strong>編集部コメント:</strong> {spot.editorComment}</p>
             <p><strong>向いている人:</strong> {spot.bestFor.join(" / ")}</p>
           </div>
-          <LikeButton contentType="leisure_spot" contentId={spot.slug} regionSlug={region} className="mt-5" />
+          <LikeButton contentKind="item" targetId={spot.id} regionSlug={region} className="mt-5" />
           </div>
           <div className="rounded-lg bg-slate-50 p-4">
           <h2 className="font-semibold">スポット基本情報</h2>

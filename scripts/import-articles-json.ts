@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "fs";
 import { dirname, join } from "path";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
+import { ARTICLE_CATEGORY_TO_SECTION, articleCanonicalPath } from "@/lib/section-map";
 
 config({ path: ".env.local" });
 
@@ -64,6 +65,9 @@ async function main() {
   const rows = data.articles.map((article) => ({
     slug: article.slug,
     category: article.category,
+    major_category: ARTICLE_CATEGORY_TO_SECTION[article.category]?.majorCategory ?? null,
+    section_slug: ARTICLE_CATEGORY_TO_SECTION[article.category]?.sectionSlug ?? null,
+    canonical_path: articleCanonicalPath(article.category, article.slug),
     region: article.region ?? null,
     title: article.title,
     description: article.description,

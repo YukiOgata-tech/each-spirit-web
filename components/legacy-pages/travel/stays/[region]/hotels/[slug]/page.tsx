@@ -17,7 +17,7 @@ type PageProps = { params: Promise<{ region: string; slug: string }> };
 
 export async function generateStaticParams() {
   return await Promise.all(
-    getTravelRegions().map(async (r) => {
+    (await getTravelRegions()).map(async (r) => {
       const hotels = await getTravelHotels(r.slug);
       return hotels.map((h) => ({ region: r.slug, slug: h.slug }));
     })
@@ -124,7 +124,7 @@ export default async function HotelPage({ params }: PageProps) {
             ))}
           </div>
 
-          <LikeButton contentType="hotel" contentId={hotel.slug} regionSlug={region} className="mt-5" />
+          <LikeButton contentKind="item" targetId={hotel.id} regionSlug={region} className="mt-5" />
         </div>
       </section>
 

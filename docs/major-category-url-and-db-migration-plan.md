@@ -170,6 +170,7 @@ major_category + section_slug + item_kind + slug
 - `items/rankings` に `major_category + section_slug + slug` の一意indexを追加
 - `ranking_items.item_id` を追加
 - item/ranking canonical URL を region なしの形へ更新
+- `items.item_kind` を追加し、既存主要 item を backfill
 - 新canonical詳細routeを追加
 - 旧region入り詳細routeを削除
 - `/{major}/{section}/articles` の一覧routeを追加
@@ -179,7 +180,6 @@ major_category + section_slug + item_kind + slug
 
 ## 残タスク
 
-- `item_kind` migration を本番DBへ適用する
 - `lib/content.ts` の travel services item query を `content_type` ではなく `major_category + section_slug + item_kind` へ移行する
 - likes/reviews/counts の識別設計を `content_type + content_id` から canonical content key へ移行する
 - seed/import scripts を新DB構成へ更新する

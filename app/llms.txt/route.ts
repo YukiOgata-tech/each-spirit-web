@@ -2,7 +2,7 @@ import { getCategories, getLeisureRankings, getLeisureRegions, getLeisureSpots, 
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export async function GET() {
-  const leisureRegions = getLeisureRegions();
+  const leisureRegions = await getLeisureRegions();
   const [ramenArticles, ramenRankings, ramenItems, ...leisurePairs] = await Promise.all([
     getRamenArticles(),
     getRamenRankings(),

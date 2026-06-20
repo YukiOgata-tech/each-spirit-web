@@ -12,7 +12,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function BeautyIndexPage() {
-  const regions = getBeautyRegions();
+  const regions = await getBeautyRegions();
   const regionData = await Promise.all(
     regions.map(async (region) => ({
       ...region,

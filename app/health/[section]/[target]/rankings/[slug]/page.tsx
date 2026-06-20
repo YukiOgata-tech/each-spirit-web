@@ -17,7 +17,7 @@ type PageProps = { params: Promise<{ section: string; target: string; slug: stri
 
 export async function generateStaticParams() {
   const rankings = await getProteinRankings();
-  return getProteinTargets().flatMap((t) =>
+  return (await getProteinTargets()).flatMap((t) =>
     rankings
       .filter((r) => r.target === t.slug)
       .map((r) => ({ section: "protein", target: t.slug, slug: r.slug }))

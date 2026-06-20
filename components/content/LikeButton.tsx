@@ -15,17 +15,16 @@ type LikeType = "like" | "bookmark";
  * - 未ログイン: クリックでログインページへ（戻り先付き）。いいね数は閲覧可能。
  * - ログイン済み: es.content_likes に insert/delete（楽観更新・失敗時ロールバック）。
  *
- * content_type は es スキーマの CHECK 制約に合わせること:
- *   'cafe' | 'ramen_item' | 'article' | 'ranking' | 'leisure_spot' | 'hotel' | 'beauty_salon'
+ * 識別キーは content_kind('item'|'article'|'ranking') + targetId(es の行 uuid)。
  */
 export function LikeButton({
-  contentType,
-  contentId,
+  contentKind,
+  targetId,
   regionSlug = null,
   className,
 }: {
-  contentType: string;
-  contentId: string;
+  contentKind: "item" | "article" | "ranking";
+  targetId: string | undefined;
   regionSlug?: string | null;
   className?: string;
 }) {
@@ -38,6 +37,10 @@ export function LikeButton({
   const [pending, setPending] = useState<LikeType | null>(null);
 
   useEffect(() => {
+    if (!targetId) {
+      setReady(true);
+      return;
+    }
     const supabase = createClient();
     let active = true;
 
@@ -48,8 +51,8 @@ export function LikeButton({
           .schema("es")
           .from("content_like_counts")
           .select("count")
-          .eq("content_type", contentType)
-          .eq("content_id", contentId)
+          .eq("content_kind", contentKind)
+          .eq("target_id", targetId)
           .eq("like_type", "like")
           .maybeSingle(),
       ]);
@@ -65,8 +68,8 @@ export function LikeButton({
           .from("content_likes")
           .select("like_type")
           .eq("user_id", user.id)
-          .eq("content_type", contentType)
-          .eq("content_id", contentId);
+          .eq("content_kind", contentKind)
+          .eq("target_id", targetId);
         if (!active) return;
         const types = new Set((mine ?? []).map((r) => r.like_type));
         setLiked(types.has("like"));
@@ -78,7 +81,7 @@ export function LikeButton({
     return () => {
       active = false;
     };
-  }, [contentType, contentId]);
+  }, [contentKind, targetId]);
 
   async function toggle(type: LikeType) {
     if (!userId) {
@@ -86,7 +89,7 @@ export function LikeButton({
       router.push(`${routes.authLogin}?next=${next}`);
       return;
     }
-    if (pending) return;
+    if (pending || !targetId) return;
 
     const isOn = type === "like" ? liked : bookmarked;
     setPending(type);
@@ -106,16 +109,16 @@ export function LikeButton({
           .from("content_likes")
           .delete()
           .eq("user_id", userId)
-          .eq("content_type", contentType)
-          .eq("content_id", contentId)
+          .eq("content_kind", contentKind)
+          .eq("target_id", targetId)
           .eq("like_type", type)
       : await supabase
           .schema("es")
           .from("content_likes")
           .insert({
             user_id: userId,
-            content_type: contentType,
-            content_id: contentId,
+            content_kind: contentKind,
+            target_id: targetId,
             region_slug: regionSlug,
             like_type: type,
           });

@@ -10,8 +10,8 @@ export const metadata = pageMetadata({
   path: routes.leisureSpots,
 });
 
-export default function LeisureSpotsPage() {
-  const regions = getLeisureRegions();
+export default async function LeisureSpotsPage() {
+  const regions = await getLeisureRegions();
   return (
     <main className="section-shell">
       <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-soft sm:p-8">

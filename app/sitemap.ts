@@ -5,13 +5,20 @@ import { articleHref, getBeautyRankings, getBeautyRegions, getBeautySalons, getC
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const leisureRegions = getLeisureRegions();
-  const travelRegions = getTravelRegions().filter((r) => r.status === "live");
-  const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
-  const cafeRegions = getCafeRegions().filter((r) => r.status === "live");
-  const beautyRegions = getBeautyRegions().filter((r) => r.status === "live");
-  const proteinTargets = getProteinTargets().filter((t) => t.status === "live");
-  const sections = await getContentSections();
+  const [leisureRegions, travelRegionsAll, travelServiceRegionsAll, cafeRegionsAll, beautyRegionsAll, proteinTargetsAll, sections] = await Promise.all([
+    getLeisureRegions(),
+    getTravelRegions(),
+    getTravelServiceRegions(),
+    getCafeRegions(),
+    getBeautyRegions(),
+    getProteinTargets(),
+    getContentSections(),
+  ]);
+  const travelRegions = travelRegionsAll.filter((r) => r.status === "live");
+  const travelServiceRegions = travelServiceRegionsAll.filter((r) => r.status === "live");
+  const cafeRegions = cafeRegionsAll.filter((r) => r.status === "live");
+  const beautyRegions = beautyRegionsAll.filter((r) => r.status === "live");
+  const proteinTargets = proteinTargetsAll.filter((t) => t.status === "live");
 
   const [articles, ramenRankings, ramenItems] = await Promise.all([
     getLatestArticles(),
@@ -73,7 +80,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       { url: absoluteUrl(routes.sectionRankings(section.majorCategory, section.sectionSlug)), lastModified: new Date("2026-06-20") },
     ]),
     { url: absoluteUrl(routes.articles), lastModified: new Date("2026-06-19") },
-    ...getRamenRegions().map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
+    ...(await getRamenRegions()).map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...articles.map((article) => ({ url: absoluteUrl(articleHref(article)), lastModified: new Date(article.updatedAt) })),
     ...ramenRankings.map((ranking) => ({ url: absoluteUrl(routes.ramenRanking(ranking.slug)), lastModified: new Date(ranking.lastUpdatedAt) })),
     ...ramenItems.map((item) => ({ url: absoluteUrl(routes.ramenItem(item.slug)), lastModified: new Date(item.lastVerifiedAt) })),

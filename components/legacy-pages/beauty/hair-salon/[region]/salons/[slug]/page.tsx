@@ -16,7 +16,7 @@ import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage"
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
 export async function generateStaticParams() {
-  const regions = getBeautyRegions();
+  const regions = await getBeautyRegions();
   const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, salons: await getBeautySalons(r.slug) })));
   return pairs.flatMap(({ region, salons }) => salons.map((salon) => ({ region, slug: salon.slug })));
 }
@@ -205,7 +205,7 @@ export default async function BeautySalonPage({ params }: PageProps) {
                 )}
               </div>
 
-              <LikeButton contentType="beauty_salon" contentId={salon.slug} regionSlug={region} className="mt-5 justify-center" />
+              <LikeButton contentKind="item" targetId={salon.id} regionSlug={region} className="mt-5 justify-center" />
 
               <p className="mt-4 text-[10px] leading-5 text-slate-400">最終確認日: {salon.lastVerifiedAt}。情報は変更される場合があります。</p>
             </div>

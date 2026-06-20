@@ -14,7 +14,7 @@ import { getBeautyRanking, getBeautyRankingEntries, getBeautyRegions, getBeautyR
 type PageProps = { params: Promise<{ region: string; slug: string }> };
 
 export async function generateStaticParams() {
-  const regions = getBeautyRegions();
+  const regions = await getBeautyRegions();
   const pairs = await Promise.all(regions.map(async (r) => ({ region: r.slug, rankings: await getBeautyRankings(r.slug) })));
   return pairs.flatMap(({ region, rankings }) => rankings.map((r) => ({ region, slug: r.slug })));
 }

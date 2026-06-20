@@ -10,8 +10,8 @@ export const metadata = pageMetadata({
   path: routes.beautyHairSalon,
 });
 
-export default function HairSalonPage() {
-  const regions = getBeautyRegions().filter((region) => region.status === "live");
+export default async function HairSalonPage() {
+  const regions = (await getBeautyRegions()).filter((region) => region.status === "live");
   return (
     <main className="section-shell">
       <section className="rounded-lg border border-pink-100 bg-white p-5 shadow-soft sm:p-8">

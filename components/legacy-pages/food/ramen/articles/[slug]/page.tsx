@@ -60,7 +60,7 @@ export default async function ArticlePage({ params }: PageProps) {
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {article.category}</p>
         </div>
-        <LikeButton contentType="article" contentId={article.slug} className="mt-2 sm:mt-5" />
+        <LikeButton contentKind="article" targetId={article.id} className="mt-2 sm:mt-5" />
       </div>
       <section className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-4 sm:mt-6 sm:p-5">
         <h2 className="text-lg font-semibold">要点まとめ</h2>

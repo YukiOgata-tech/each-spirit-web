@@ -31,6 +31,14 @@ if (process.env.ALLOW_LEGACY_CONTENT_SEED !== "1") {
 
 import { createClient } from "@supabase/supabase-js"
 import ws from "ws"
+import {
+  ITEM_CONTENT_TYPE_TO_SECTION,
+  ARTICLE_CATEGORY_TO_SECTION,
+  RANKING_CONTENT_TYPE_TO_SECTION,
+  itemCanonicalPath,
+  articleCanonicalPath,
+  rankingCanonicalPath,
+} from "@/lib/section-map"
 
 // ── コンテンツ import ──────────────────────────────────────
 import { ramenArticles }         from "@/content/ramen/articles"
@@ -88,6 +96,25 @@ const es = db.schema("es")
 
 function ok(label: string, count: number) {
   console.log(`  ✅ ${label}: ${count} 件`)
+}
+
+/** items 行に新構造の列（major/section/item_kind/canonical）を付与 */
+function withItemSection<T extends { content_type: string; slug: string }>(rows: T[]) {
+  return rows.map((r) => {
+    const m = ITEM_CONTENT_TYPE_TO_SECTION[r.content_type]
+    if (!m) return r
+    return { ...r, major_category: m.majorCategory, section_slug: m.sectionSlug, item_kind: m.itemKind, canonical_path: itemCanonicalPath(r.content_type, r.slug) }
+  })
+}
+
+/** articles 行に新構造の列（major/section/canonical）を付与 */
+function withArticleSection<T extends { category: string; slug: string }>(rows: T[]) {
+  return rows.map((r) => ({
+    ...r,
+    major_category: ARTICLE_CATEGORY_TO_SECTION[r.category]?.majorCategory ?? null,
+    section_slug: ARTICLE_CATEGORY_TO_SECTION[r.category]?.sectionSlug ?? null,
+    canonical_path: articleCanonicalPath(r.category, r.slug),
+  }))
 }
 
 function err(label: string, error: unknown) {
@@ -172,7 +199,7 @@ async function migrateArticles() {
   ]
 
   const { error, count } = await es.from("articles")
-    .upsert(rows, { onConflict: "slug", count: "exact" })
+    .upsert(withArticleSection(rows), { onConflict: "slug", count: "exact" })
   if (error) err("articles", error)
   else ok("articles", count ?? rows.length)
 }
@@ -191,7 +218,7 @@ async function migrateItems() {
     ...toyamaCafeItems.map(c   => cafeToRow(c,  "toyama")),
   ]
   const { error: e1, count: c1 } = await es.from("items")
-    .upsert(cafeRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(cafeRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e1) err("cafe items", e1); else ok("cafe items", c1 ?? cafeRows.length)
 
   // ラーメン
@@ -202,7 +229,7 @@ async function migrateItems() {
     ...fukushimaRamenItems.map(r => ramenToRow(r, "fukushima")),
   ]
   const { error: e2, count: c2 } = await es.from("items")
-    .upsert(ramenRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(ramenRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e2) err("ramen items", e2); else ok("ramen items", c2 ?? ramenRows.length)
 
   // ホテル
@@ -232,7 +259,7 @@ async function migrateItems() {
     },
   }))
   const { error: e3, count: c3 } = await es.from("items")
-    .upsert(hotelRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(hotelRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e3) err("hotel items", e3); else ok("hotel items", c3 ?? hotelRows.length)
 
   // 旅行会社
@@ -242,7 +269,7 @@ async function migrateItems() {
     ...yamagataTravelAgencies.map(a => travelAgencyToRow(a, "yamagata")),
   ]
   const { error: eTravelAgency, count: cTravelAgency } = await es.from("items")
-    .upsert(travelAgencyRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(travelAgencyRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (eTravelAgency) err("travel agency items", eTravelAgency); else ok("travel agency items", cTravelAgency ?? travelAgencyRows.length)
 
   // 旅行アプリ（地域なし）
@@ -268,7 +295,7 @@ async function migrateItems() {
     },
   }))
   const { error: eTravelApp, count: cTravelApp } = await es.from("items")
-    .upsert(travelAppRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(travelAppRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (eTravelApp) err("travel app items", eTravelApp); else ok("travel app items", cTravelApp ?? travelAppRows.length)
 
   // 美容サロン
@@ -277,7 +304,7 @@ async function migrateItems() {
     ...yamagataBeautySalons.map(s => salonToRow(s, "yamagata")),
   ]
   const { error: e4, count: c4 } = await es.from("items")
-    .upsert(salonRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(salonRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e4) err("beauty salon items", e4); else ok("beauty salon items", c4 ?? salonRows.length)
 
   // レジャースポット
@@ -305,7 +332,7 @@ async function migrateItems() {
     },
   }))
   const { error: e5, count: c5 } = await es.from("items")
-    .upsert(leisureRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(leisureRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e5) err("leisure items", e5); else ok("leisure items", c5 ?? leisureRows.length)
 
   // プロテイン製品（地域なし）
@@ -331,7 +358,7 @@ async function migrateItems() {
     },
   }))
   const { error: e6, count: c6 } = await es.from("items")
-    .upsert(proteinRows, { onConflict: "content_type,slug", count: "exact" })
+    .upsert(withItemSection(proteinRows), { onConflict: "major_category,section_slug,slug", count: "exact" })
   if (e6) err("protein items", e6); else ok("protein items", c6 ?? proteinRows.length)
 }
 
@@ -377,12 +404,19 @@ async function migrateRankings() {
     ...proteinRankings.map(r       => normalizeProteinRanking(r)),
   ]
 
+  // ranking_items の item_id 解決用に slug→id を取得
+  const { data: allItemIdRows } = await es.from("items").select("id, slug")
+  const itemIdBySlug = new Map((allItemIdRows ?? []).map((r: { id: string; slug: string }) => [r.slug, r.id]))
+
   for (const r of allRankings) {
     // 1. ranking 行を upsert
     const { data: rankingRow, error: re } = await es.from("rankings")
       .upsert({
         slug:              r.slug,
         content_type:      r.content_type,
+        major_category:    RANKING_CONTENT_TYPE_TO_SECTION[r.content_type]?.majorCategory ?? null,
+        section_slug:      RANKING_CONTENT_TYPE_TO_SECTION[r.content_type]?.sectionSlug ?? null,
+        canonical_path:    rankingCanonicalPath(r.content_type, r.slug),
         region:            r.region,
         title:             r.title,
         description:       r.description,
@@ -392,7 +426,7 @@ async function migrateRankings() {
         last_updated_at:   r.last_updated_at,
         status:            "published",
         metadata:          { sources: r.sources, faqs: r.faqs, target: r.target },
-      }, { onConflict: "content_type,slug" })
+      }, { onConflict: "major_category,section_slug,slug" })
       .select("id")
       .single()
 
@@ -406,6 +440,7 @@ async function migrateRankings() {
       rank:              item.rank,
       item_content_type: r.item_content_type,
       item_slug:         item.itemSlug,
+      item_id:           itemIdBySlug.get(item.itemSlug) ?? null,
       score:             item.score,
       reason:            item.reason,
       is_pr:             item.isPr,

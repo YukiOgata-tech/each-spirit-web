@@ -18,12 +18,12 @@ import {
 type PageProps = { params: Promise<{ region: string }> };
 
 export async function generateStaticParams() {
-  return getBeautyRegions().map((r) => ({ region: r.slug }));
+  return (await getBeautyRegions()).map((r) => ({ region: r.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getBeautyRegion(region);
+  const regionData = await getBeautyRegion(region);
   if (!regionData) return {};
   return pageMetadata({
     title: `${regionData.name}の美容室・美容院おすすめ比較｜人気サロンランキングと選び方`,
@@ -42,7 +42,7 @@ const AGE_GROUPS = [
 
 export default async function BeautyRegionPage({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getBeautyRegion(region);
+  const regionData = await getBeautyRegion(region);
   if (!regionData) notFound();
 
   const [salons, rankings, articles] = await Promise.all([

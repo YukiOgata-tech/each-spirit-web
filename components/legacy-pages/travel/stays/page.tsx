@@ -10,8 +10,8 @@ export const metadata = pageMetadata({
   path: routes.travelStays,
 });
 
-export default function TravelStaysPage() {
-  const regions = getTravelRegions().filter((region) => region.status === "live");
+export default async function TravelStaysPage() {
+  const regions = (await getTravelRegions()).filter((region) => region.status === "live");
   return (
     <main className="section-shell">
       <section className="rounded-lg border border-emerald-100 bg-white p-5 shadow-soft sm:p-8">

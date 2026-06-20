@@ -24,9 +24,9 @@ const regionImages: Record<string, { src: string; alt: string }> = {
   },
 };
 
-export default function LeisurePage() {
+export default async function LeisurePage() {
   const category = getCategory("leisure");
-  const regions = getLeisureRegions();
+  const regions = await getLeisureRegions();
 
   return (
     <div className="leisure-theme">

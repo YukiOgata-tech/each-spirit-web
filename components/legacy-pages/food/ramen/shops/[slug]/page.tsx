@@ -89,7 +89,7 @@ export default async function ItemPage({ params }: PageProps) {
             <p><strong>編集部コメント:</strong> {item.editorComment}</p>
             <p><strong>おすすめメニュー:</strong> {item.recommendedMenu}</p>
           </div>
-          <LikeButton contentType="ramen_item" contentId={item.slug} className="mt-5" />
+          <LikeButton contentKind="item" targetId={item.id} className="mt-5" />
         </div>
         <div className="rounded-lg bg-slate-50 p-4">
           <h2 className="font-semibold">店舗基本情報</h2>

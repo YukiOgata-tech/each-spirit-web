@@ -30,19 +30,6 @@ const CONTENT_LABEL: Record<string, string> = {
   ranking: "ランキング",
 };
 
-const ITEM_TYPES = new Set(["cafe", "ramen_item", "beauty_salon", "hotel", "leisure_spot"]);
-
-function articleHref(category: string, slug: string): string | null {
-  if (category === "ramen") return routes.sectionArticle("food", "ramen", slug);
-  if (category === "cafe") return routes.sectionArticle("food", "cafe", slug);
-  if (category === "protein") return routes.sectionArticle("health", "protein", slug);
-  if (category === "beauty") return routes.sectionArticle("beauty", "hair-salon", slug);
-  if (category === "travel") return routes.sectionArticle("travel", "stays", slug);
-  if (category === "travel-services") return routes.sectionArticle("travel", "services", slug);
-  if (category === "leisure") return routes.sectionArticle("leisure", "spots", slug);
-  return routes.article(slug);
-}
-
 type PageProps = { searchParams: Promise<{ type?: string }> };
 
 export default async function AccountLikesPage({ searchParams }: PageProps) {
@@ -56,47 +43,45 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
   const { data: likesData } = await supabase
     .schema("es")
     .from("content_likes")
-    .select("content_type, content_id, region_slug, created_at")
+    .select("content_kind, target_id, region_slug, created_at")
     .eq("user_id", user.id)
     .eq("like_type", likeType)
     .order("created_at", { ascending: false });
 
-  type Row = { content_type: string; content_id: string; region_slug: string | null; created_at: string };
+  type Row = { content_kind: string; target_id: string; region_slug: string | null; created_at: string };
   const likes: Row[] = (likesData ?? []) as Row[];
 
-  const itemSlugs = likes.filter((l) => ITEM_TYPES.has(l.content_type)).map((l) => l.content_id);
-  const articleSlugs = likes.filter((l) => l.content_type === "article").map((l) => l.content_id);
-  const rankingSlugs = likes.filter((l) => l.content_type === "ranking").map((l) => l.content_id);
+  const itemIds = likes.filter((l) => l.content_kind === "item").map((l) => l.target_id);
+  const articleIds = likes.filter((l) => l.content_kind === "article").map((l) => l.target_id);
+  const rankingIds = likes.filter((l) => l.content_kind === "ranking").map((l) => l.target_id);
 
   const es = supabase.schema("es");
   const [itemsRes, articlesRes, rankingsRes] = await Promise.all([
-    itemSlugs.length ? es.from("items").select("content_type, slug, name, canonical_path").in("slug", itemSlugs) : Promise.resolve({ data: [] }),
-    articleSlugs.length ? es.from("articles").select("slug, title, category, canonical_path").in("slug", articleSlugs) : Promise.resolve({ data: [] }),
-    rankingSlugs.length ? es.from("rankings").select("slug, title, canonical_path").in("slug", rankingSlugs) : Promise.resolve({ data: [] }),
+    itemIds.length ? es.from("items").select("id, content_type, name, canonical_path").in("id", itemIds) : Promise.resolve({ data: [] }),
+    articleIds.length ? es.from("articles").select("id, title, canonical_path").in("id", articleIds) : Promise.resolve({ data: [] }),
+    rankingIds.length ? es.from("rankings").select("id, title, canonical_path").in("id", rankingIds) : Promise.resolve({ data: [] }),
   ]);
 
-  const resolved = new Map<string, { name: string; href: string | null }>();
+  const resolved = new Map<string, { name: string; href: string | null; contentType: string }>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const it of (itemsRes.data ?? []) as any[]) {
-    resolved.set(`${it.content_type}:${it.slug}`, { name: it.name, href: it.canonical_path ?? null });
+    resolved.set(`item:${it.id}`, { name: it.name, href: it.canonical_path ?? null, contentType: it.content_type ?? "item" });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of (articlesRes.data ?? []) as any[]) {
-    resolved.set(`article:${a.slug}`, { name: a.title, href: a.canonical_path ?? articleHref(a.category, a.slug) });
+    resolved.set(`article:${a.id}`, { name: a.title, href: a.canonical_path ?? null, contentType: "article" });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (rankingsRes.data ?? []) as any[]) {
-    resolved.set(`ranking:${r.slug}`, { name: r.title, href: r.canonical_path ?? null });
+    resolved.set(`ranking:${r.id}`, { name: r.title, href: r.canonical_path ?? null, contentType: "ranking" });
   }
 
   const rows = likes.map((l) => {
-    const key = l.content_type === "article" || l.content_type === "ranking"
-      ? `${l.content_type}:${l.content_id}`
-      : `${l.content_type}:${l.content_id}`;
-    const r = resolved.get(key);
+    const r = resolved.get(`${l.content_kind}:${l.target_id}`);
     return {
-      ...l,
-      name: r?.name ?? l.content_id,
+      created_at: l.created_at,
+      content_type: r?.contentType ?? l.content_kind,
+      name: r?.name ?? l.target_id,
       href: r?.href ?? null,
     };
   });
@@ -162,7 +147,7 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
               );
               const cls = "flex items-center gap-3 rounded-xl border border-[var(--border)] bg-white px-4 py-3";
               return (
-                <li key={`${row.content_type}-${row.content_id}-${i}`}>
+                <li key={`${row.content_type}-${row.name}-${i}`}>
                   {row.href ? (
                     <Link href={row.href} className={`${cls} transition hover:border-[var(--primary)]/40 hover:shadow-sm`}>
                       {inner}

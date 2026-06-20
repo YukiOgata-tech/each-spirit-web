@@ -33,7 +33,7 @@ export default async function ProteinIndexPage({ params }: PageProps) {
   const { section } = await params;
   if (section !== "protein") notFound();
 
-  const targets = getProteinTargets();
+  const targets = await getProteinTargets();
   const [products, rankings] = await Promise.all([getProteinProducts(), getProteinRankings()]);
 
   return (

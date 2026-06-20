@@ -16,13 +16,13 @@ import type { CafeRanking } from "@/lib/types";
 
 type PageProps = { params: Promise<{ region: string }> };
 
-export function generateStaticParams() {
-  return getCafeRegions().map((r) => ({ region: r.slug }));
+export async function generateStaticParams() {
+  return (await getCafeRegions()).map((r) => ({ region: r.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getCafeRegion(region);
+  const regionData = await getCafeRegion(region);
   if (!regionData) return {};
   return pageMetadata({
     title: regionData.seoTitle,
@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function CafeRegionPage({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getCafeRegion(region);
+  const regionData = await getCafeRegion(region);
   if (!regionData) notFound();
 
   const [items, rankings, articles] = await Promise.all([getCafeItemsByRegion(region), getCafeRankingsByRegion(region), getCafeArticles(region)]);

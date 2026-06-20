@@ -4,8 +4,8 @@ import { getBeautyRegions } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; region: string }> };
 
-export function generateStaticParams() {
-  return getBeautyRegions().map((region) => ({ section: "hair-salon", region: region.slug }));
+export async function generateStaticParams() {
+  return (await getBeautyRegions()).map((region) => ({ section: "hair-salon", region: region.slug }));
 }
 
 export default async function BeautySectionRegionPage({ params }: PageProps) {

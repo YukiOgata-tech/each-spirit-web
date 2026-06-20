@@ -16,7 +16,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function TravelServicesIndexPage() {
-  const regions = getTravelServiceRegions();
+  const regions = await getTravelServiceRegions();
   const [apps, regionStats] = await Promise.all([
     getTravelApps(),
     Promise.all(

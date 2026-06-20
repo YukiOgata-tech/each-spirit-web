@@ -23,12 +23,12 @@ import type { Item } from "@/lib/types";
 type PageProps = { params: Promise<{ region: string }> };
 
 export async function generateStaticParams() {
-  return getRamenRegions().map((r) => ({ region: r.slug }));
+  return (await getRamenRegions()).map((r) => ({ region: r.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getRamenRegion(region);
+  const regionData = await getRamenRegion(region);
   if (!regionData) return {};
   return pageMetadata({
     title: regionData.seoTitle,
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: PageProps) {
 
 export default async function RamenRegionPage({ params }: PageProps) {
   const { region } = await params;
-  const regionData = getRamenRegion(region);
+  const regionData = await getRamenRegion(region);
   if (!regionData) notFound();
 
   const [items, rankings, allArticles] = await Promise.all([

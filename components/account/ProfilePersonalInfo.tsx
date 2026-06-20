@@ -117,7 +117,7 @@ export function ProfilePersonalInfo({
               max={today}
               min="1900-01-01"
               onChange={(e) => setDraftBirthday(e.target.value)}
-              className="h-10 w-full rounded-lg border border-[var(--border)] bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-violet-400"
+              className="h-11 w-full rounded-lg border border-[var(--border)] bg-white px-3 text-sm text-slate-800 outline-none transition focus:border-violet-400"
             />
           </div>
 
@@ -134,7 +134,7 @@ export function ProfilePersonalInfo({
                     key={g}
                     type="button"
                     onClick={() => setDraftGender(g)}
-                    className={`flex h-10 items-center justify-center gap-1.5 rounded-lg border text-sm font-bold transition ${
+                    className={`flex h-11 items-center justify-center gap-1.5 rounded-lg border text-sm font-bold transition ${
                       active
                         ? "border-violet-400 bg-violet-50 text-violet-700"
                         : "border-[var(--border)] bg-white text-slate-500 hover:bg-slate-50"
@@ -153,7 +153,7 @@ export function ProfilePersonalInfo({
               type="button"
               onClick={save}
               disabled={!draftBirthday || !draftGender || saving}
-              className="inline-flex h-10 items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-5 text-sm font-bold text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center gap-1.5 rounded-lg bg-violet-500 px-5 text-sm font-bold text-white transition hover:bg-violet-600 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {saving ? "保存中…" : "保存"}
             </button>
@@ -161,7 +161,7 @@ export function ProfilePersonalInfo({
               type="button"
               onClick={() => setEditing(false)}
               disabled={saving}
-              className="inline-flex h-10 items-center justify-center rounded-lg border border-[var(--border)] bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
+              className="inline-flex h-11 items-center justify-center rounded-lg border border-[var(--border)] bg-white px-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:opacity-50"
               aria-label="キャンセル"
             >
               <X className="h-4 w-4" />

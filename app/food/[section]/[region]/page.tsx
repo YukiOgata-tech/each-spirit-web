@@ -5,10 +5,11 @@ import { getCafeRegions, getRamenRegions } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; region: string }> };
 
-export function generateStaticParams() {
+export async function generateStaticParams() {
+  const [ramenRegions, cafeRegions] = await Promise.all([getRamenRegions(), getCafeRegions()]);
   return [
-    ...getRamenRegions().map((region) => ({ section: "ramen", region: region.slug })),
-    ...getCafeRegions().map((region) => ({ section: "cafe", region: region.slug })),
+    ...ramenRegions.map((region) => ({ section: "ramen", region: region.slug })),
+    ...cafeRegions.map((region) => ({ section: "cafe", region: region.slug })),
   ];
 }
 

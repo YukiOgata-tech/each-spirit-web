@@ -8,7 +8,7 @@ type PageProps = { params: Promise<{ section: string; slug: string }> };
 export async function generateStaticParams() {
   const [ramenItems, cafePairs] = await Promise.all([
     getRamenItems(),
-    Promise.all(getCafeRegions().map(async (region) => ({ region: region.slug, items: await getCafeItemsByRegion(region.slug) }))),
+    getCafeRegions().then((regions) => Promise.all(regions.map(async (region) => ({ region: region.slug, items: await getCafeItemsByRegion(region.slug) })))),
   ]);
   return [
     ...ramenItems.map((item) => ({ section: "ramen", slug: item.slug })),
@@ -20,7 +20,7 @@ export default async function FoodSectionShopPage({ params }: PageProps) {
   const { section, slug } = await params;
   if (section === "ramen") return <RamenItemPage params={Promise.resolve({ slug })} />;
   if (section === "cafe") {
-    const pairs = await Promise.all(getCafeRegions().map(async (region) => ({ region: region.slug, item: await getCafeItemBySlug(region.slug, slug) })));
+    const pairs = await Promise.all((await getCafeRegions()).map(async (region) => ({ region: region.slug, item: await getCafeItemBySlug(region.slug, slug) })));
     const match = pairs.find((pair) => pair.item);
     if (!match) notFound();
     return <CafeItemPage params={Promise.resolve({ region: match.region, slug })} />;

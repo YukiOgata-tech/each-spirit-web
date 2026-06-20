@@ -26,6 +26,10 @@ import type {
   ProteinRanking,
   ProteinRankingEntry,
   ProteinTarget,
+  ProteinTargetInfo,
+  RamenRegion,
+  BeautyRegion,
+  TravelRegion,
   Ranking,
   RankingItem,
   RelatedLink,
@@ -121,6 +125,7 @@ function sectionSlugFromContentType(contentType: string | null | undefined): str
 function mapRamenItem(row: any): Item {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     description: row.description,
@@ -151,6 +156,7 @@ function mapRamenItem(row: any): Item {
 function mapCafeItem(row: any): CafeItem {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     description: row.description,
@@ -187,6 +193,7 @@ function mapCafeItem(row: any): CafeItem {
 function mapHotelItem(row: any): Hotel {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     description: row.description,
@@ -220,6 +227,7 @@ function mapHotelItem(row: any): Hotel {
 function mapTravelAgencyItem(row: any): TravelAgency {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     tagline: m.tagline ?? "",
@@ -274,6 +282,7 @@ function mapTravelAppItem(row: any): TravelApp {
 function mapLeisureItem(row: any): LeisureSpot {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     description: row.description,
@@ -307,6 +316,7 @@ function mapLeisureItem(row: any): LeisureSpot {
 function mapSalonItem(row: any): Salon {
   const m = row.metadata ?? {};
   return {
+    id: row.id,
     slug: row.slug,
     name: row.name,
     tagline: m.tagline ?? "",
@@ -402,6 +412,7 @@ function mapArticle(row: any): Article {
   const majorCategory = row.major_category ?? majorCategoryFromArticleCategory(row.category);
   const sectionSlug = row.section_slug ?? sectionSlugFromArticleCategory(row.category);
   return {
+    id: row.id,
     slug: row.slug,
     title: row.title,
     description: row.description,
@@ -497,19 +508,68 @@ export async function getContentSections(majorCategory?: string): Promise<Conten
   }
   return (data ?? []).map(mapContentSection);
 }
-export function getRamenRegions() { return ramenRegions; }
-export function getRamenRegion(slug: string) { return ramenRegions.find((r) => r.slug === slug); }
-export function getLeisureRegions() { return ["niigata"]; }
-export function getBeautyRegions() { return beautyRegions; }
-export function getBeautyRegion(slug: string) { return beautyRegions.find((r) => r.slug === slug); }
-export function getTravelRegions() { return travelRegions; }
-export function getTravelRegion(slug: string) { return travelRegions.find((r) => r.slug === slug); }
-export function getTravelServiceRegions(): TravelServiceRegion[] { return travelServiceRegions; }
-export function getTravelServiceRegion(slug: string): TravelServiceRegion | undefined { return travelServiceRegions.find((r) => r.slug === slug); }
-export function getCafeRegions(): CafeRegion[] { return cafeRegions; }
-export function getCafeRegion(slug: string): CafeRegion | undefined { return cafeRegions.find((r) => r.slug === slug); }
-export function getProteinTargets() { return proteinTargets; }
-export function getProteinTarget(slug: ProteinTarget) { return proteinTargets.find((t) => t.slug === slug); }
+// region / target は es.content_regions / es.content_targets を正とし、
+// 取得失敗・空のときだけ静的 content/** にフォールバックする（静的=seed入力 / DB=配信）。
+async function fetchRegionData<T>(major: string, section: string): Promise<T[] | null> {
+  const sb = createServerClient();
+  const { data, error } = await sb
+    .from("content_regions")
+    .select("data")
+    .eq("major_category", major)
+    .eq("section_slug", section)
+    .order("sort_order", { ascending: true });
+  if (error || !data || data.length === 0) return null;
+  return data.map((row) => row.data as T);
+}
+
+export async function getRamenRegions(): Promise<RamenRegion[]> {
+  return (await fetchRegionData<RamenRegion>("food", "ramen")) ?? ramenRegions;
+}
+export async function getRamenRegion(slug: string): Promise<RamenRegion | undefined> {
+  return (await getRamenRegions()).find((r) => r.slug === slug);
+}
+export async function getLeisureRegions(): Promise<string[]> {
+  const rows = await fetchRegionData<{ slug: string }>("leisure", "spots");
+  return rows ? rows.map((r) => r.slug) : ["niigata"];
+}
+export async function getBeautyRegions(): Promise<BeautyRegion[]> {
+  return (await fetchRegionData<BeautyRegion>("beauty", "hair-salon")) ?? beautyRegions;
+}
+export async function getBeautyRegion(slug: string): Promise<BeautyRegion | undefined> {
+  return (await getBeautyRegions()).find((r) => r.slug === slug);
+}
+export async function getTravelRegions(): Promise<TravelRegion[]> {
+  return (await fetchRegionData<TravelRegion>("travel", "stays")) ?? travelRegions;
+}
+export async function getTravelRegion(slug: string): Promise<TravelRegion | undefined> {
+  return (await getTravelRegions()).find((r) => r.slug === slug);
+}
+export async function getTravelServiceRegions(): Promise<TravelServiceRegion[]> {
+  return (await fetchRegionData<TravelServiceRegion>("travel", "services")) ?? travelServiceRegions;
+}
+export async function getTravelServiceRegion(slug: string): Promise<TravelServiceRegion | undefined> {
+  return (await getTravelServiceRegions()).find((r) => r.slug === slug);
+}
+export async function getCafeRegions(): Promise<CafeRegion[]> {
+  return (await fetchRegionData<CafeRegion>("food", "cafe")) ?? cafeRegions;
+}
+export async function getCafeRegion(slug: string): Promise<CafeRegion | undefined> {
+  return (await getCafeRegions()).find((r) => r.slug === slug);
+}
+export async function getProteinTargets(): Promise<ProteinTargetInfo[]> {
+  const sb = createServerClient();
+  const { data, error } = await sb
+    .from("content_targets")
+    .select("data")
+    .eq("major_category", "health")
+    .eq("section_slug", "protein")
+    .order("sort_order", { ascending: true });
+  if (error || !data || data.length === 0) return proteinTargets;
+  return data.map((row) => row.data as ProteinTargetInfo);
+}
+export async function getProteinTarget(slug: ProteinTarget): Promise<ProteinTargetInfo | undefined> {
+  return (await getProteinTargets()).find((t) => t.slug === slug);
+}
 
 export async function getProteinProducts(): Promise<ProteinProduct[]> {
   const sb = createServerClient();
@@ -557,13 +617,13 @@ export async function getProteinRankingEntries(slug: string) {
 
 export async function getRamenArticles(): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "ramen").eq("status", "published").order("updated_at", { ascending: false });
+  const { data } = await sb.from("articles").select("*").eq("major_category", "food").eq("section_slug", "ramen").eq("status", "published").order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
 }
 
 export async function getRamenArticle(slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "ramen").eq("status", "published").maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("major_category", "food").eq("section_slug", "ramen").eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
@@ -632,6 +692,18 @@ export async function getArticlesByMajorCategory(majorCategory: string): Promise
 export async function getArticlesBySection(majorCategory: string, sectionSlug: string): Promise<Article[]> {
   const articles = await getLatestArticles();
   return articles.filter((article) => article.majorCategory === majorCategory && article.sectionSlug === sectionSlug);
+}
+
+/** 管理UI用: section 配下の item の slug/name を一覧（ranking_items の選択肢など） */
+export async function getItemOptionsBySection(majorCategory: string, sectionSlug: string): Promise<{ slug: string; name: string }[]> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("items")
+    .select("slug, name")
+    .eq("major_category", majorCategory)
+    .eq("section_slug", sectionSlug)
+    .order("name", { ascending: true });
+  return (data ?? []).map((row) => ({ slug: row.slug as string, name: row.name as string }));
 }
 
 export async function getRankingsBySection(majorCategory: string, sectionSlug: string): Promise<Ranking[]> {
@@ -711,37 +783,37 @@ export async function getLatestArticles(limit?: number): Promise<Article[]> {
 
 export async function getBeautyArticles(region: string): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "beauty").eq("region", region).eq("status", "published");
+  const { data } = await sb.from("articles").select("*").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region).eq("status", "published");
   return (data ?? []).map(mapArticle);
 }
 
 export async function getBeautyArticle(region: string, slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "beauty").eq("region", region).eq("status", "published").maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getBeautyArticleMarkdown(region: string, slug: string): Promise<string> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "beauty").eq("region", region).eq("status", "published").maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
 export async function getCafeArticles(region: string): Promise<Article[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("category", "cafe").eq("region", region).eq("status", "published").order("updated_at", { ascending: false });
+  const { data } = await sb.from("articles").select("*").eq("major_category", "food").eq("section_slug", "cafe").eq("region", region).eq("status", "published").order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
 }
 
 export async function getCafeArticle(region: string, slug: string): Promise<Article | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", "cafe").eq("region", region).eq("status", "published").maybeSingle();
+  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("major_category", "food").eq("section_slug", "cafe").eq("region", region).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getCafeArticleMarkdown(region: string, slug: string): Promise<string> {
   const sb = createServerClient();
-  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", "cafe").eq("region", region).eq("status", "published").maybeSingle();
+  const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("major_category", "food").eq("section_slug", "cafe").eq("region", region).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
 }
 
@@ -804,7 +876,7 @@ export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
 // ── Search ───────────────────────────────────────────────────────────────────
 
 export async function getSearchResults(): Promise<SearchResult[]> {
-  const travelServiceRegions = getTravelServiceRegions().filter((r) => r.status === "live");
+  const travelServiceRegions = (await getTravelServiceRegions()).filter((r) => r.status === "live");
   const sections = await getContentSections();
   const sectionLabelByKey = new Map(sections.map((section) => [`${section.majorCategory}:${section.sectionSlug}`, section.label]));
   const categoryLabelBySlug = new Map(categories.map((category) => [category.slug, category.name]));
@@ -913,11 +985,70 @@ export async function getSearchResults(): Promise<SearchResult[]> {
     imageUrl: app.imageUrl,
   }));
 
+  // cafe店舗 / 美容サロン / ホテルも検索対象に含める（旧実装では欠落していた）
+  const [cafeRegionsLive, beautyRegionsLive] = await Promise.all([getCafeRegions(), getBeautyRegions()]);
+  const [cafePairs, beautyPairs, allHotels] = await Promise.all([
+    Promise.all(
+      cafeRegionsLive
+        .filter((r) => r.status === "live")
+        .map(async (r) => ({ region: r.slug, items: await getCafeItemsByRegion(r.slug) })),
+    ),
+    Promise.all(
+      beautyRegionsLive
+        .filter((r) => r.status === "live")
+        .map(async (r) => ({ region: r.slug, salons: await getBeautySalons(r.slug) })),
+    ),
+    getTravelAllHotels(),
+  ]);
+
+  const cafeResults: SearchResult[] = cafePairs.flatMap(({ region, items }) =>
+    items.map((cafe) => ({
+      id: "cafe-" + region + "-" + cafe.slug,
+      type: "item" as const,
+      title: cafe.name,
+      description: cafe.description,
+      category: "カフェ",
+      href: routes.cafeItem(region, cafe.slug),
+      tags: [cafe.area, cafe.style, ...cafe.tags],
+      updatedAt: cafe.lastVerifiedAt,
+      imageUrl: cafe.imageUrl,
+    })),
+  );
+
+  const salonResults: SearchResult[] = beautyPairs.flatMap(({ region, salons }) =>
+    salons.map((salon) => ({
+      id: "salon-" + region + "-" + salon.slug,
+      type: "item" as const,
+      title: salon.name,
+      description: salon.description,
+      category: "美容室",
+      href: routes.beautySalon(region, salon.slug),
+      tags: [salon.area],
+      updatedAt: salon.lastVerifiedAt,
+      imageUrl: salon.imageUrl,
+    })),
+  );
+
+  const hotelResults: SearchResult[] = allHotels.map((hotel) => ({
+    id: "hotel-" + hotel.slug,
+    type: "item" as const,
+    title: hotel.name,
+    description: hotel.description,
+    category: "旅行",
+    href: routes.travelHotel("", hotel.slug),
+    tags: [hotel.area, hotel.style, ...hotel.tags],
+    updatedAt: hotel.lastVerifiedAt,
+    imageUrl: hotel.imageUrl,
+  }));
+
   return [
     ...categoryResults,
     ...articleResults,
     ...rankingResults,
     ...itemResults,
+    ...cafeResults,
+    ...salonResults,
+    ...hotelResults,
     ...leisureSpotResults,
     ...travelAgencyResults,
     ...travelAppResults,
@@ -1036,13 +1167,13 @@ export async function getTravelRankingEntries(region: string, slug: string) {
 
 export async function getTravelAgencies(region: string): Promise<TravelAgency[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("content_type", "travel_agency").eq("region", region);
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "agency").eq("region", region);
   return (data ?? []).map(mapTravelAgencyItem);
 }
 
 export async function getTravelAgency(region: string, slug: string): Promise<TravelAgency | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("content_type", "travel_agency").eq("region", region).eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "agency").eq("region", region).eq("slug", slug).maybeSingle();
   return data ? mapTravelAgencyItem(data) : undefined;
 }
 
@@ -1068,7 +1199,7 @@ export async function getTravelServiceRankingEntries(region: string, slug: strin
 
 export async function getTravelApps(): Promise<TravelApp[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("content_type", "travel_app");
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "app");
   return (data ?? []).map(mapTravelAppItem);
 }
 

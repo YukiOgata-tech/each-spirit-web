@@ -14,14 +14,14 @@ import type { ProteinTarget } from "@/lib/types";
 
 type PageProps = { params: Promise<{ section: string; target: string }> };
 
-export function generateStaticParams() {
-  return getProteinTargets().map((t) => ({ section: "protein", target: t.slug }));
+export async function generateStaticParams() {
+  return (await getProteinTargets()).map((t) => ({ section: "protein", target: t.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
   const { section, target } = await params;
   if (section !== "protein") return {};
-  const info = getProteinTarget(target as ProteinTarget);
+  const info = await getProteinTarget(target as ProteinTarget);
   if (!info) return {};
   return pageMetadata({
     title: `${info.name}におすすめのプロテイン比較｜目的別ランキングと選び方`,
@@ -33,7 +33,7 @@ export async function generateMetadata({ params }: PageProps) {
 export default async function ProteinTargetPage({ params }: PageProps) {
   const { section, target } = await params;
   if (section !== "protein") notFound();
-  const info = getProteinTarget(target as ProteinTarget);
+  const info = await getProteinTarget(target as ProteinTarget);
   if (!info) notFound();
 
   const [products, rankings] = await Promise.all([

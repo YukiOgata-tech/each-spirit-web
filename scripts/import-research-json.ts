@@ -2,6 +2,12 @@ import { config } from "dotenv";
 import { readFileSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
 import ws from "ws";
+import {
+  ITEM_CONTENT_TYPE_TO_SECTION,
+  RANKING_CONTENT_TYPE_TO_SECTION,
+  itemCanonicalPath,
+  rankingCanonicalPath,
+} from "@/lib/section-map";
 
 config({ path: ".env.local" });
 
@@ -181,35 +187,47 @@ function normalize(data: ResearchJson) {
 
 async function main() {
   const data = JSON.parse(readFileSync(inputPath, "utf8")) as ResearchJson;
-  if (data.research.category !== "ramen" || data.research.region !== "miyagi") {
-    throw new Error("This import script is currently intended for the Miyagi ramen research JSON.");
-  }
 
   const { items, rankings, slugMap } = normalize(data);
 
-  const itemRows = items.map((item) => ({
-    slug: item.slug,
-    content_type: item.content_type,
-    region: item.region,
-    name: item.name,
-    description: item.description,
-    image_url: item.image_url,
-    address: item.address ?? null,
-    area: item.area ?? null,
-    phone: item.phone ?? null,
-    price_range: item.price_range ?? null,
-    official_url: item.official_url ?? null,
-    map_url: item.map_url ?? null,
-    tags: item.tags,
-    last_verified_at: item.last_verified_at,
-    editor_comment: item.editor_comment,
-    metadata: item.metadata,
-  }));
+  const itemRows = items.map((item) => {
+    const meta = ITEM_CONTENT_TYPE_TO_SECTION[item.content_type];
+    if (!meta) throw new Error(`未知の item content_type: ${item.content_type}（${item.slug}）`);
+    return {
+      slug: item.slug,
+      content_type: item.content_type,
+      major_category: meta.majorCategory,
+      section_slug: meta.sectionSlug,
+      item_kind: meta.itemKind,
+      canonical_path: itemCanonicalPath(item.content_type, item.slug),
+      region: item.region,
+      name: item.name,
+      description: item.description,
+      image_url: item.image_url,
+      address: item.address ?? null,
+      area: item.area ?? null,
+      phone: item.phone ?? null,
+      price_range: item.price_range ?? null,
+      official_url: item.official_url ?? null,
+      map_url: item.map_url ?? null,
+      tags: item.tags,
+      last_verified_at: item.last_verified_at,
+      editor_comment: item.editor_comment,
+      metadata: item.metadata,
+    };
+  });
 
   const { error: itemError, count: itemCount } = await es
     .from("items")
-    .upsert(itemRows, { onConflict: "content_type,slug", count: "exact" });
+    .upsert(itemRows, { onConflict: "major_category,section_slug,slug", count: "exact" });
   if (itemError) throw itemError;
+
+  // ranking_items の item_id 解決用に slug→id を取得
+  const { data: itemIdRows } = await es
+    .from("items")
+    .select("id, slug")
+    .in("slug", itemRows.length ? itemRows.map((r) => r.slug) : ["__none__"]);
+  const itemIdBySlug = new Map((itemIdRows ?? []).map((r: { id: string; slug: string }) => [r.slug, r.id]));
 
   let rankingItemCount = 0;
   for (const ranking of rankings) {
@@ -219,6 +237,9 @@ async function main() {
         {
           slug: ranking.slug,
           content_type: ranking.content_type,
+          major_category: RANKING_CONTENT_TYPE_TO_SECTION[ranking.content_type]?.majorCategory ?? null,
+          section_slug: RANKING_CONTENT_TYPE_TO_SECTION[ranking.content_type]?.sectionSlug ?? null,
+          canonical_path: rankingCanonicalPath(ranking.content_type, ranking.slug),
           region: ranking.region,
           title: ranking.title,
           description: ranking.description,
@@ -229,7 +250,7 @@ async function main() {
           status: ranking.status,
           metadata: ranking.metadata,
         },
-        { onConflict: "content_type,slug" }
+        { onConflict: "major_category,section_slug,slug" }
       )
       .select("id")
       .single();
@@ -243,6 +264,7 @@ async function main() {
       rank: item.rank,
       item_content_type: item.item_content_type,
       item_slug: item.item_slug,
+      item_id: itemIdBySlug.get(item.item_slug) ?? null,
       score: item.score,
       reason: item.reason,
       is_pr: item.is_pr,

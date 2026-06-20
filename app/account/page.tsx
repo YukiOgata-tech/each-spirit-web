@@ -211,16 +211,38 @@ export default async function AccountPage() {
 
           {admin && (
             <DashboardCard title="管理メニュー">
-              <Link
-                href="/account/articles/new"
-                className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
-              >
-                <span className="inline-flex items-center gap-2">
-                  <PenLine className="h-4 w-4 text-[var(--primary)]" />
-                  記事を作成する
-                </span>
-                <ArrowRight className="h-4 w-4 text-slate-400" />
-              </Link>
+              <div className="space-y-2">
+                <Link
+                  href="/account/articles/new"
+                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    記事を作成する
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                </Link>
+                <Link
+                  href="/account/items/new"
+                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    店舗・商品を作成する
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                </Link>
+                <Link
+                  href="/account/rankings/new"
+                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    ランキングを作成する
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                </Link>
+              </div>
               <p className="mt-3 text-xs leading-5 text-slate-500">
                 公開時は記事ページと関連一覧のキャッシュを自動更新します。
               </p>

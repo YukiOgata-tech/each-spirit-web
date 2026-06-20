@@ -13,7 +13,7 @@ export const metadata = pageMetadata({
 });
 
 export default async function RamenIndexPage() {
-  const regions = getRamenRegions();
+  const regions = await getRamenRegions();
   const allArticles = await getRamenArticles();
   const regionData = await Promise.all(
     regions.map(async (region) => ({

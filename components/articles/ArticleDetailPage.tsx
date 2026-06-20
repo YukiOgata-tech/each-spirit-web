@@ -45,7 +45,7 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {categoryLabel}</p>
         </div>
-        <LikeButton contentType="article" contentId={article.slug} className="mt-5" />
+        <LikeButton contentKind="article" targetId={article.id} className="mt-5" />
       </div>
 
       {article.summary.length > 0 && (
