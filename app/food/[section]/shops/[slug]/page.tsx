@@ -1,9 +1,16 @@
 import { notFound } from "next/navigation";
+import { GenericItemDetailPage, genericItemMetadata } from "@/components/generic/GenericSectionPages";
 import RamenItemPage from "@/components/legacy-pages/food/ramen/shops/[slug]/page";
 import CafeItemPage from "@/components/legacy-pages/food/cafe/[region]/shops/[slug]/page";
 import { getCafeItemsByRegion, getCafeRegions, getRamenItems } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
+
+export async function generateMetadata({ params }: PageProps) {
+  const { section, slug } = await params;
+  if (section === "ramen" || section === "cafe") return {};
+  return genericItemMetadata("food", section, "shops", slug);
+}
 
 export async function generateStaticParams() {
   const [ramenItems, cafePairs] = await Promise.all([
@@ -25,7 +32,7 @@ export default async function FoodSectionShopPage({ params }: PageProps) {
     if (!match) notFound();
     return <CafeItemPage params={Promise.resolve({ region: match.region, slug })} />;
   }
-  notFound();
+  return <GenericItemDetailPage majorCategory="food" sectionSlug={section} itemPathSegment="shops" slug={slug} />;
 }
 
 async function getCafeItemBySlug(region: string, slug: string) {
