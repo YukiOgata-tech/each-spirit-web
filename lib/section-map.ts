@@ -56,8 +56,7 @@ export function rankingCanonicalPath(contentType: string, slug: string): string 
   return `/${m.majorCategory}/${m.sectionSlug}/rankings/${slug}`;
 }
 
-/** article の canonical_path（major/section 不明なら独立記事 /articles/{slug}） */
+/** article の canonical_path（記事は category slug 配下に集約） */
 export function articleCanonicalPath(category: string, slug: string): string {
-  const m = ARTICLE_CATEGORY_TO_SECTION[category];
-  return m ? `/${m.majorCategory}/${m.sectionSlug}/articles/${slug}` : `/articles/${slug}`;
+  return `/articles/${category}/${slug}`;
 }

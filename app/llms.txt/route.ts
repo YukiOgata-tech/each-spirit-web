@@ -1,4 +1,4 @@
-import { getCategories, getLeisureRankings, getLeisureRegions, getLeisureSpots, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
+import { articleHref, getCategories, getLeisureRankings, getLeisureRegions, getLeisureSpots, getRamenArticles, getRamenItems, getRamenRankings } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export async function GET() {
@@ -28,7 +28,7 @@ export async function GET() {
     ...getCategories().map((category) => "- " + category.name + ": " + absoluteUrl(category.href)),
     "",
     "## Ramen articles",
-    ...ramenArticles.map((article) => "- " + article.title + ": " + absoluteUrl(routes.ramenArticle(article.slug))),
+    ...ramenArticles.map((article) => "- " + article.title + ": " + absoluteUrl(articleHref(article))),
     "",
     "## Ramen rankings",
     ...ramenRankings.map((ranking) => "- " + ranking.title + ": " + absoluteUrl(routes.ramenRanking(ranking.slug))),

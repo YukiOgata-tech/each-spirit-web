@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, cafeRegionItemListSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { getCafeRegion, getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeArticles } from "@/lib/content";
+import { articleHref, getCafeRegion, getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeArticles } from "@/lib/content";
 import type { CafeRanking } from "@/lib/types";
 
 type PageProps = { params: Promise<{ region: string }> };
@@ -147,7 +147,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
             <h2 className="section-heading mt-2">カフェ選びのガイド記事</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {articles.map((article) => (
-                <ArticleCard key={article.slug} article={article} href={routes.cafeArticle(region, article.slug)} />
+                <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
               ))}
             </div>
           </section>

@@ -1,17 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPinned } from "lucide-react";
+import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getCategory, getLeisureRegions, getContentSections } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
+import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
   title: "レジャー・お出かけスポットおすすめ比較ガイド｜人気の遊び場ランキングと選び方",
   description: "新潟を中心に、アウトドア、インドア、雨の日、子連れ、車なしで選べるレジャースポットを整理するカテゴリページです。",
   path: routes.leisure,
+  image: majorMetaImage("leisure"),
 });
 
 const regionNames: Record<string, string> = {
@@ -31,33 +32,15 @@ export default async function LeisurePage() {
 
   return (
     <div className="leisure-theme">
-      <section className="border-b border-cyan-100 bg-[linear-gradient(135deg,#ecfeff_0%,#fff_52%,#fff4e6_100%)]">
-        <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-12 max-sm:w-[min(1360px,calc(100%-24px))] lg:grid-cols-[1fr_0.8fr]">
-          <div>
-            <Badge className="border-cyan-200 bg-white text-cyan-800">Leisure Guide</Badge>
-            <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-normal text-slate-950 sm:text-5xl">
-              天候と同行者で選ぶ、地域別レジャースポット。
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-8 text-slate-700">
-              アウトドア、インドア、雨の日、子連れ、車なしなど、実際の予定に合わせて選べるようにスポット情報とランキングを整理します。
-            </p>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <Button asChild><Link href={routes.leisureRegion("niigata")}>新潟のレジャーを見る<ArrowRight className="h-4 w-4" /></Link></Button>
-              <Button asChild variant="outline"><Link href="#regions">地域一覧</Link></Button>
-            </div>
-          </div>
-          <div className="rounded-lg border border-cyan-200 bg-white/86 p-5 shadow-soft">
-            <MapPinned className="h-10 w-10 text-[var(--primary)]" />
-            <h2 className="mt-4 text-xl font-semibold">検索軸</h2>
-            <div className="mt-4 flex flex-wrap gap-2">
-              {category?.searchFacets.map((facet) => <Badge key={facet} className="bg-cyan-50 text-cyan-900">{facet}</Badge>)}
-            </div>
-            <div className="mt-5 rounded-md bg-slate-950 p-4 text-sm leading-6 text-white">
-              今後: {category?.plannedTopics.join(" / ")}
-            </div>
-          </div>
-        </div>
-      </section>
+      <MajorCategoryHero
+        major="leisure"
+        variant="scatter"
+        surfaceClass="bg-[linear-gradient(135deg,#ecfeff_0%,#ffffff_52%,#fff4e6_100%)]"
+        eyebrow="Leisure Guide"
+        title={<>天候と同行者で選ぶ、<span className="text-[var(--primary)]">地域別レジャー</span>。</>}
+        description="アウトドア、インドア、雨の日、子連れ、車なしなど、実際の予定に合わせて選べるようにスポット情報とランキングを整理します。"
+        actions={[{ label: "新潟のレジャーを見る", href: routes.leisureRegion("niigata"), primary: true }, { label: "地域一覧", href: "#regions" }]}
+      />
 
       <section id="regions" className="section-shell">
         <MajorSectionDirectory
@@ -65,6 +48,12 @@ export default async function LeisurePage() {
           description="スポットなど、レジャー内の公開中カテゴリを横断できます。"
           sections={sections}
         />
+
+        {category?.searchFacets?.length ? (
+          <div className="mb-6 flex flex-wrap gap-2">
+            {category.searchFacets.map((facet) => <Badge key={facet} className="bg-cyan-50 text-cyan-900">{facet}</Badge>)}
+          </div>
+        ) : null}
 
         <div className="mb-5">
           <p className="section-kicker">Regions</p>
@@ -84,8 +73,8 @@ export default async function LeisurePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/58 to-transparent" />
                 <Badge className="absolute bottom-3 left-3 bg-white text-cyan-900">{regionNames[region] ?? region}</Badge>
               </div>
-              <div className="p-5">
-                <h3 className="text-xl font-bold text-slate-950">{regionNames[region] ?? region}のおすすめレジャー</h3>
+              <div className="p-4 sm:p-5">
+                <h3 className="text-lg font-bold text-slate-950 sm:text-xl">{regionNames[region] ?? region}のおすすめレジャー</h3>
                 <p className="mt-2 text-sm leading-7 text-slate-600">屋外・屋内・雨の日・子連れを分けて、公式情報ベースで比較します。</p>
               </div>
             </Link>

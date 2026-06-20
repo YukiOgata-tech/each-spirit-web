@@ -459,6 +459,7 @@ export type Ranking = {
   majorCategory?: string;
   sectionSlug?: string;
   canonicalPath?: string;
+  imageUrl?: string;
   region?: string;
   target?: string;
   criteria: string[];

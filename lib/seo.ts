@@ -19,15 +19,21 @@ import type {
   TravelApp,
 } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
+import { majorMetaImage } from "@/lib/category-media";
 import { site } from "@/content/site";
 
 // ─── Core metadata ───────────────────────────────────────────────────────────
+
+/** path の先頭セグメント（major category）から meta 画像を引く。/food/... → food */
+function majorImageForPath(path: string): string | undefined {
+  return majorMetaImage(path.split("/").filter(Boolean)[0]);
+}
 
 export function pageMetadata({
   title,
   description,
   path,
-  image = site.ogImage,
+  image,
   keywords,
 }: {
   title: string;
@@ -36,6 +42,8 @@ export function pageMetadata({
   image?: string;
   keywords?: string[];
 }): Metadata {
+  // 明示画像 > メジャー配下の共通 meta 画像 > サイト既定 OG の順でフォールバック
+  const resolvedImage = image ?? majorImageForPath(path) ?? site.ogImage;
   const fullTitle =
     title === site.name || title === site.title ? title : title + " | " + site.titleSuffix;
   return {
@@ -50,13 +58,13 @@ export function pageMetadata({
       siteName: site.name,
       locale: "ja_JP",
       type: "website",
-      images: [{ url: absoluteUrl(image), width: 1200, height: 630, alt: fullTitle }],
+      images: [{ url: absoluteUrl(resolvedImage), width: 1200, height: 630, alt: fullTitle }],
     },
     twitter: {
       card: "summary_large_image",
       title: fullTitle,
       description,
-      images: [absoluteUrl(image)],
+      images: [absoluteUrl(resolvedImage)],
     },
   };
 }
@@ -163,7 +171,7 @@ export function howToSchema({
 
 // ─── Articles ─────────────────────────────────────────────────────────────────
 
-/** url: canonical URL for this article (e.g. routes.ramenArticle(slug) or routes.beautyArticle(region,slug)) */
+/** url: canonical URL for this article (e.g. routes.articleByCategory(category, slug) or articleHref(article)) */
 export function articleSchema(article: Article, url: string) {
   return {
     "@context": "https://schema.org",

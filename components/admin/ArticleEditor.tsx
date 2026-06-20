@@ -91,6 +91,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   const [placement, setPlacement] = useState<"major" | "independent">("major");
   const [majorCategory, setMajorCategory] = useState("food");
   const [sectionSlug, setSectionSlug] = useState("ramen");
+  const [articleCategory, setArticleCategory] = useState("ramen");
   const [slug, setSlug] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -107,7 +108,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   ]);
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
-  const normalizedCategory = majorCategory.trim().toLowerCase();
+  const normalizedCategory = articleCategory.trim().toLowerCase();
   const selectedCategory = categoryOptions.find((option) => option.slug === normalizedCategory);
   const hasInvalidCategoryCharacter = normalizedCategory.includes(".") || sectionSlug.includes(".");
   const suggestedCategories = categoryOptions
@@ -181,7 +182,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                 <option value="independent">独立記事として作成</option>
               </select>
               <span className="mt-1 block text-[11px] leading-5 text-slate-500">
-                大カテゴリ配下は /food/ramen/articles/slug の形式、独立記事は /articles/slug の形式です。
+                URLはどちらも /articles/[記事カテゴリ]/[slug] です。大カテゴリ配下はカテゴリ/店舗ページとの紐づけにも使います。
               </span>
             </Field>
             <Field label="大カテゴリ">
@@ -199,7 +200,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                 <option value="travel">旅行 / travel</option>
                 <option value="leisure">レジャー / leisure</option>
               </select>
-              <CategorySlugStatus category={normalizedCategory} selected={selectedCategory} />
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">記事URLには使いません。記事を紐づける大カテゴリです（独立記事では無効）。</span>
             </Field>
             <Field label="地域">
               <input name="region" className={inputClass} placeholder="niigata など。必要な場合だけ入力" />
@@ -209,11 +210,27 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
               <input
                 name="section_slug"
                 value={sectionSlug}
-                onChange={(event) => setSectionSlug(event.target.value)}
+                onChange={(event) => {
+                  const nextSectionSlug = event.target.value;
+                  setSectionSlug(event.target.value);
+                  setArticleCategory((current) => current === sectionSlug || !current ? nextSectionSlug : current);
+                }}
                 className={inputClass}
                 placeholder="ramen / cafe / protein / hair-salon"
               />
               <span className="mt-1 block text-[11px] leading-5 text-slate-500">カテゴリ配下の細分化に使います。独立記事では任意です。</span>
+            </Field>
+            <Field label="記事カテゴリslug（公開URLの分類）">
+              <input
+                name="article_category"
+                required
+                value={articleCategory}
+                onChange={(event) => setArticleCategory(event.target.value)}
+                className={inputClass}
+                placeholder="dining / ramen / cafe / travel-tips"
+              />
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">公開URLは <span className="font-mono">/articles/{normalizedCategory || "[category]"}/{slug || "[slug]"}</span> になります。同じテーマは既存カテゴリ名を再利用してください。</span>
+              <CategorySlugStatus category={normalizedCategory} selected={selectedCategory} />
             </Field>
             <Field label="slug">
               <input name="slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className={inputClass} placeholder="shokudo-ajiyoshi-niigata-kobari" />
@@ -267,9 +284,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
         <section className={sectionClass}>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <h2 className="text-sm font-bold text-slate-900">カテゴリslug確認</h2>
+              <h2 className="text-sm font-bold text-slate-900">既存の記事カテゴリ（再利用候補）</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">
-                第一slugに使える既存パスと、固定ページとして使えないslugです。カテゴリ入力と連動して絞り込みます。
+                公開中の記事カテゴリ一覧です。表記揺れを防ぐため、同テーマは既存カテゴリ名の再利用を推奨します。入力と連動して絞り込みます。
               </p>
             </div>
             <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{suggestedCategories.length}件表示</span>
@@ -305,7 +322,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                     <td colSpan={4} className="px-3 py-4 text-xs leading-5 text-slate-500">
                       {hasInvalidCategoryCharacter
                         ? "カテゴリslugにドットは使えません。ハイフン区切りのslugにしてください。"
-                        : <>一致する既存slugはありません。固定ページと衝突しない自由カテゴリとして、公開URLは /{normalizedCategory}/[slug] になります。</>}
+                        : <>一致する既存カテゴリはありません。新規カテゴリとして追加され、公開URLは /articles/{normalizedCategory || "[category]"}/[slug] になります。</>}
                     </td>
                   </tr>
                 )}
@@ -322,7 +339,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
             <Tool icon={List} label="箇条書き" onClick={() => apply("\n- 項目\n- 項目\n")} />
             <Tool icon={Quote} label="引用" onClick={() => apply("\n\n> 引用または要点\n\n")} />
             <Tool icon={LinkIcon} label="リンク" onClick={() => apply("[リンクテキスト](/path/to/page)")} />
-            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/food/ramen/articles/example-slug) - 説明文\n:::\n\n")} />
+            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/articles/ramen/example-slug) - 説明文\n:::\n\n")} />
             <Tool icon={ImagePlus} label="外部画像" onClick={() => apply("\n\n:::official-image\nsrc: https://example.com/image.webp\nalt: 画像の説明\ncaption: キャプション\nsource: 出典名\nsourceUrl: https://example.com/\n:::\n\n")} />
             <Button type="button" variant="outline" size="sm" disabled={uploading} className="max-sm:w-full" onClick={() => fileRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />
@@ -629,7 +646,7 @@ function CategorySlugStatus({ category, selected }: { category: string; selected
   if (!selected) {
     return (
       <span className="mt-1 block text-[11px] leading-5 text-emerald-700">
-        大カテゴリは固定です。独立記事は /articles/[slug]、大カテゴリ配下は /category/section/articles/[slug] になります。
+        記事カテゴリとして新規作成されます。公開URLは /articles/[category]/[slug] になります。
       </span>
     );
   }

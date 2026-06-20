@@ -11,6 +11,16 @@ function regionLabel(mode: ContentSection["regionMode"]) {
   return "地域なし";
 }
 
+function modelLabel(model: string) {
+  if (model === "restaurant") return "店舗ガイド";
+  if (model === "product") return "商品比較";
+  if (model === "salon") return "サロン";
+  if (model === "hotel") return "宿泊施設";
+  if (model === "travel-service") return "旅行サービス";
+  if (model === "spot") return "スポット";
+  return "掲載一覧";
+}
+
 export function MajorSectionDirectory({
   title = "カテゴリから探す",
   description,
@@ -39,7 +49,7 @@ export function MajorSectionDirectory({
               key={`${section.majorCategory}-${section.sectionSlug}`}
               href={section.href || `/${section.majorCategory}/${section.sectionSlug}`}
               aria-current={active ? "page" : undefined}
-              className={`group flex min-h-36 flex-col rounded-lg border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 ${
+              className={`group flex min-h-36 flex-col rounded-lg border bg-white p-4 shadow-sm transition hover:-translate-y-1 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 ${
                 active ? "border-[var(--primary)]/50 ring-1 ring-[var(--primary)]/20" : "border-slate-200 hover:border-[var(--primary)]/35"
               }`}
             >
@@ -51,9 +61,9 @@ export function MajorSectionDirectory({
                 <ArrowRight className="mt-1 h-4 w-4 shrink-0 text-[var(--primary)] transition group-hover:translate-x-1" />
               </div>
               <div className="mt-auto flex flex-wrap gap-2 pt-4">
-                <Badge>{section.contentModel}</Badge>
+                <Badge>{modelLabel(section.contentModel)}</Badge>
                 <Badge>{regionLabel(section.regionMode)}</Badge>
-                {section.itemPathSegment && <Badge>{section.itemPathSegment}</Badge>}
+                {active && <Badge>表示中</Badge>}
               </div>
             </Link>
           );
@@ -85,7 +95,7 @@ export function SectionActionNav({
         <Link href={routes.sectionRankings(majorCategory, sectionSlug)}><Trophy className="h-4 w-4 shrink-0" /><span className="min-w-0 truncate">ランキング {rankingCount}</span></Link>
       </Button>
       <Button asChild variant="outline" className="h-auto justify-start gap-2 px-3 py-3 text-left">
-        <Link href={routes.sectionArticles(majorCategory, sectionSlug)}><FileText className="h-4 w-4 shrink-0" /><span className="min-w-0 truncate">記事 {articleCount}</span></Link>
+        <Link href="#articles"><FileText className="h-4 w-4 shrink-0" /><span className="min-w-0 truncate">記事 {articleCount}</span></Link>
       </Button>
     </div>
   );

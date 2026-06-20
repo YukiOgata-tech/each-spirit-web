@@ -60,6 +60,7 @@ export async function saveRanking(formData: FormData) {
     canonical_path: canonical,
     region,
     title,
+    image_url: text(formData, "image_url") || null,
     description: text(formData, "description"),
     conclusion: text(formData, "conclusion"),
     quick_table_label: text(formData, "quick_table_label"),

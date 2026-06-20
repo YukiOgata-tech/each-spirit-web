@@ -362,6 +362,9 @@ function mapSalonItem(row: any): Salon {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapRanking(row: any, items: any[]): Ranking {
   const m = row.metadata ?? {};
+  const sorted = [...items].sort((a, b) => a.rank - b.rank);
+  // ランキング専用画像が無ければ、上位アイテムの画像をカード/メタ画像に流用する
+  const topItemImage = sorted.find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
@@ -369,21 +372,20 @@ function mapRanking(row: any, items: any[]): Ranking {
     majorCategory: row.major_category ?? undefined,
     sectionSlug: row.section_slug ?? undefined,
     canonicalPath: row.canonical_path ?? undefined,
+    imageUrl: row.image_url ?? topItemImage ?? undefined,
     region: row.region ?? undefined,
     target: m.target ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
     lastUpdatedAt: toDateStr(row.last_updated_at),
-    items: items
-      .sort((a, b) => a.rank - b.rank)
-      .map((ri): RankingItem => ({
-        rank: ri.rank,
-        itemSlug: ri.item_slug,
-        score: Number(ri.score ?? 0),
-        reason: ri.reason ?? "",
-        isPr: ri.is_pr ?? false,
-      })),
+    items: sorted.map((ri): RankingItem => ({
+      rank: ri.rank,
+      itemSlug: ri.item_slug,
+      score: Number(ri.score ?? 0),
+      reason: ri.reason ?? "",
+      isPr: ri.is_pr ?? false,
+    })),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
   };
@@ -419,6 +421,7 @@ function mapArticle(row: any): Article {
   const m = row.metadata ?? {};
   const majorCategory = row.major_category ?? majorCategoryFromArticleCategory(row.category);
   const sectionSlug = row.section_slug ?? sectionSlugFromArticleCategory(row.category);
+  const categoryPath = routes.articleByCategory(row.category || "general", row.slug);
   return {
     id: row.id,
     slug: row.slug,
@@ -427,7 +430,7 @@ function mapArticle(row: any): Article {
     category: row.category,
     majorCategory,
     sectionSlug,
-    canonicalPath: row.canonical_path ?? (majorCategory && sectionSlug ? routes.sectionArticle(majorCategory, sectionSlug, row.slug) : routes.article(row.slug)),
+    canonicalPath: categoryPath,
     region: row.region ?? undefined,
     coverImageUrl: row.cover_image_url ?? undefined,
     tags: (row.tags ?? []) as string[],
@@ -563,7 +566,7 @@ export async function getRankingBySection(majorCategory: string, sectionSlug: st
   const sb = createServerClient();
   const { data } = await sb
     .from("rankings")
-    .select("*, ranking_items(*)")
+    .select("*, ranking_items(*, items(image_url))")
     .eq("major_category", majorCategory)
     .eq("section_slug", sectionSlug)
     .eq("slug", slug)
@@ -653,7 +656,7 @@ export async function getProteinProductsByTarget(target: ProteinTarget): Promise
 
 export async function getProteinRankings(): Promise<ProteinRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "health").eq("section_slug", "protein");
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "health").eq("section_slug", "protein");
   return (data ?? []).map((r) => mapProteinRanking(r, r.ranking_items ?? []));
 }
 
@@ -664,7 +667,7 @@ export async function getProteinRankingsByTarget(target: ProteinTarget): Promise
 
 export async function getProteinRanking(slug: string): Promise<ProteinRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "health").eq("section_slug", "protein").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "health").eq("section_slug", "protein").eq("slug", slug).maybeSingle();
   return data ? mapProteinRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -696,15 +699,8 @@ export async function getArticleMarkdown(slug: string): Promise<string> {
   return data?.body_md ?? "";
 }
 
-const dedicatedArticleCategories = ["ramen", "beauty", "cafe"];
-const majorArticleCategories = ["food", "health", "beauty", "travel", "leisure"];
-
 export function articleHref(article: Pick<Article, "category" | "region" | "slug">) {
-  const a = article as Pick<Article, "category" | "region" | "slug" | "majorCategory" | "canonicalPath">;
-  if (a.canonicalPath) return a.canonicalPath;
-  const majorCategory = a.majorCategory ?? majorCategoryFromArticleCategory(a.category);
-  const sectionSlug = (article as Pick<Article, "sectionSlug">).sectionSlug ?? sectionSlugFromArticleCategory(a.category);
-  return majorCategory && sectionSlug ? routes.sectionArticle(majorCategory, sectionSlug, a.slug) : routes.article(a.slug);
+  return routes.articleByCategory(article.category || "general", article.slug);
 }
 
 export function rankingHref(ranking: Pick<Ranking, "region" | "slug" | "target">) {
@@ -720,7 +716,6 @@ export async function getGenericArticles(): Promise<Article[]> {
   const { data } = await sb
     .from("articles")
     .select("*")
-    .not("category", "in", `(${dedicatedArticleCategories.join(",")})`)
     .eq("status", "published")
     .order("updated_at", { ascending: false });
   return (data ?? []).map(mapArticle);
@@ -752,7 +747,7 @@ export async function getRankingsBySection(majorCategory: string, sectionSlug: s
   const sb = createServerClient();
   const { data } = await sb
     .from("rankings")
-    .select("*, ranking_items(*)")
+    .select("*, ranking_items(*, items(image_url))")
     .eq("major_category", majorCategory)
     .eq("section_slug", sectionSlug)
     .eq("status", "published")
@@ -760,37 +755,24 @@ export async function getRankingsBySection(majorCategory: string, sectionSlug: s
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
-export async function getArticleByMajorCategory(majorCategory: string, slug: string): Promise<Article | undefined> {
-  const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
-  if (!data) return undefined;
-  const article = mapArticle(data);
-  return article.majorCategory === majorCategory ? article : undefined;
-}
-
-export async function getArticleBySection(majorCategory: string, sectionSlug: string, slug: string): Promise<Article | undefined> {
-  const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
-  if (!data) return undefined;
-  const article = mapArticle(data);
-  return article.majorCategory === majorCategory && article.sectionSlug === sectionSlug ? article : undefined;
-}
-
-export async function getIndependentArticles(): Promise<Article[]> {
+/** 公開記事のカテゴリ一覧（/articles のカテゴリ一覧ページ用）。件数の多い順 */
+export async function getArticleCategories(): Promise<{ category: string; count: number; latestUpdatedAt: string; coverImageUrl?: string }[]> {
   const articles = await getLatestArticles();
-  return articles.filter((article) => !article.majorCategory || !majorArticleCategories.includes(article.majorCategory));
-}
-
-export async function getIndependentArticle(slug: string): Promise<Article | undefined> {
-  const sb = createServerClient();
-  const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("status", "published").maybeSingle();
-  if (!data) return undefined;
-  const article = mapArticle(data);
-  return !article.majorCategory || !majorArticleCategories.includes(article.majorCategory) ? article : undefined;
+  const map = new Map<string, { category: string; count: number; latestUpdatedAt: string; coverImageUrl?: string }>();
+  for (const article of articles) {
+    const category = article.category || "general";
+    const existing = map.get(category);
+    if (existing) {
+      existing.count += 1;
+      if (!existing.coverImageUrl && article.coverImageUrl) existing.coverImageUrl = article.coverImageUrl;
+    } else {
+      map.set(category, { category, count: 1, latestUpdatedAt: article.updatedAt, coverImageUrl: article.coverImageUrl });
+    }
+  }
+  return Array.from(map.values()).sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
 }
 
 export async function getGenericArticlesByCategory(category: string): Promise<Article[]> {
-  if (dedicatedArticleCategories.includes(category)) return [];
   const sb = createServerClient();
   const { data } = await sb
     .from("articles")
@@ -802,14 +784,12 @@ export async function getGenericArticlesByCategory(category: string): Promise<Ar
 }
 
 export async function getGenericArticle(category: string, slug: string): Promise<Article | undefined> {
-  if (dedicatedArticleCategories.includes(category)) return undefined;
   const sb = createServerClient();
   const { data } = await sb.from("articles").select("*").eq("slug", slug).eq("category", category).eq("status", "published").maybeSingle();
   return data ? mapArticle(data) : undefined;
 }
 
 export async function getGenericArticleMarkdown(category: string, slug: string): Promise<string> {
-  if (dedicatedArticleCategories.includes(category)) return "";
   const sb = createServerClient();
   const { data } = await sb.from("articles").select("body_md").eq("slug", slug).eq("category", category).eq("status", "published").maybeSingle();
   return data?.body_md ?? "";
@@ -883,19 +863,19 @@ export async function getRamenItem(slug: string): Promise<Item | undefined> {
 
 export async function getRamenRankings(): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "food").eq("section_slug", "ramen");
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen");
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getRamenRankingsByRegion(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "food").eq("section_slug", "ramen").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getRamenRanking(slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "food").eq("section_slug", "ramen").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -909,7 +889,7 @@ export async function getRankingEntries(slug: string) {
 
 export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
   const sb = createServerClient();
-  let q = sb.from("rankings").select("*, ranking_items(*)").order("last_updated_at", { ascending: false });
+  let q = sb.from("rankings").select("*, ranking_items(*, items(image_url))").order("last_updated_at", { ascending: false });
   if (typeof limit === "number") q = q.limit(limit);
   const { data } = await q;
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
@@ -1109,13 +1089,13 @@ export async function getLeisureSpot(region: string, slug: string): Promise<Leis
 
 export async function getLeisureRankings(region: string): Promise<LeisureRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "leisure").eq("section_slug", "spots").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "leisure").eq("section_slug", "spots").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getLeisureRanking(region: string, slug: string): Promise<LeisureRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "leisure").eq("section_slug", "spots").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "leisure").eq("section_slug", "spots").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1143,13 +1123,13 @@ export async function getBeautySalon(region: string, slug: string): Promise<Salo
 
 export async function getBeautyRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getBeautyRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1183,13 +1163,13 @@ export async function getTravelAllHotels(): Promise<Hotel[]> {
 
 export async function getTravelRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "travel").eq("section_slug", "stays").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "stays").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getTravelRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "travel").eq("section_slug", "stays").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "stays").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1217,13 +1197,13 @@ export async function getTravelAgency(region: string, slug: string): Promise<Tra
 
 export async function getTravelServiceRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "travel").eq("section_slug", "services").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "services").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getTravelServiceRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "travel").eq("section_slug", "services").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "services").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1257,13 +1237,13 @@ export async function getCafeItem(region: string, slug: string): Promise<CafeIte
 
 export async function getCafeRankingsByRegion(region: string): Promise<CafeRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "food").eq("section_slug", "cafe").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "cafe").eq("region", region);
   return (data ?? []).map((r) => mapCafeRanking(r, r.ranking_items ?? []));
 }
 
 export async function getCafeRanking(region: string, slug: string): Promise<CafeRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*)").eq("major_category", "food").eq("section_slug", "cafe").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "cafe").eq("slug", slug).maybeSingle();
   return data ? mapCafeRanking(data, data.ranking_items ?? []) : undefined;
 }
 

@@ -75,11 +75,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
-    ...sections.flatMap((section) => [
-      { url: absoluteUrl(routes.sectionArticles(section.majorCategory, section.sectionSlug)), lastModified: new Date("2026-06-19") },
-      { url: absoluteUrl(routes.sectionRankings(section.majorCategory, section.sectionSlug)), lastModified: new Date("2026-06-20") },
-    ]),
+    ...sections.map((section) => (
+      { url: absoluteUrl(routes.sectionRankings(section.majorCategory, section.sectionSlug)), lastModified: new Date("2026-06-20") }
+    )),
     { url: absoluteUrl(routes.articles), lastModified: new Date("2026-06-19") },
+    ...Array.from(new Set(articles.map((article) => article.category || "general"))).map((category) => (
+      { url: absoluteUrl(routes.articleCategory(category)), lastModified: new Date("2026-06-21") }
+    )),
     ...(await getRamenRegions()).map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...articles.map((article) => ({ url: absoluteUrl(articleHref(article)), lastModified: new Date(article.updatedAt) })),
     ...ramenRankings.map((ranking) => ({ url: absoluteUrl(routes.ramenRanking(ranking.slug)), lastModified: new Date(ranking.lastUpdatedAt) })),

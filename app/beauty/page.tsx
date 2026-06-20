@@ -1,8 +1,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin } from "lucide-react";
+import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { pageMetadata } from "@/lib/seo";
+import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
 import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles, getContentSections } from "@/lib/content";
 
@@ -10,6 +12,7 @@ export const metadata = pageMetadata({
   title: "美容室・美容院おすすめ比較ガイド｜人気サロンランキングと失敗しない選び方",
   description: "各県の美容室を年代・施術・エリアで比較。カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンをランキングと店舗カードで整理しています。",
   path: routes.beauty,
+  image: majorMetaImage("beauty"),
 });
 
 export default async function BeautyIndexPage() {
@@ -22,25 +25,27 @@ export default async function BeautyIndexPage() {
       articles: await getBeautyArticles(region.slug),
     }))
   );
+  const totalSalons = regionData.reduce((sum, region) => sum + region.salons.length, 0);
+  const totalRankings = regionData.reduce((sum, region) => sum + region.rankings.length, 0);
 
   return (
     <div className="beauty-theme">
-      <section className="border-b border-[#f2d5e8] beauty-hero-bg px-4 py-14">
-        <div className="mx-auto max-w-4xl text-center">
-          <span className="inline-block rounded-full border border-[#f2d5e8] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#8b3a7e]">
-            Beauty Guide
-          </span>
-          <h1 className="mt-5 text-4xl font-black leading-tight text-slate-950 sm:text-5xl">
-            美容室を、<span className="beauty-shimmer-text">地域・年代・施術</span>で選ぶ。
-          </h1>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-8 text-slate-600">
-            カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンを、都道府県ごとに整理。
-            年代に合った提案力とエリアの利便性を軸にランキングとサロンカードで比較できます。
-          </p>
-        </div>
-      </section>
+      <MajorCategoryHero
+        major="beauty"
+        variant="overlap"
+        surfaceClass="bg-[linear-gradient(135deg,#fff1f7_0%,#ffffff_48%,#f1efff_100%)]"
+        eyebrow="Beauty Guide"
+        title={<>美容室を、<span className="beauty-shimmer-text">地域・年代・施術</span>で選ぶ。</>}
+        description="カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンを都道府県ごとに整理。年代に合った提案力とエリアの利便性で比較できます。"
+        actions={[{ label: "新潟のサロンを見る", href: routes.beautyRegion("niigata"), primary: true }, { label: "エリア一覧", href: "#regions" }]}
+        stats={[
+          { label: "エリア", value: regionData.length },
+          { label: "サロン", value: totalSalons },
+          { label: "ランキング", value: totalRankings },
+        ]}
+      />
 
-      <section className="section-shell mx-auto max-w-5xl">
+      <section id="regions" className="section-shell mx-auto max-w-5xl">
         <MajorSectionDirectory
           title="美容カテゴリ"
           description="美容室を中心に、美容内の公開中カテゴリを横断できます。"
@@ -49,14 +54,14 @@ export default async function BeautyIndexPage() {
 
         <p className="section-kicker" style={{ color: "#8b3a7e" }}>REGIONS</p>
         <h2 className="section-heading mt-2">エリアを選ぶ</h2>
-        <div className="mt-6 grid gap-6 sm:grid-cols-2">
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-6">
           {regionData.map((region) => (
             <Link
               key={region.slug}
               href={routes.beautyRegion(region.slug)}
               className="beauty-card group overflow-hidden"
             >
-              <div className="relative h-52 w-full overflow-hidden">
+              <div className="relative aspect-[16/10] w-full overflow-hidden sm:h-52 sm:aspect-auto">
                 <Image
                   src={region.imageUrl}
                   alt={region.name}
@@ -64,7 +69,7 @@ export default async function BeautyIndexPage() {
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, 50vw"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
+                <div className="absolute inset-0 bg-linear-to-t from-black/60 via-black/10 to-transparent" />
                 <div className="absolute bottom-4 left-5">
                   <p className="text-[11px] font-bold uppercase tracking-widest text-white/70">
                     {region.status === "live" ? "公開中" : "準備中"}
@@ -72,10 +77,10 @@ export default async function BeautyIndexPage() {
                   <p className="mt-0.5 text-2xl font-black text-white">{region.name}</p>
                 </div>
               </div>
-              <div className="p-5">
+              <div className="p-4 sm:p-5">
                 <p className="text-sm font-semibold text-[#8b3a7e]">{region.tagline}</p>
                 <p className="mt-2 text-xs leading-6 text-slate-500">{region.description}</p>
-                <div className="mt-4 flex gap-4 text-center">
+                <div className="mt-4 flex gap-3 text-center sm:gap-4">
                   {[
                     { num: region.salons.length,   label: "サロン" },
                     { num: region.rankings.length, label: "ランキング" },

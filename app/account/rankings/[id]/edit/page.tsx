@@ -50,6 +50,7 @@ export default async function EditRankingPage({ params }: PageProps) {
     fields: {
       title: str(row.title),
       description: str(row.description),
+      image_url: str(row.image_url),
       conclusion: str(row.conclusion),
       quick_table_label: str(row.quick_table_label),
       criteria: ((row.criteria as string[]) ?? []).join(", "),

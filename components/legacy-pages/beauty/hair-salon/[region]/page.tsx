@@ -7,6 +7,7 @@ import { BeautyRankingCard } from "@/components/beauty/BeautyRankingCard";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import {
+  articleHref,
   getBeautyArticles,
   getBeautyRankings,
   getBeautySalons,
@@ -127,7 +128,7 @@ export default async function BeautyRegionPage({ params }: PageProps) {
           {articles.map((article) => (
             <Link
               key={article.slug}
-              href={routes.beautyArticle(region, article.slug)}
+              href={articleHref(article)}
               className="beauty-card group flex flex-col gap-4 p-6"
             >
               <div className="flex flex-wrap gap-2">

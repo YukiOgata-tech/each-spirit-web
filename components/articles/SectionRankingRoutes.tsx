@@ -4,7 +4,14 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { getRankingsBySection, rankingHref } from "@/lib/content";
 import { breadcrumbSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import type { SectionConfig } from "@/components/articles/SectionArticleRoutes";
+
+export type SectionConfig = {
+  majorCategory: string;
+  sectionSlug: string;
+  majorLabel: string;
+  sectionLabel: string;
+  sectionHref: string;
+};
 
 export async function SectionRankingsIndex({ config }: { config: SectionConfig }) {
   const rankings = await getRankingsBySection(config.majorCategory, config.sectionSlug);

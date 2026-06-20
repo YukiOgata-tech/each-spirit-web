@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ArticleEditor } from "@/components/admin/ArticleEditor";
 import { getCurrentAdminUser } from "@/lib/admin";
-import { getCategories } from "@/lib/content";
+import { getArticleCategories } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { saveArticle } from "./actions";
 
@@ -16,43 +16,17 @@ export default async function NewArticlePage() {
   if (!admin) {
     redirect(`${routes.authLogin}?next=/account/articles/new`);
   }
-  const siteCategories = getCategories();
-  const reservedSlugs = [
-    "about",
-    "account",
-    "api",
-    "apple-icon.png",
-    "articles",
-    "auth",
-    "contact",
-    "disclaimer",
-    "fortune",
-    "icon.png",
-    "llms.txt",
-    "opengraph-image",
-    "privacy",
-    "robots.txt",
-    "search",
-    "sitemap.xml",
-  ];
-  const categoryOptions = [
-    ...siteCategories.map((category) => ({
-      slug: category.slug,
-      path: category.href.startsWith("/") ? category.href : "/" + category.slug,
-      label: category.name,
-      kind: "大カテゴリ",
-      available: category.status === "live",
-      note: "記事URLは /" + category.slug + "/[中カテゴリ]/articles/[slug] です。",
-    })),
-    ...reservedSlugs.map((slug) => ({
-      slug,
-      path: "/" + slug,
-      label: slug,
-      kind: "予約済み",
-      available: false,
-      note: "システム/固定ページのためカテゴリslugには使えません。",
-    })),
-  ];
+  // 記事URLは /articles/[記事カテゴリ]/[slug]。記事カテゴリは独立した名前空間なので
+  // 固定ページ（/about 等）とは衝突しない。既存カテゴリを候補として提示し、表記揺れを防ぐ。
+  const existingCategories = await getArticleCategories();
+  const categoryOptions = existingCategories.map((category) => ({
+    slug: category.category,
+    path: routes.articleCategory(category.category),
+    label: category.category,
+    kind: "既存カテゴリ",
+    available: true,
+    note: `${category.count}件の記事。再利用すると一覧が整理されます。`,
+  }));
 
   return (
     <main className="min-h-screen bg-slate-100 pb-8 sm:pb-12">

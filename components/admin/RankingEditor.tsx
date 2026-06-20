@@ -89,6 +89,10 @@ export function RankingEditor({ action, sections, regionOptions, itemsBySection,
             <textarea name="description" defaultValue={f.description ?? ""} rows={2} className={inputClass} />
           </div>
           <div className="sm:col-span-2">
+            <label className={labelClass}>カード/メタ画像URL</label>
+            <input name="image_url" defaultValue={f.image_url ?? ""} className={inputClass} placeholder="https://… 空欄の場合は1位アイテムの画像を自動使用" />
+          </div>
+          <div className="sm:col-span-2">
             <label className={labelClass}>結論</label>
             <textarea name="conclusion" defaultValue={f.conclusion ?? ""} rows={2} className={inputClass} />
           </div>

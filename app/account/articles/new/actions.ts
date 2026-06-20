@@ -34,19 +34,17 @@ function slugify(input: string) {
     .replace(/-{2,}/g, "-");
 }
 
-function articlePath(placement: string, majorCategory: string | null, sectionSlug: string | null, slug: string) {
-  return placement === "independent" || !majorCategory
-    ? routes.article(slug)
-    : routes.sectionArticle(majorCategory, sectionSlug || "general", slug);
+function articlePath(category: string, slug: string) {
+  return routes.articleByCategory(category, slug);
 }
 
-function listingPaths(placement: string, majorCategory: string | null, sectionSlug: string | null) {
-  const paths = ["/", "/sitemap.xml"];
-  if (placement === "independent" || !majorCategory) {
-    paths.push(routes.articles);
-    return paths;
+function listingPaths(category: string, placement: string, majorCategory: string | null, sectionSlug: string | null) {
+  const paths = ["/", "/sitemap.xml", routes.articles, routes.articleCategory(category)];
+  if (placement !== "independent" && majorCategory) {
+    paths.push(routes.majorCategory(majorCategory));
+    // 大カテゴリ配下に紐づく記事は section トップにインライン表示されるため、そのページも再生成
+    if (sectionSlug) paths.push("/" + majorCategory + "/" + sectionSlug);
   }
-  paths.push(routes.majorCategory(majorCategory), routes.sectionArticles(majorCategory, sectionSlug || "general"));
   return paths;
 }
 
@@ -123,7 +121,7 @@ export async function saveArticle(formData: FormData) {
   const majorCategoryInput = text(formData, "major_category").toLowerCase();
   const majorCategory = placement === "independent" ? null : slugify(majorCategoryInput);
   const sectionSlug = slugify(text(formData, "section_slug"));
-  const category = majorCategory ?? (sectionSlug || "article");
+  const category = slugify(text(formData, "article_category")) || sectionSlug || majorCategory || "general";
   const regionRaw = slugify(text(formData, "region"));
   const region = regionRaw || null;
   const slug = slugify(text(formData, "slug"));
@@ -138,7 +136,7 @@ export async function saveArticle(formData: FormData) {
   if (placement === "major" && (!majorCategory || !majorCategories.has(majorCategory))) {
     throw new Error("大カテゴリ配下の記事では food, health, beauty, travel, leisure のいずれかを選択してください");
   }
-  if (majorCategoryInput.includes(".") || sectionSlug.includes(".")) {
+  if (majorCategoryInput.includes(".") || sectionSlug.includes(".") || category.includes(".")) {
     throw new Error("slugにドットは使えません");
   }
 
@@ -146,7 +144,7 @@ export async function saveArticle(formData: FormData) {
     throw new Error("大カテゴリ配下の記事では中カテゴリslugが必須です");
   }
 
-  const path = articlePath(placement, majorCategory, sectionSlug || null, slug);
+  const path = articlePath(category, slug);
   const now = new Date().toISOString();
   const summary = list(formData, "summary");
   const whatYouLearn = list(formData, "what_you_learn");
@@ -193,7 +191,7 @@ export async function saveArticle(formData: FormData) {
 
   if (status === "published") {
     revalidatePath(path);
-    for (const listingPath of listingPaths(placement, majorCategory, sectionSlug || null)) {
+    for (const listingPath of listingPaths(category, placement, majorCategory, sectionSlug || null)) {
       revalidatePath(listingPath);
     }
   }
