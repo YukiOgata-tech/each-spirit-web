@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
+import { ES_CONTENT_CACHE_TAG } from "@/lib/supabase-server";
 
 /**
  * On-demand ISR 再検証エンドポイント。
@@ -35,12 +36,14 @@ export async function POST(request: NextRequest) {
   const body = (await request.json().catch(() => null)) as { path?: string } | null;
   const path = body?.path;
 
+  revalidateTag(ES_CONTENT_CACHE_TAG);
+
   if (path) {
     revalidatePath(path);
-    return NextResponse.json({ ok: true, revalidated: path, now: Date.now() });
+    return NextResponse.json({ ok: true, revalidated: path, revalidatedTag: ES_CONTENT_CACHE_TAG, now: Date.now() });
   }
 
   // path 未指定: root layout 配下（=コンテンツ全ページ）をまとめて再検証
   revalidatePath("/", "layout");
-  return NextResponse.json({ ok: true, revalidated: "all", now: Date.now() });
+  return NextResponse.json({ ok: true, revalidated: "all", revalidatedTag: ES_CONTENT_CACHE_TAG, now: Date.now() });
 }
