@@ -44,6 +44,23 @@ export type Category = {
   images?: CategoryImage[];
 };
 
+export type ContentSection = {
+  majorCategory: string;
+  sectionSlug: string;
+  label: string;
+  description: string;
+  href: string;
+  contentModel: string;
+  itemPathSegment?: string;
+  regionMode: "none" | "optional" | "required";
+  targetMode: "none" | "optional" | "required";
+  status: "draft" | "published" | "archived";
+  sortOrder: number;
+  displayConfig: Record<string, unknown>;
+  seoConfig: Record<string, unknown>;
+  metadata: Record<string, unknown>;
+};
+
 export type SearchResult = {
   id: string;
   type: "article" | "ranking" | "item" | "category";
@@ -61,6 +78,9 @@ export type Article = {
   title: string;
   description: string;
   category: string;
+  majorCategory?: string;
+  sectionSlug?: string;
+  canonicalPath?: string;
   region?: string;
   coverImageUrl?: string;
   tags: string[];
@@ -407,6 +427,9 @@ export type Ranking = {
   title: string;
   description: string;
   contentType?: string;
+  majorCategory?: string;
+  sectionSlug?: string;
+  canonicalPath?: string;
   region?: string;
   target?: string;
   criteria: string[];

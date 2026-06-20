@@ -9,29 +9,7 @@ import type { FAQ, RelatedLink, Source, SourceType } from "@/lib/types";
 
 type ArticleStatus = "draft" | "published";
 
-const regionRequiredCategories = new Set(["beauty", "cafe"]);
-const unavailableCategorySlugs = new Set([
-  "about",
-  "account",
-  "api",
-  "apple-icon.png",
-  "articles",
-  "auth",
-  "contact",
-  "disclaimer",
-  "fortune",
-  "icon.png",
-  "leisure",
-  "llms.txt",
-  "opengraph-image",
-  "privacy",
-  "protein",
-  "robots.txt",
-  "search",
-  "sitemap.xml",
-  "travel",
-  "travel-services",
-]);
+const majorCategories = new Set(["food", "health", "beauty", "travel", "leisure"]);
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
@@ -56,27 +34,19 @@ function slugify(input: string) {
     .replace(/-{2,}/g, "-");
 }
 
-function articlePath(category: string, region: string | null, slug: string) {
-  if (category === "ramen") return routes.ramenArticle(slug);
-  if (category === "beauty") return routes.beautyArticle(region!, slug);
-  if (category === "cafe") return routes.cafeArticle(region!, slug);
-  return routes.genericArticle(category, slug);
+function articlePath(placement: string, majorCategory: string | null, sectionSlug: string | null, slug: string) {
+  return placement === "independent" || !majorCategory
+    ? routes.article(slug)
+    : routes.sectionArticle(majorCategory, sectionSlug || "general", slug);
 }
 
-function listingPaths(category: string, region: string | null) {
+function listingPaths(placement: string, majorCategory: string | null, sectionSlug: string | null) {
   const paths = ["/", "/sitemap.xml"];
-  if (category === "ramen") paths.push(routes.ramen);
-  if (category === "beauty") {
-    paths.push(routes.beauty);
-    if (region) paths.push(routes.beautyRegion(region));
+  if (placement === "independent" || !majorCategory) {
+    paths.push(routes.articles);
+    return paths;
   }
-  if (category === "cafe") {
-    paths.push(routes.cafe);
-    if (region) paths.push(routes.cafeRegion(region));
-  }
-  if (!["ramen", "beauty", "cafe"].includes(category)) {
-    paths.push(routes.genericCategory(category));
-  }
+  paths.push(routes.majorCategory(majorCategory), routes.sectionArticles(majorCategory, sectionSlug || "general"));
   return paths;
 }
 
@@ -149,8 +119,11 @@ export async function saveArticle(formData: FormData) {
   const admin = await requireAdminUser();
   const service = createServerClient();
 
-  const categoryInput = text(formData, "category").toLowerCase();
-  const category = slugify(categoryInput);
+  const placement = text(formData, "placement") === "independent" ? "independent" : "major";
+  const majorCategoryInput = text(formData, "major_category").toLowerCase();
+  const majorCategory = placement === "independent" ? null : slugify(majorCategoryInput);
+  const sectionSlug = slugify(text(formData, "section_slug"));
+  const category = majorCategory ?? (sectionSlug || "article");
   const regionRaw = slugify(text(formData, "region"));
   const region = regionRaw || null;
   const slug = slugify(text(formData, "slug"));
@@ -159,20 +132,21 @@ export async function saveArticle(formData: FormData) {
   const bodyMd = text(formData, "body_md");
   const status = (text(formData, "status") === "published" ? "published" : "draft") as ArticleStatus;
 
-  if (!category || !slug || !title || !description || !bodyMd) {
-    throw new Error("category, slug, title, description, body_md are required");
+  if (!slug || !title || !description || !bodyMd) {
+    throw new Error("slug, title, description, body_md are required");
   }
-  if (unavailableCategorySlugs.has(category)) {
-    throw new Error("このカテゴリslugは固定ページまたはシステムページと衝突するため使えません");
+  if (placement === "major" && (!majorCategory || !majorCategories.has(majorCategory))) {
+    throw new Error("大カテゴリ配下の記事では food, health, beauty, travel, leisure のいずれかを選択してください");
   }
-  if (regionRequiredCategories.has(category) && !region) {
-    throw new Error("beauty と cafe の記事は region が必須です");
-  }
-  if (categoryInput.includes(".")) {
-    throw new Error("カテゴリslugにドットは使えません");
+  if (majorCategoryInput.includes(".") || sectionSlug.includes(".")) {
+    throw new Error("slugにドットは使えません");
   }
 
-  const path = articlePath(category, region, slug);
+  if (placement === "major" && !sectionSlug) {
+    throw new Error("大カテゴリ配下の記事では中カテゴリslugが必須です");
+  }
+
+  const path = articlePath(placement, majorCategory, sectionSlug || null, slug);
   const now = new Date().toISOString();
   const summary = list(formData, "summary");
   const whatYouLearn = list(formData, "what_you_learn");
@@ -196,6 +170,9 @@ export async function saveArticle(formData: FormData) {
   const { error } = await service.from("articles").upsert({
     slug,
     category,
+    major_category: majorCategory,
+    section_slug: sectionSlug || null,
+    canonical_path: path,
     region,
     title,
     description,
@@ -216,7 +193,7 @@ export async function saveArticle(formData: FormData) {
 
   if (status === "published") {
     revalidatePath(path);
-    for (const listingPath of listingPaths(category, region)) {
+    for (const listingPath of listingPaths(placement, majorCategory, sectionSlug || null)) {
       revalidatePath(listingPath);
     }
   }

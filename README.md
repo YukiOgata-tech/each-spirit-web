@@ -58,7 +58,7 @@ UI コンポーネントでは `content/**` を直接 import せず、原則と�
 4. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
 5. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
 
-自由カテゴリの記事は `/{category}/{slug}` で表示します。旧形式の `/articles/{category}/{slug}` と `/{category}/articles/{slug}` は正規URLへリダイレクトします。既存の `ramen`、`beauty`、`cafe` は専用記事ルートを持つため、汎用記事ルートからは除外します。
+記事は大カテゴリと中カテゴリに紐づく場合、`/{major}/{section}/articles/{slug}` で表示します。例: `/food/ramen/articles/niigata-ramen-first-guide`。大カテゴリに属さない独立記事は `/articles/{slug}` で表示します。中カテゴリは Supabase `es.content_sections` を正とし、`food`, `health`, `beauty`, `travel`, `leisure` の大カテゴリ配下に配置します。
 
 記事作成UIでは、カテゴリslugの使用可否、サムネイル、本文Markdown、公式情報・確認日・出典URL、関連記事・関連店舗リンク、FAQ、SEO項目を入力できます。公開時は記事パス、一覧、`/sitemap.xml` を再検証します。
 
@@ -110,13 +110,12 @@ root layout の既定 ISR は `app/layout.tsx` の `revalidate` で管理して�
 
 - `/`
 - `/search`
-- `/ramen`、`/ramen/[region]`、記事、ランキング、店舗詳細
-- `/protein`、目的別ページ、ランキング、商品詳細
-- `/beauty`、地域ページ、記事、ランキング、サロン詳細
-- `/cafe`、地域ページ、記事、ランキング、店舗詳細
-- `/travel`、地域ページ、ランキング、宿詳細
-- `/travel-services`、地域ページ、旅行会社、旅行アプリ
-- `/leisure`、地域ページ、ランキング、スポット詳細
+- `/food`、`/food/ramen`、`/food/cafe`、地域ページ、記事、ランキング、店舗詳細
+- `/health`、`/health/protein`、目的別ページ、ランキング、商品詳細
+- `/beauty`、`/beauty/hair-salon`、地域ページ、記事、ランキング、サロン詳細
+- `/travel`、`/travel/stays`、`/travel/services`、地域ページ、ランキング、宿・旅行会社・旅行アプリ
+- `/leisure`、`/leisure/spots`、地域ページ、ランキング、スポット詳細
+- `/articles`、独立記事詳細
 - `/fortune`
 - `/auth/login`、`/auth/signup`、`/auth/callback`
 - `/account`、`/account/likes`、`/account/articles/new`

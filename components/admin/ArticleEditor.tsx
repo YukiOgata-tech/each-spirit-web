@@ -88,7 +88,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
   const [body, setBody] = useState(initialBody);
-  const [category, setCategory] = useState("dining");
+  const [placement, setPlacement] = useState<"major" | "independent">("major");
+  const [majorCategory, setMajorCategory] = useState("food");
+  const [sectionSlug, setSectionSlug] = useState("ramen");
   const [slug, setSlug] = useState("");
   const [coverImageUrl, setCoverImageUrl] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -105,10 +107,9 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
   ]);
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
-  const normalizedCategory = category.trim().toLowerCase();
+  const normalizedCategory = majorCategory.trim().toLowerCase();
   const selectedCategory = categoryOptions.find((option) => option.slug === normalizedCategory);
-  const requiresRegion = normalizedCategory === "beauty" || normalizedCategory === "cafe";
-  const hasInvalidCategoryCharacter = normalizedCategory.includes(".");
+  const hasInvalidCategoryCharacter = normalizedCategory.includes(".") || sectionSlug.includes(".");
   const suggestedCategories = categoryOptions
     .filter((option) => !normalizedCategory || option.slug.includes(normalizedCategory) || option.label.toLowerCase().includes(normalizedCategory))
     .slice(0, 12);
@@ -174,28 +175,45 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
       <div className="space-y-4 sm:space-y-5">
         <section className={sectionClass}>
           <div className="grid gap-4 sm:grid-cols-2">
-            <Field label="カテゴリ">
-              <input
-                name="category"
-                required
-                value={category}
-                onChange={(event) => setCategory(event.target.value)}
-                list="article-category-options"
+            <Field label="配置">
+              <select name="placement" value={placement} onChange={(event) => setPlacement(event.target.value as "major" | "independent")} className={inputClass}>
+                <option value="major">大カテゴリ配下に作成</option>
+                <option value="independent">独立記事として作成</option>
+              </select>
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">
+                大カテゴリ配下は /food/ramen/articles/slug の形式、独立記事は /articles/slug の形式です。
+              </span>
+            </Field>
+            <Field label="大カテゴリ">
+              <select
+                name="major_category"
+                required={placement === "major"}
+                value={majorCategory}
+                onChange={(event) => setMajorCategory(event.target.value)}
+                disabled={placement === "independent"}
                 className={inputClass}
-                placeholder="dining / ramen / beauty / cafe"
-              />
-              <datalist id="article-category-options">
-                {categoryOptions.filter((option) => option.available).map((option) => <option key={option.slug} value={option.slug} />)}
-              </datalist>
+              >
+                <option value="food">グルメ / food</option>
+                <option value="health">健康 / health</option>
+                <option value="beauty">美容 / beauty</option>
+                <option value="travel">旅行 / travel</option>
+                <option value="leisure">レジャー / leisure</option>
+              </select>
               <CategorySlugStatus category={normalizedCategory} selected={selectedCategory} />
             </Field>
             <Field label="地域">
-              <input name="region" required={requiresRegion} className={inputClass} placeholder="niigata など。自由カテゴリは空でも可" />
-              {requiresRegion ? (
-                <span className="mt-1 block text-[11px] font-semibold leading-5 text-red-600">beauty / cafe の記事は地域slugが必須です。</span>
-              ) : (
-                <span className="mt-1 block text-[11px] leading-5 text-slate-500">自由カテゴリは空でも可。地域別にしたい場合だけ入力します。</span>
-              )}
+              <input name="region" className={inputClass} placeholder="niigata など。必要な場合だけ入力" />
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">記事URLには使いません。関連記事・関連店舗の文脈付けに使います。</span>
+            </Field>
+            <Field label="小ジャンル">
+              <input
+                name="section_slug"
+                value={sectionSlug}
+                onChange={(event) => setSectionSlug(event.target.value)}
+                className={inputClass}
+                placeholder="ramen / cafe / protein / hair-salon"
+              />
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">カテゴリ配下の細分化に使います。独立記事では任意です。</span>
             </Field>
             <Field label="slug">
               <input name="slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className={inputClass} placeholder="shokudo-ajiyoshi-niigata-kobari" />
@@ -304,7 +322,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
             <Tool icon={List} label="箇条書き" onClick={() => apply("\n- 項目\n- 項目\n")} />
             <Tool icon={Quote} label="引用" onClick={() => apply("\n\n> 引用または要点\n\n")} />
             <Tool icon={LinkIcon} label="リンク" onClick={() => apply("[リンクテキスト](/path/to/page)")} />
-            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/category/slug) - 説明文\n:::\n\n")} />
+            <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/food/ramen/articles/example-slug) - 説明文\n:::\n\n")} />
             <Tool icon={ImagePlus} label="外部画像" onClick={() => apply("\n\n:::official-image\nsrc: https://example.com/image.webp\nalt: 画像の説明\ncaption: キャプション\nsource: 出典名\nsourceUrl: https://example.com/\n:::\n\n")} />
             <Button type="button" variant="outline" size="sm" disabled={uploading} className="max-sm:w-full" onClick={() => fileRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />
@@ -420,7 +438,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-bold text-slate-900">関連記事・関連店舗リンク</h2>
-              <p className="mt-1 text-xs leading-5 text-slate-500">記事下部にカード表示する内部導線です。関連店舗は `/ramen/items/slug` などのURLを入力します。</p>
+              <p className="mt-1 text-xs leading-5 text-slate-500">記事下部にカード表示する内部導線です。関連店舗は `/food/ramen/shops/slug` などのURLを入力します。</p>
             </div>
             <Button
               type="button"
@@ -449,7 +467,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                     value={link.url}
                     onChange={(event) => setRelatedLinks((current) => current.map((item) => item.id === link.id ? { ...item, url: event.target.value } : item))}
                     className={compactInputClass}
-                    placeholder="/ramen/items/example または https://..."
+                    placeholder="/food/ramen/shops/example または https://..."
                     aria-label={`関連リンク${index + 1}のURL`}
                   />
                   <select
@@ -611,7 +629,7 @@ function CategorySlugStatus({ category, selected }: { category: string; selected
   if (!selected) {
     return (
       <span className="mt-1 block text-[11px] leading-5 text-emerald-700">
-        未登録の自由カテゴリです。公開URLは /{category}/[slug] になります。
+        大カテゴリは固定です。独立記事は /articles/[slug]、大カテゴリ配下は /category/section/articles/[slug] になります。
       </span>
     );
   }

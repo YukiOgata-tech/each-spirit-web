@@ -32,30 +32,15 @@ const CONTENT_LABEL: Record<string, string> = {
 
 const ITEM_TYPES = new Set(["cafe", "ramen_item", "beauty_salon", "hotel", "leisure_spot"]);
 
-function itemHref(type: string, region: string | null, slug: string): string | null {
-  switch (type) {
-    case "cafe": return region ? routes.cafeItem(region, slug) : null;
-    case "ramen_item": return routes.ramenItem(slug);
-    case "beauty_salon": return region ? routes.beautySalon(region, slug) : null;
-    case "hotel": return region ? routes.travelHotel(region, slug) : null;
-    case "leisure_spot": return routes.leisureSpot(region ?? "niigata", slug);
-    default: return null;
-  }
-}
-function articleHref(category: string, region: string | null, slug: string): string | null {
-  if (category === "ramen") return routes.ramenArticle(slug);
-  if (category === "beauty" && region) return routes.beautyArticle(region, slug);
-  return null;
-}
-function rankingHref(category: string, region: string | null, slug: string): string | null {
-  switch (category) {
-    case "ramen": return routes.ramenRanking(slug);
-    case "cafe": return region ? routes.cafeRanking(region, slug) : null;
-    case "beauty": return region ? routes.beautyRanking(region, slug) : null;
-    case "hotel": return region ? routes.travelRanking(region, slug) : null;
-    case "leisure": return region ? routes.leisureRanking(region, slug) : null;
-    default: return null;
-  }
+function articleHref(category: string, slug: string): string | null {
+  if (category === "ramen") return routes.sectionArticle("food", "ramen", slug);
+  if (category === "cafe") return routes.sectionArticle("food", "cafe", slug);
+  if (category === "protein") return routes.sectionArticle("health", "protein", slug);
+  if (category === "beauty") return routes.sectionArticle("beauty", "hair-salon", slug);
+  if (category === "travel") return routes.sectionArticle("travel", "stays", slug);
+  if (category === "travel-services") return routes.sectionArticle("travel", "services", slug);
+  if (category === "leisure") return routes.sectionArticle("leisure", "spots", slug);
+  return routes.article(slug);
 }
 
 type PageProps = { searchParams: Promise<{ type?: string }> };
@@ -85,23 +70,23 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
 
   const es = supabase.schema("es");
   const [itemsRes, articlesRes, rankingsRes] = await Promise.all([
-    itemSlugs.length ? es.from("items").select("content_type, slug, name, region").in("slug", itemSlugs) : Promise.resolve({ data: [] }),
-    articleSlugs.length ? es.from("articles").select("slug, title, category, region").in("slug", articleSlugs) : Promise.resolve({ data: [] }),
-    rankingSlugs.length ? es.from("rankings").select("slug, title, content_type, region").in("slug", rankingSlugs) : Promise.resolve({ data: [] }),
+    itemSlugs.length ? es.from("items").select("content_type, slug, name, canonical_path").in("slug", itemSlugs) : Promise.resolve({ data: [] }),
+    articleSlugs.length ? es.from("articles").select("slug, title, category, canonical_path").in("slug", articleSlugs) : Promise.resolve({ data: [] }),
+    rankingSlugs.length ? es.from("rankings").select("slug, title, canonical_path").in("slug", rankingSlugs) : Promise.resolve({ data: [] }),
   ]);
 
   const resolved = new Map<string, { name: string; href: string | null }>();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const it of (itemsRes.data ?? []) as any[]) {
-    resolved.set(`${it.content_type}:${it.slug}`, { name: it.name, href: itemHref(it.content_type, it.region, it.slug) });
+    resolved.set(`${it.content_type}:${it.slug}`, { name: it.name, href: it.canonical_path ?? null });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const a of (articlesRes.data ?? []) as any[]) {
-    resolved.set(`article:${a.slug}`, { name: a.title, href: articleHref(a.category, a.region, a.slug) });
+    resolved.set(`article:${a.slug}`, { name: a.title, href: a.canonical_path ?? articleHref(a.category, a.slug) });
   }
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   for (const r of (rankingsRes.data ?? []) as any[]) {
-    resolved.set(`ranking:${r.slug}`, { name: r.title, href: rankingHref(r.content_type, r.region, r.slug) });
+    resolved.set(`ranking:${r.slug}`, { name: r.title, href: r.canonical_path ?? null });
   }
 
   const rows = likes.map((l) => {

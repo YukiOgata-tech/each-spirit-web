@@ -18,9 +18,9 @@
 
 [scripts/seed-supabase.ts](file:///C:/projects/each-spirit/scripts/seed-supabase.ts) は旧ローカル `content/**` から DB を upsert・洗い替えする復旧/初期投入用 script です。通常実行はブロックされ、`ALLOW_LEGACY_CONTENT_SEED=1` を明示した場合だけ動きます。
 
-外部 ChatGPT などへ調査を依頼する場合は、[docs/research-output-schema.md](file:///C:/projects/each-spirit/docs/research-output-schema.md) の JSON 形式で返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、content_type、metadata、sources の解釈コストが増えます。
+外部 ChatGPT などへ調査を依頼する場合は、`major_category`、`section_slug`、`slug`、`canonical_path`、`sources`、`lastVerifiedAt` を持つ JSON と、記事本文 Markdown をセットで返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、metadata、sources の解釈コストが増えます。大カテゴリ/中カテゴリ/URL 方針は [docs/major-category-url-and-db-migration-plan.md](file:///C:/projects/each-spirit/docs/major-category-url-and-db-migration-plan.md) を正とします。
 
-記事URLはカテゴリによって異なります。自由カテゴリは `/{category}/{slug}`、`ramen` は `/ramen/articles/{slug}`、`beauty` は `/beauty/{region}/articles/{slug}`、`cafe` は `/cafe/{region}/articles/{slug}` です。`beauty` と `cafe` は `region` 必須です。
+記事URLは、通常記事は `/{大カテゴリ}/{中カテゴリ}/articles/{slug}`、独立記事は `/articles/{slug}` です。例: `/food/ramen/articles/niigata-ramen-first-guide`、`/health/protein/articles/protein-beginner-guide`。地域は記事データの属性として扱い、記事URLの必須要素にはしません。
 
 ### ③ sitemap.ts へのカテゴリ登録
 サイトマップ自動生成ファイルである [app/sitemap.ts](file:///C:/projects/each-spirit/app/sitemap.ts) は、Supabase から動的にデータを取得して生成を行っています。

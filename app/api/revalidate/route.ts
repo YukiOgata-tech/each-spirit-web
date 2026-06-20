@@ -19,7 +19,7 @@ import { revalidatePath } from "next/cache";
  *   curl -X POST https://each-spirit.com/api/revalidate \
  *     -H "Authorization: Bearer $REVALIDATE_SECRET" \
  *     -H "Content-Type: application/json" \
- *     -d '{"path":"/ramen/articles/niigata-ramen-first-guide"}'
+ *     -d '{"path":"/food/ramen/articles/niigata-ramen-first-guide"}'
  */
 export async function POST(request: NextRequest) {
   const secret =

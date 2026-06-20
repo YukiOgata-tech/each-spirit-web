@@ -43,6 +43,9 @@ es.*                ← each-spirit 専用スキーマ
 | `20260611000002_es_extensible.sql` | `like_type` PK 拡張・reviews・notifications・business_accounts・user_points・point_ledger・user_follows・content_reports | 2026-06-11 |
 | `20260611000003_es_items.sql` | `es.items` 汎用アイテムテーブル・content_type CHECK 制約緩和（無限ジャンル対応）| 2026-06-11 |
 | `20260611000004_es_rankings.sql` | `es.rankings` / `es.ranking_items` ランキングテーブル・like_count トリガー・逆引きインデックス | 2026-06-11 |
+| `20260619214911_major_category_canonical_paths.sql` | `major_category` / `section_slug` / `canonical_path` 追加、`es.content_sections` 中カテゴリ管理テーブル追加 | 2026-06-19 |
+| `20260619222405_section_slug_primary_urls.sql` | item/ranking の canonical URL を大カテゴリ/中カテゴリ基準へ更新、`ranking_items.item_id` 追加 | 2026-06-19 |
+| `20260619225244_item_kind_for_section_items.sql` | `es.items.item_kind` 追加予定。ローカル作成済みだが、現時点では本番未適用 | 未適用 |
 
 ## es スキーマ テーブル一覧
 
@@ -62,9 +65,10 @@ es.*                ← each-spirit 専用スキーマ
 | `es.point_ledger` | ポイント増減履歴台帳 |
 | `es.user_follows` | ユーザー同士フォロー関係 |
 | `es.content_reports` | コンテンツ通報（モデレーション用） |
-| `es.items` | 全ジャンル汎用アイテム（カフェ・ラーメン・ホテル・家電・アプリ等）UNIQUE(content_type, slug) |
-| `es.rankings` | 全ジャンル汎用ランキング（カテゴリ・地域・タイトル・criteria）UNIQUE(content_type, slug) |
-| `es.ranking_items` | ランキング内の順位リスト（ranking_id FK + rank UNIQUE）。es.items への論理参照 |
+| `es.items` | 全ジャンル汎用アイテム（カフェ・ラーメン・ホテル・家電・アプリ等）。現在の正は `major_category + section_slug + slug` |
+| `es.rankings` | 全ジャンル汎用ランキング（カテゴリ・地域・タイトル・criteria）。現在の正は `major_category + section_slug + slug` |
+| `es.ranking_items` | ランキング内の順位リスト（ranking_id FK + rank UNIQUE）。`item_id` で `es.items` へ参照 |
+| `es.content_sections` | 大カテゴリ配下の中カテゴリ管理。`food/ramen`、`health/protein` などの表示名、URL、content model、地域/ターゲット要否を保持 |
 
 ## content_likes の content_type 値
 

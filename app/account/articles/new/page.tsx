@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { ArticleEditor } from "@/components/admin/ArticleEditor";
 import { getCurrentAdminUser } from "@/lib/admin";
-import { getCategories, getGenericArticles } from "@/lib/content";
+import { getCategories } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { saveArticle } from "./actions";
 
@@ -16,12 +16,7 @@ export default async function NewArticlePage() {
   if (!admin) {
     redirect(`${routes.authLogin}?next=/account/articles/new`);
   }
-  const [siteCategories, genericArticles] = await Promise.all([
-    Promise.resolve(getCategories()),
-    getGenericArticles(),
-  ]);
-  const genericCategories = Array.from(new Set(genericArticles.map((article) => article.category)));
-  const articleSupportedDedicatedCategories = new Set(["ramen", "beauty", "cafe"]);
+  const siteCategories = getCategories();
   const reservedSlugs = [
     "about",
     "account",
@@ -40,38 +35,15 @@ export default async function NewArticlePage() {
     "search",
     "sitemap.xml",
   ];
-  const reservedSlugSet = new Set(reservedSlugs);
   const categoryOptions = [
     ...siteCategories.map((category) => ({
       slug: category.slug,
-      path: category.status === "planned"
-        ? routes.genericCategory(category.slug)
-        : category.href.startsWith("/")
-          ? category.href
-          : "/" + category.slug,
+      path: category.href.startsWith("/") ? category.href : "/" + category.slug,
       label: category.name,
-      kind: articleSupportedDedicatedCategories.has(category.slug)
-        ? "記事対応専用カテゴリ"
-        : category.status === "live"
-          ? "既存カテゴリ"
-          : "予定カテゴリ",
-      available: articleSupportedDedicatedCategories.has(category.slug) || category.status === "planned",
-      note: articleSupportedDedicatedCategories.has(category.slug)
-        ? "専用の記事URL構成を使用します。beauty/cafeはregion必須です。"
-        : category.status === "live"
-          ? "既存固定ページと衝突するため、記事カテゴリslugとしては使えません。"
-          : "自由カテゴリとして使用できます。公開URLは /" + category.slug + "/[slug] です。",
+      kind: "大カテゴリ",
+      available: category.status === "live",
+      note: "記事URLは /" + category.slug + "/[中カテゴリ]/articles/[slug] です。",
     })),
-    ...genericCategories
-      .filter((slug) => !siteCategories.some((category) => category.slug === slug) && !reservedSlugSet.has(slug))
-      .map((slug) => ({
-        slug,
-        path: routes.genericCategory(slug),
-        label: slug,
-        kind: "自由カテゴリ",
-        available: true,
-        note: "既存の自由カテゴリです。",
-      })),
     ...reservedSlugs.map((slug) => ({
       slug,
       path: "/" + slug,
