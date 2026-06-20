@@ -772,6 +772,22 @@ export async function getArticleCategories(): Promise<{ category: string; count:
   return Array.from(map.values()).sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
 }
 
+/** ランキング詳細用: 各順位項目に section の item（名前/画像/URL等）を解決して紐付ける */
+export async function getRankingEntriesBySection(
+  majorCategory: string,
+  sectionSlug: string,
+  slug: string,
+): Promise<{ ranking: Ranking; entries: { entry: RankingItem; item?: GenericItem }[] } | undefined> {
+  const [ranking, items] = await Promise.all([
+    getRankingBySection(majorCategory, sectionSlug, slug),
+    getGenericItemsBySection(majorCategory, sectionSlug),
+  ]);
+  if (!ranking) return undefined;
+  const bySlug = new Map(items.map((item) => [item.slug, item]));
+  const entries = ranking.items.map((entry) => ({ entry, item: bySlug.get(entry.itemSlug) }));
+  return { ranking, entries };
+}
+
 export async function getGenericArticlesByCategory(category: string): Promise<Article[]> {
   const sb = createServerClient();
   const { data } = await sb

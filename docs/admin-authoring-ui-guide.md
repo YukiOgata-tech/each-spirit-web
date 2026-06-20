@@ -63,6 +63,7 @@
 ### 本体項目
 - **カテゴリ(section)**（新規=選択 / 編集=固定）、**slug**（必須）、**タイトル**（必須）
 - 説明、結論、クイック表ラベル、評価軸(list)
+- **カード/メタ画像URL**（任意）: 空欄の場合は**1位アイテムの画像**を自動でカード/OG画像に流用（`es.rankings.image_url`）
 - **地域(region)**（section により必須）、**対象target**（プロテインのみ・`es.content_targets` から）
 - タグ(list)、最終更新日、ステータス（公開/下書き）
 
@@ -76,11 +77,15 @@
 
 ## 3. 記事エディタ（articles）
 
-- 配置（大カテゴリ配下 or 独立記事 `/articles/...`）、大カテゴリ＋中カテゴリ(section)、slug、タイトル、説明
+- **記事カテゴリslug（必須）**: 公開URL `/articles/{記事カテゴリ}/{slug}` の第一分類。既存カテゴリの再利用を推奨（表記揺れ防止のため、フォームに既存カテゴリ候補を表示）
+- 配置（大カテゴリ配下 or 独立記事）と大カテゴリ＋中カテゴリ(section): **任意の紐づけ**。URLには使わず、設定すると該当 section ページ（例 `/food/ramen`）の記事欄にインライン表示される
+- slug、タイトル、説明
 - **Markdown 本文＋ライブプレビュー**、サムネ画像アップロード（webp最適化）、記事内画像の出典登録
 - 要点まとめ・学べること(list)、参照ソース / FAQ / 関連リンク（動的行）、タグ、SEOタイトル/説明/キーワード
 - 下書き保存 / 公開
-- 予約スラグ（about, account, auth, fortune, search 等）は独立記事・大カテゴリ slug として使用不可。
+
+> 記事URLは大カテゴリ配下・独立を問わず `/articles/{記事カテゴリ}/{slug}` に統一。section 固有の記事ルート（`/{major}/{section}/articles/...`）は廃止済み（記事はカテゴリ単位で `/articles/{記事カテゴリ}` から閲覧）。<br>
+> Markdown 記法・記事内画像の差し込み・画像ホスト制約など、コンテンツ作成の前提知識は [db-content-authoring-knowledge.md](./db-content-authoring-knowledge.md) を参照。
 
 ---
 
@@ -89,8 +94,8 @@
 1. **canonical_path 生成**
    - item: `/{major}/{section}/{item_path_segment}/{slug}`（travel_app のみ `/travel/services/apps`）
    - ranking: `/{major}/{section}/rankings/{slug}`
-   - article: `/{major}/{section}/articles/{slug}`（独立記事は `/articles/{slug}`）
-2. **major_category / section_slug / item_kind** を section から導出して保存。
+   - article: `/articles/{記事カテゴリ}/{slug}`（大カテゴリ配下・独立を問わず統一。アプリは category+slug から表示URLを導出する）
+2. **major_category / section_slug / item_kind** を section から導出して保存（記事の major/section は任意の紐づけ）。
 3. **slug 重複チェック**（items/rankings は `major_category+section_slug` スコープ・編集時は自分を除外、記事は全体一意）。
 4. **revalidate**（詳細・一覧・地域ページ・`/sitemap.xml`）で即時反映。
 5. 公開→詳細ページ / 下書き→マイページへリダイレクト。

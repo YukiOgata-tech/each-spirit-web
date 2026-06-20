@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { ArrowRight, ExternalLink, MapPin, Sparkles, Trophy } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
+import { FaqSection } from "@/components/cards/FaqSection";
+import { SourceList } from "@/components/cards/SourceList";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
@@ -17,10 +19,11 @@ import {
   getGenericItemBySection,
   getGenericItemsBySection,
   getRankingBySection,
+  getRankingEntriesBySection,
   getRankingsBySection,
   rankingHref,
 } from "@/lib/content";
-import { breadcrumbSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
+import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { majorMetaImage } from "@/lib/category-media";
 import type { ContentSection, GenericItem } from "@/lib/types";
@@ -359,6 +362,7 @@ export async function GenericItemDetailPage({
     <main className={`${theme.className} section-shell max-w-6xl`}>
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={speakableWebPageSchema(path, item.name)} />
+      {item.faqs.length > 0 && <JsonLd data={faqSchema(item.faqs)} />}
       <Breadcrumbs items={breadcrumbs.map((entry, index) => ({ label: entry.name, href: index === breadcrumbs.length - 1 ? undefined : entry.href }))} />
 
       <section className={`overflow-hidden rounded-lg border border-[var(--border)] ${theme.hero} shadow-soft`}>
@@ -439,6 +443,9 @@ export async function GenericItemDetailPage({
               <p className="mt-2 text-sm leading-7 text-slate-700">{item.editorComment}</p>
             </div>
           )}
+
+          {item.faqs.length > 0 && <div className="mt-8"><FaqSection faqs={item.faqs} /></div>}
+          {item.sources.length > 0 && <div className="mt-8"><SourceList sources={item.sources} /></div>}
         </section>
 
         <aside className="space-y-3">
@@ -478,51 +485,119 @@ export async function GenericItemDetailPage({
 export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slug }: { majorCategory: string; sectionSlug: string; slug: string }) {
   const section = await getContentSection(majorCategory, sectionSlug);
   if (!section) notFound();
-  const ranking = await getRankingBySection(majorCategory, sectionSlug, slug);
-  if (!ranking) notFound();
+  const resolved = await getRankingEntriesBySection(majorCategory, sectionSlug, slug);
+  if (!resolved) notFound();
+  const { ranking, entries } = resolved;
 
   const majorLabel = majorCategoryLabels[majorCategory] ?? majorCategory;
   const theme = genericTheme(majorCategory);
   const path = rankingHref(ranking);
+  const scoreLabel = ranking.quickTableLabel || "スコア";
+  const sectionTop = section.href || `/${majorCategory}/${sectionSlug}`;
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: majorLabel, href: routes.majorCategory(majorCategory) },
-    { name: section.label, href: section.href || `/${majorCategory}/${sectionSlug}` },
+    { name: section.label, href: sectionTop },
     { name: ranking.title, href: path },
   ];
 
   return (
     <main className={`${theme.className} section-shell max-w-5xl`}>
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
+      <JsonLd data={speakableWebPageSchema(path, ranking.title)} />
       <Breadcrumbs items={breadcrumbs.map((entry, index) => ({ label: entry.name, href: index === breadcrumbs.length - 1 ? undefined : entry.href }))} />
-      <section className={`rounded-lg border border-[var(--border)] p-5 shadow-soft sm:p-8 ${theme.hero}`}>
-        <div className="flex items-center gap-2 text-sm font-bold text-[var(--primary)]"><Trophy className="h-4 w-4" />Ranking</div>
-        <h1 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 sm:text-5xl">{ranking.title}</h1>
-        <p className="mt-4 max-w-3xl text-sm leading-7 text-slate-600 sm:text-base">{ranking.description}</p>
-      </section>
-      <section className="mt-8 rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm sm:p-6">
-        <h2 className="text-xl font-bold tracking-normal text-slate-950">ランキング項目</h2>
-        <div className="mt-4 space-y-3">
-          {ranking.items.map((item) => (
-            <div key={`${item.rank}-${item.itemSlug}`} className="grid gap-3 rounded-lg border border-[var(--border)] p-4 sm:grid-cols-[3.5rem_1fr]">
-              <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[var(--primary)] text-sm font-black text-white">#{item.rank}</div>
-              <div>
-                <p className="text-sm font-bold text-[var(--primary)]">{item.itemSlug}</p>
-                <p className="mt-2 text-sm leading-7 text-slate-600">{item.reason}</p>
+
+      {/* Hero */}
+      <section className={`overflow-hidden rounded-lg border border-[var(--border)] shadow-soft ${theme.hero}`}>
+        <div className="grid lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="flex min-h-[260px] flex-col justify-center p-5 sm:p-8 lg:p-10">
+            <div className="flex items-center gap-2 text-sm font-bold text-[var(--primary)]"><Trophy className="h-4 w-4" />{majorLabel} / {section.label} ランキング</div>
+            <h1 data-speakable="title" className="mt-3 text-[1.75rem] font-black leading-[1.12] tracking-normal text-slate-950 sm:text-4xl lg:text-5xl">{ranking.title}</h1>
+            <p data-speakable="description" className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">{ranking.description}</p>
+            {ranking.criteria.length > 0 && (
+              <div className="mt-5 flex flex-wrap gap-2">
+                {ranking.criteria.map((c) => <Badge key={c}>{c}</Badge>)}
               </div>
+            )}
+            <div className="mt-6 flex flex-wrap gap-2 text-[11px] font-bold text-slate-500 sm:text-xs">
+              <span className="rounded-full bg-white/80 px-2.5 py-1 backdrop-blur">{entries.length}項目</span>
+              {ranking.region && <span className="rounded-full bg-white/80 px-2.5 py-1 backdrop-blur">{ranking.region}</span>}
+              {ranking.lastUpdatedAt && <span className="rounded-full bg-white/80 px-2.5 py-1 backdrop-blur">更新 {ranking.lastUpdatedAt}</span>}
             </div>
-          ))}
+          </div>
+          <div className="relative min-h-[200px] overflow-hidden lg:min-h-[360px]">
+            {ranking.imageUrl ? (
+              <Image src={ranking.imageUrl} alt={ranking.title} fill priority sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
+            ) : (
+              <div className={`flex h-full min-h-[200px] items-center justify-center ${theme.imageFallback}`}><Trophy className="h-12 w-12 text-[var(--primary)]/50" /></div>
+            )}
+            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.04)_0%,rgba(15,23,42,0.42)_100%)]" />
+          </div>
         </div>
       </section>
-      <section className="mt-6 grid gap-2 sm:grid-cols-3">
+
+      {/* Entries */}
+      <section id="ranking" className="mt-8 scroll-mt-24 space-y-4">
+        {entries.map(({ entry, item }) => {
+          const top = entry.rank <= 3;
+          const href = item ? (item.canonicalPath ?? itemHref(section, item)) : undefined;
+          const name = item?.name ?? entry.itemSlug;
+          const body = (
+            <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
+                {item?.imageUrl ? (
+                  <Image src={item.imageUrl} alt={name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center"><Sparkles className="h-7 w-7 text-[var(--primary)]/40" /></div>
+                )}
+                <span className={`absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow ${top ? "bg-[var(--primary)] text-white" : "bg-white/92 text-slate-700"}`}>{entry.rank}</span>
+                {entry.isPr && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">PR</span>}
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  {item?.region && <Badge>{item.region}</Badge>}
+                  {item?.area && <Badge>{item.area}</Badge>}
+                  {(item?.tags ?? []).slice(0, 2).map((tag) => <Badge key={tag}>{tag}</Badge>)}
+                </div>
+                <h3 className="mt-2 text-lg font-bold tracking-normal text-slate-950 transition-colors group-hover:text-[var(--primary)] sm:text-xl">{name}</h3>
+                {entry.reason && <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">{entry.reason}</p>}
+                <div className="mt-3 flex flex-wrap items-center gap-3">
+                  {entry.score > 0 && (
+                    <span className="inline-flex items-baseline gap-1 rounded-md bg-[var(--muted)] px-2.5 py-1 text-sm font-black text-[var(--primary)]">
+                      {entry.score}<span className="text-[10px] font-bold text-slate-500">{scoreLabel}</span>
+                    </span>
+                  )}
+                  {item?.priceRange && <span className="text-xs font-semibold text-slate-500">{item.priceRange}</span>}
+                  {href && <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">詳しく見る<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>}
+                </div>
+              </div>
+            </div>
+          );
+          const cardClass = `group block overflow-hidden rounded-lg border bg-white shadow-sm transition ${top ? "border-[var(--primary)]/35" : "border-[var(--border)]"} ${href ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
+          return href ? (
+            <Link key={`${entry.rank}-${entry.itemSlug}`} href={href} className={cardClass}>{body}</Link>
+          ) : (
+            <div key={`${entry.rank}-${entry.itemSlug}`} className={cardClass}>{body}</div>
+          );
+        })}
+      </section>
+
+      {ranking.conclusion && (
+        <section className={`mt-8 rounded-lg border p-5 sm:p-6 ${theme.accentPanel}`}>
+          <h2 className="text-lg font-bold tracking-normal text-slate-950">まとめ</h2>
+          <p className="mt-2 text-sm leading-7 text-slate-700">{ranking.conclusion}</p>
+        </section>
+      )}
+
+      <section className="mt-8 grid gap-2 sm:grid-cols-3">
         <Button asChild variant="outline" className="justify-between">
-          <Link href={section.href || `/${majorCategory}/${sectionSlug}`}>カテゴリトップ<ArrowRight className="h-4 w-4" /></Link>
+          <Link href={sectionTop}>カテゴリトップ<ArrowRight className="h-4 w-4" /></Link>
         </Button>
         <Button asChild variant="outline" className="justify-between">
           <Link href={routes.sectionRankings(majorCategory, sectionSlug)}>ランキング一覧<Trophy className="h-4 w-4" /></Link>
         </Button>
         <Button asChild variant="outline" className="justify-between">
-          <Link href={`${section.href || `/${majorCategory}/${sectionSlug}`}#articles`}>記事一覧<ArrowRight className="h-4 w-4" /></Link>
+          <Link href={`${sectionTop}#articles`}>記事一覧<ArrowRight className="h-4 w-4" /></Link>
         </Button>
       </section>
     </main>
