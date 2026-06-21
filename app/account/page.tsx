@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine,
+  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, ShieldCheck,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
@@ -206,40 +206,54 @@ export default async function AccountPage() {
           </DashboardCard>
 
           {admin && (
-            <DashboardCard title="管理メニュー">
+            <DashboardCard title="管理メニュー" className="border-orange-300 bg-orange-50/70">
+              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-100 px-2.5 py-1 text-[11px] font-bold text-orange-700">
+                <ShieldCheck className="h-3.5 w-3.5" />
+                管理者のみに表示
+              </div>
               <div className="space-y-2">
                 <Link
-                  href="/account/articles/new"
-                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                  href="/account/manage"
+                  className="flex items-center justify-between rounded-xl border border-orange-400 bg-orange-500 px-4 py-3 text-sm font-bold text-white transition hover:bg-orange-600"
                 >
                   <span className="inline-flex items-center gap-2">
-                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    <ClipboardList className="h-4 w-4" />
+                    コンテンツを修正・管理
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-white/80" />
+                </Link>
+                <Link
+                  href="/account/articles/new"
+                  className="flex items-center justify-between rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <PenLine className="h-4 w-4 text-orange-500" />
                     記事を作成する
                   </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                  <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
                 <Link
                   href="/account/items/new"
-                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                  className="flex items-center justify-between rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50"
                 >
                   <span className="inline-flex items-center gap-2">
-                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    <PenLine className="h-4 w-4 text-orange-500" />
                     店舗・商品を作成する
                   </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                  <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
                 <Link
                   href="/account/rankings/new"
-                  className="flex items-center justify-between rounded-xl border border-[var(--primary)]/25 bg-[var(--primary)]/5 px-4 py-3 text-sm font-bold text-slate-900 transition hover:border-[var(--primary)]/50 hover:bg-[var(--primary)]/10"
+                  className="flex items-center justify-between rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50"
                 >
                   <span className="inline-flex items-center gap-2">
-                    <PenLine className="h-4 w-4 text-[var(--primary)]" />
+                    <PenLine className="h-4 w-4 text-orange-500" />
                     ランキングを作成する
                   </span>
-                  <ArrowRight className="h-4 w-4 text-slate-400" />
+                  <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
               </div>
-              <p className="mt-3 text-xs leading-5 text-slate-500">
+              <p className="mt-3 text-xs leading-5 text-orange-700/80">
                 公開時は記事ページと関連一覧のキャッシュを自動更新します。
               </p>
             </DashboardCard>

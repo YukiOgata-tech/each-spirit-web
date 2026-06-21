@@ -8,6 +8,33 @@ import { Button } from "@/components/ui/button";
 type ArticleEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   categoryOptions: CategoryOption[];
+  initial?: ArticleInitial;
+};
+
+export type ArticleInitial = {
+  id: string;
+  placement: "major" | "independent";
+  majorCategory: string;
+  sectionSlug: string;
+  articleCategory: string;
+  slug: string;
+  title: string;
+  description: string;
+  coverImageUrl: string;
+  authorName: string;
+  region: string;
+  body: string;
+  /** カンマ/改行区切りの文字列としてそのまま textarea に流し込む */
+  tags: string;
+  relatedSlugs: string;
+  summary: string;
+  whatYouLearn: string;
+  seoTitle: string;
+  seoDescription: string;
+  seoKeywords: string;
+  sources: SourceInput[];
+  relatedLinks: RelatedLinkInput[];
+  faqs: FaqInput[];
 };
 
 type CategoryOption = {
@@ -83,29 +110,36 @@ async function optimizeImage(file: File) {
   return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
 }
 
-export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
+export function ArticleEditor({ action, categoryOptions, initial }: ArticleEditorProps) {
+  const isEdit = Boolean(initial);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const coverFileRef = useRef<HTMLInputElement>(null);
-  const [body, setBody] = useState(initialBody);
-  const [placement, setPlacement] = useState<"major" | "independent">("major");
-  const [majorCategory, setMajorCategory] = useState("food");
-  const [sectionSlug, setSectionSlug] = useState("ramen");
-  const [articleCategory, setArticleCategory] = useState("ramen");
-  const [slug, setSlug] = useState("");
-  const [coverImageUrl, setCoverImageUrl] = useState("");
+  const [body, setBody] = useState(initial?.body ?? initialBody);
+  const [placement, setPlacement] = useState<"major" | "independent">(initial?.placement ?? "major");
+  const [majorCategory, setMajorCategory] = useState(initial?.majorCategory || "food");
+  const [sectionSlug, setSectionSlug] = useState(initial?.sectionSlug || "ramen");
+  const [articleCategory, setArticleCategory] = useState(initial?.articleCategory || "ramen");
+  const [slug, setSlug] = useState(initial?.slug ?? "");
+  const [coverImageUrl, setCoverImageUrl] = useState(initial?.coverImageUrl ?? "");
   const [uploading, setUploading] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
-  const [sources, setSources] = useState<SourceInput[]>([
-    { id: id(), title: "", url: "", sourceType: "official", collectedAt: today(), note: "" },
-  ]);
-  const [relatedLinks, setRelatedLinks] = useState<RelatedLinkInput[]>([
-    { id: id(), title: "", url: "", type: "article", note: "" },
-  ]);
-  const [faqs, setFaqs] = useState<FaqInput[]>([
-    { id: id(), question: "", answer: "" },
-  ]);
+  const [sources, setSources] = useState<SourceInput[]>(
+    initial && initial.sources.length > 0
+      ? initial.sources
+      : [{ id: id(), title: "", url: "", sourceType: "official", collectedAt: today(), note: "" }],
+  );
+  const [relatedLinks, setRelatedLinks] = useState<RelatedLinkInput[]>(
+    initial && initial.relatedLinks.length > 0
+      ? initial.relatedLinks
+      : [{ id: id(), title: "", url: "", type: "article", note: "" }],
+  );
+  const [faqs, setFaqs] = useState<FaqInput[]>(
+    initial && initial.faqs.length > 0
+      ? initial.faqs
+      : [{ id: id(), question: "", answer: "" }],
+  );
 
   const preview = useMemo(() => body || "本文プレビュー", [body]);
   const normalizedCategory = articleCategory.trim().toLowerCase();
@@ -173,6 +207,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
 
   return (
     <form action={action} className="grid gap-4 lg:grid-cols-[minmax(0,0.95fr)_minmax(420px,0.8fr)] lg:gap-6">
+      {initial?.id && <input type="hidden" name="id" value={initial.id} />}
       <div className="space-y-4 sm:space-y-5">
         <section className={sectionClass}>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -203,7 +238,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
               <span className="mt-1 block text-[11px] leading-5 text-slate-500">記事URLには使いません。記事を紐づける大カテゴリです（独立記事では無効）。</span>
             </Field>
             <Field label="地域">
-              <input name="region" className={inputClass} placeholder="niigata など。必要な場合だけ入力" />
+              <input name="region" defaultValue={initial?.region ?? ""} className={inputClass} placeholder="niigata など。必要な場合だけ入力" />
               <span className="mt-1 block text-[11px] leading-5 text-slate-500">記事URLには使いません。関連記事・関連店舗の文脈付けに使います。</span>
             </Field>
             <Field label="小ジャンル">
@@ -237,15 +272,15 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
               <input name="slug" required value={slug} onChange={(event) => setSlug(event.target.value)} className={inputClass} placeholder="shokudo-ajiyoshi-niigata-kobari" />
             </Field>
             <Field label="著者名">
-              <input name="author_name" defaultValue="Each Spirit 編集部" className={inputClass} />
+              <input name="author_name" defaultValue={initial?.authorName || "Each Spirit 編集部"} className={inputClass} />
             </Field>
           </div>
 
           <Field label="タイトル" className="mt-4">
-            <input name="title" required className={inputClass} placeholder="記事タイトル" />
+            <input name="title" required defaultValue={initial?.title ?? ""} className={inputClass} placeholder="記事タイトル" />
           </Field>
           <Field label="説明文" className="mt-4">
-            <textarea name="description" required rows={3} className={`${inputClass} resize-y`} placeholder="検索結果や記事冒頭に出る説明文" />
+            <textarea name="description" required defaultValue={initial?.description ?? ""} rows={3} className={`${inputClass} resize-y`} placeholder="検索結果や記事冒頭に出る説明文" />
           </Field>
           <Field label="サムネイル画像URL" className="mt-4">
             <div className="grid gap-3 sm:grid-cols-[1fr_auto]">
@@ -581,25 +616,25 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
         <section className={sectionClass}>
           <div className="grid gap-4 sm:grid-cols-2">
             <Field label="タグ">
-              <textarea name="tags" rows={3} className={`${inputClass} resize-y`} placeholder="新潟, 食堂, 定食" />
+              <textarea name="tags" defaultValue={initial?.tags ?? ""} rows={3} className={`${inputClass} resize-y`} placeholder="新潟, 食堂, 定食" />
             </Field>
             <Field label="関連slug（旧形式）">
-              <textarea name="related_slugs" rows={3} className={`${inputClass} resize-y`} placeholder="niigata-ramen-first-guide" />
+              <textarea name="related_slugs" defaultValue={initial?.relatedSlugs ?? ""} rows={3} className={`${inputClass} resize-y`} placeholder="niigata-ramen-first-guide" />
             </Field>
             <Field label="要点まとめ">
-              <textarea name="summary" rows={4} className={`${inputClass} resize-y`} placeholder="1行1要点" />
+              <textarea name="summary" defaultValue={initial?.summary ?? ""} rows={4} className={`${inputClass} resize-y`} placeholder="1行1要点" />
             </Field>
             <Field label="このページで分かること">
-              <textarea name="what_you_learn" rows={4} className={`${inputClass} resize-y`} placeholder="1行1項目" />
+              <textarea name="what_you_learn" defaultValue={initial?.whatYouLearn ?? ""} rows={4} className={`${inputClass} resize-y`} placeholder="1行1項目" />
             </Field>
             <Field label="SEOタイトル">
-              <input name="seo_title" className={inputClass} />
+              <input name="seo_title" defaultValue={initial?.seoTitle ?? ""} className={inputClass} />
             </Field>
             <Field label="SEO説明">
-              <input name="seo_description" className={inputClass} />
+              <input name="seo_description" defaultValue={initial?.seoDescription ?? ""} className={inputClass} />
             </Field>
             <Field label="SEOキーワード" className="sm:col-span-2">
-              <input name="seo_keywords" className={inputClass} placeholder="カンマ区切り" />
+              <input name="seo_keywords" defaultValue={initial?.seoKeywords ?? ""} className={inputClass} placeholder="カンマ区切り" />
             </Field>
           </div>
         </section>
@@ -608,7 +643,7 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
           <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto">下書き保存</Button>
           <Button type="submit" name="status" value="published" className="w-full sm:w-auto">
             <Send className="h-4 w-4" />
-            記事を公開
+            {isEdit ? "更新を公開" : "記事を公開"}
           </Button>
         </div>
       </div>

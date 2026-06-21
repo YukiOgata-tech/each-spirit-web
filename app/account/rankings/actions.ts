@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
-import { createServerClient } from "@/lib/supabase-server";
+import { createServerClient, ES_CONTENT_CACHE_TAG } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
 import { getRankingSection, type RankingItemRow } from "@/lib/admin-ranking-schema";
 
@@ -117,6 +117,9 @@ export async function saveRanking(formData: FormData) {
     if (error) throw error;
   }
 
+  // コンテンツの Data Cache（es-content タグ・1か月）を即時無効化し、
+  // 公開ページ・管理一覧・編集フォームに変更を反映する。
+  revalidateTag(ES_CONTENT_CACHE_TAG);
   revalidatePath(canonical);
   revalidatePath("/" + section.majorCategory + "/" + section.sectionSlug);
   revalidatePath(routes.sectionRankings(section.majorCategory, section.sectionSlug));

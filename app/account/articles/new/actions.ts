@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
-import { createServerClient } from "@/lib/supabase-server";
+import { createServerClient, ES_CONTENT_CACHE_TAG } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
 import type { FAQ, RelatedLink, Source, SourceType } from "@/lib/types";
 
@@ -117,6 +117,7 @@ export async function saveArticle(formData: FormData) {
   const admin = await requireAdminUser();
   const service = createServerClient();
 
+  const id = text(formData, "id") || null;
   const placement = text(formData, "placement") === "independent" ? "independent" : "major";
   const majorCategoryInput = text(formData, "major_category").toLowerCase();
   const majorCategory = placement === "independent" ? null : slugify(majorCategoryInput);
@@ -147,6 +148,18 @@ export async function saveArticle(formData: FormData) {
 
   const path = articlePath(category, slug);
   const now = new Date().toISOString();
+
+  // 編集時は既存の公開日時を保全（再公開で published_at が現在時刻に巻き戻り
+  // 「最新記事」順が崩れるのを防ぐ）
+  let publishedAt: string | null = null;
+  if (status === "published") {
+    if (id) {
+      const { data: existing } = await service.from("articles").select("published_at").eq("id", id).maybeSingle();
+      publishedAt = existing?.published_at ?? now;
+    } else {
+      publishedAt = now;
+    }
+  }
   const summary = list(formData, "summary");
   const whatYouLearn = list(formData, "what_you_learn");
   const tags = list(formData, "tags");
@@ -166,7 +179,7 @@ export async function saveArticle(formData: FormData) {
     related_links: collectRelatedLinks(formData),
   };
 
-  const { error } = await service.from("articles").upsert({
+  const payload = {
     slug,
     category,
     major_category: majorCategory,
@@ -181,16 +194,28 @@ export async function saveArticle(formData: FormData) {
     author_name: metadata.author.name,
     author_id: admin.id,
     status,
-    published_at: status === "published" ? now : null,
+    published_at: publishedAt,
     seo_title: text(formData, "seo_title") || title,
     seo_description: text(formData, "seo_description") || description,
     seo_keywords: list(formData, "seo_keywords"),
     metadata,
-  }, { onConflict: "slug" });
+  };
 
-  if (error) throw error;
+  // 編集（id あり）は id で更新。slug 変更時に別レコードが増えるのを防ぐ。
+  // 新規は slug を一意キーに upsert。
+  if (id) {
+    const { error } = await service.from("articles").update(payload).eq("id", id);
+    if (error) throw error;
+  } else {
+    const { error } = await service.from("articles").upsert(payload, { onConflict: "slug" });
+    if (error) throw error;
+  }
 
-  if (status === "published") {
+  // 公開時は当然、編集時（下書き化を含む）も古い公開ページを更新するため再生成する。
+  if (status === "published" || id) {
+    // コンテンツの Data Cache（es-content タグ・1か月）も即時無効化し、
+    // 公開ページ・管理一覧・編集フォームに変更を反映する。
+    revalidateTag(ES_CONTENT_CACHE_TAG);
     revalidatePath(path);
     for (const listingPath of listingPaths(category, placement, majorCategory, sectionSlug || null)) {
       revalidatePath(listingPath);

@@ -1,9 +1,9 @@
 "use server";
 
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
-import { createServerClient } from "@/lib/supabase-server";
+import { createServerClient, ES_CONTENT_CACHE_TAG } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
 import { getSectionItemSchema, SECTION_ITEM_SCHEMAS, type ItemField, type SectionItemSchema } from "@/lib/admin-item-schema";
 
@@ -189,7 +189,9 @@ export async function saveItem(formData: FormData) {
     if (error) throw error;
   }
 
-  // 再生成
+  // 再生成。コンテンツの Data Cache（es-content タグ・1か月）も即時無効化し、
+  // 公開ページ・管理一覧・編集フォームに変更を反映する。
+  revalidateTag(ES_CONTENT_CACHE_TAG);
   revalidatePath(canonical);
   revalidatePath("/" + schema.majorCategory + "/" + schema.sectionSlug);
   if (region) revalidatePath(routes.sectionRegion(schema.majorCategory, schema.sectionSlug, region));

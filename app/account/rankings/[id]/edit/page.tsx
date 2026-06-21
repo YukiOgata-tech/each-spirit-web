@@ -71,7 +71,7 @@ export default async function EditRankingPage({ params }: PageProps) {
     <main className="min-h-screen bg-slate-100 pb-12">
       <header className="border-b border-slate-200 bg-white">
         <div className="mx-auto w-[min(1080px,calc(100%-24px))] py-5 sm:w-[min(1080px,calc(100%-32px))] sm:py-6">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-[var(--primary)]">Admin editor</p>
+          <p className="inline-flex items-center rounded-full border border-orange-300 bg-orange-100 px-2.5 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-orange-700">Admin only</p>
           <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">{row.title} を編集</h1>
         </div>
       </header>
