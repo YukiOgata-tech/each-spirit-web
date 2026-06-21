@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { ArrowLeft, PenLine, ShieldCheck } from "lucide-react";
+import { ArrowLeft, PenLine, ShieldCheck, UploadCloud } from "lucide-react";
 import { getCurrentAdminUser } from "@/lib/admin";
 import { createServerClient } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
@@ -108,6 +108,9 @@ export default async function ManageContentPage() {
               </Link>
               <Link href="/account/rankings/new" className="inline-flex items-center gap-1.5 rounded-md border border-orange-200 bg-white px-3 py-2 text-xs font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50">
                 <PenLine className="h-3.5 w-3.5 text-orange-500" /> ランキングを作成
+              </Link>
+              <Link href="/account/storage" className="inline-flex items-center gap-1.5 rounded-md border border-orange-200 bg-white px-3 py-2 text-xs font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50">
+                <UploadCloud className="h-3.5 w-3.5 text-orange-500" /> 画像をアップロード
               </Link>
             </div>
           </div>

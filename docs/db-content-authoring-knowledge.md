@@ -152,7 +152,11 @@ sourceUrl: 出典URL
 - サイトは Next.js の画像最適化（`next/image`）を使うため、**許可されたホストの画像URLしか描画できない**。許可外のホストはエラーになり表示されない。
 - **最も安全な方法: Supabase ストレージの公開バケットにアップロードし、その公開URLを使う**（ストレージのホストは許可済み）。
   - バケット `each-spirit-images`（公開・最大5MB・`jpeg/png/webp/gif`）= コンテンツ画像の正規置き場。
-  - バケット `article-assets` = 記事エディタのアップロード先。
+  - バケット `article-assets` も選択可（公開・同条件）。
+- **記事画像のパス規則（重要）**: 記事に使う画像は **`each-spirit-images/articles/{記事slug}/{任意ファイル名}`** に置く（slug 単位フォルダで衝突しない）。公開URLは
+  `https://<SUPABASE>/storage/v1/object/public/each-spirit-images/articles/{slug}/{file}`。
+  記事slug はグローバル一意なので、**実ファイルを上げる前に MD にこのURLを書いておける**。
+- **直接ストレージ操作できない外部サービス向けの運用**: MD には先に上記URLを書いておき、**実ファイルは後から管理UI（マイページ → 画像をアップロード, `/account/storage`）で同じパスにアップロードする**。管理UIは記事を選ぶと本文中の画像URLを検出し、「未アップロード」のスロットへそのまま上げられる。アップロード時に**パスの拡張子に合わせて再エンコード＋縮小**して容量を抑える（`.webp` 推奨）。拡張子を変えると MD のURLと食い違うので、MD に書いた拡張子と実ファイルの拡張子を一致させること。
 - もしくは **`next.config.ts` の `remotePatterns` に登録済みの外部ホスト**のみ使用可。現状の許可外部ホストは `images.unsplash.com` と一部の店舗・施設公式ドメイン（正は `next.config.ts`）。
 - **新しい外部ホストを使うには `next.config.ts` への追記（コード変更＋デプロイ）が必要**。任意ドメインの直リンクは不可。
 - **動画は `next/image` では扱えない**（現状は画像URLのみ）。
@@ -173,4 +177,4 @@ sourceUrl: 出典URL
 - **region / target の候補**は `es.content_regions` / `es.content_targets` が供給。section の `region_mode` が `required` の section では region 必須、`none` では region を持たせない。
 - **like_count / view_count** はアプリが管理するカウンタ。手動で書き換えない。
 - **slug の一意性スコープ**: 記事は全体で一意。items / rankings は `major_category + section_slug` の範囲で一意。
-- 反映は ISR で**最大1時間遅延**。確認時は時間差を考慮する。
+- 反映は ISR（フォールバック再生成は約1か月）だが、**管理UIからの保存・アップロードは on-demand 再検証で即時反映**される。seed など外部更新時は `/api/revalidate` を叩けば即時化できる。

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, ShieldCheck,
+  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, ShieldCheck, UploadCloud,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
@@ -161,12 +161,6 @@ export default async function AccountPage() {
 
       {/* ── ダッシュボード グリッド ──────────────────────────── */}
       <div className="mx-auto w-[min(1360px,calc(100%-40px))] max-sm:w-[min(1360px,calc(100%-24px))]">
-        {/*
-          モバイル: 1カラム
-          md:     2カラム
-          lg:     3カラム
-          Activity は md:col-span-2 / lg:col-span-2 でワイドに
-        */}
         <div className="mt-6 grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
 
           {/* ── 最近のアクティビティ ─────────────────── */}
@@ -249,6 +243,16 @@ export default async function AccountPage() {
                   <span className="inline-flex items-center gap-2">
                     <PenLine className="h-4 w-4 text-orange-500" />
                     ランキングを作成する
+                  </span>
+                  <ArrowRight className="h-4 w-4 text-orange-300" />
+                </Link>
+                <Link
+                  href="/account/storage"
+                  className="flex items-center justify-between rounded-xl border border-orange-200 bg-white px-4 py-3 text-sm font-bold text-orange-900 transition hover:border-orange-400 hover:bg-orange-50"
+                >
+                  <span className="inline-flex items-center gap-2">
+                    <UploadCloud className="h-4 w-4 text-orange-500" />
+                    画像をアップロード
                   </span>
                   <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>

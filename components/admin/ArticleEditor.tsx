@@ -165,11 +165,13 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
   };
 
   const uploadAsset = async (file: File) => {
-    const optimized = await optimizeImage(file);
+    const optimized = await optimizeImage(file); // 記事エディタは常に webp 化して容量を抑える
     const formData = new FormData();
     formData.set("file", optimized);
-    formData.set("slug", slug || "draft");
-    const res = await fetch("/api/admin/article-assets", { method: "POST", body: formData });
+    // 新方針: each-spirit-images/articles/{slug}/{uuid}.webp（slug 単位フォルダ）
+    formData.set("bucket", "each-spirit-images");
+    formData.set("path", `articles/${slug || "draft"}/${crypto.randomUUID()}.webp`);
+    const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
     const data = (await res.json()) as { ok: boolean; publicUrl?: string; message?: string };
     if (!res.ok || !data.ok || !data.publicUrl) {
       throw new Error(data.message ?? "upload failed");
