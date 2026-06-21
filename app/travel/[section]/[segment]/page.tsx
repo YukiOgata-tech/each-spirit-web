@@ -3,18 +3,19 @@ import TravelRegionPage from "@/components/legacy-pages/travel/stays/[region]/pa
 import TravelServiceRegionPage from "@/components/legacy-pages/travel/services/[region]/page";
 import { getTravelRegions, getTravelServiceRegions } from "@/lib/content";
 
-type PageProps = { params: Promise<{ section: string; region: string }> };
+type PageProps = { params: Promise<{ section: string; segment: string }> };
 
 export async function generateStaticParams() {
   const [stays, services] = await Promise.all([getTravelRegions(), getTravelServiceRegions()]);
   return [
-    ...stays.map((region) => ({ section: "stays", region: region.slug })),
-    ...services.map((region) => ({ section: "services", region: region.slug })),
+    ...stays.map((region) => ({ section: "stays", segment: region.slug })),
+    ...services.map((region) => ({ section: "services", segment: region.slug })),
   ];
 }
 
 export default async function TravelSectionRegionPage({ params }: PageProps) {
-  const { section, region } = await params;
+  const { section, segment } = await params;
+  const region = segment;
   if (section === "stays") return <TravelRegionPage params={Promise.resolve({ region })} />;
   if (section === "services") return <TravelServiceRegionPage params={Promise.resolve({ region })} />;
   notFound();

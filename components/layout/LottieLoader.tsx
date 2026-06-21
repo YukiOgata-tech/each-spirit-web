@@ -1,15 +1,9 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import { DotLottieReact } from "@lottiefiles/dotlottie-react";
 
-// wasm/canvas ベースのプレイヤーはクライアント限定で読み込む（SSR/プリレンダを回避）
-const DotLottieReact = dynamic(
-  () => import("@lottiefiles/dotlottie-react").then((m) => m.DotLottieReact),
-  { ssr: false },
-);
-
-/** Each Spirit のローディング Lottie（dotLottie 形式）。public/lottie に配置。 */
-export function LottieLoader({ size = 168 }: { size?: number }) {
+/** Each Spirit のローディング Lottie（dotLottie 形式・背景透過）。public/lottie に配置。 */
+export function LottieLoader({ size = 200 }: { size?: number }) {
   return (
     <div className="mx-auto" style={{ width: size, height: size }} aria-hidden="true">
       <DotLottieReact

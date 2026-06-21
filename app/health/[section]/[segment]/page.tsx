@@ -12,14 +12,15 @@ import {
 } from "@/lib/content";
 import type { ProteinTarget } from "@/lib/types";
 
-type PageProps = { params: Promise<{ section: string; target: string }> };
+type PageProps = { params: Promise<{ section: string; segment: string }> };
 
 export async function generateStaticParams() {
-  return (await getProteinTargets()).map((t) => ({ section: "protein", target: t.slug }));
+  return (await getProteinTargets()).map((t) => ({ section: "protein", segment: t.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {
-  const { section, target } = await params;
+  const { section, segment } = await params;
+  const target = segment;
   if (section !== "protein") return {};
   const info = await getProteinTarget(target as ProteinTarget);
   if (!info) return {};
@@ -31,7 +32,8 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export default async function ProteinTargetPage({ params }: PageProps) {
-  const { section, target } = await params;
+  const { section, segment } = await params;
+  const target = segment;
   if (section !== "protein") notFound();
   const info = await getProteinTarget(target as ProteinTarget);
   if (!info) notFound();

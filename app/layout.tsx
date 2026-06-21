@@ -64,6 +64,8 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
   return (
     <html lang="ja">
       <body className={geistSans.variable + " " + geistMono.variable}>
+        {/* ローディング Lottie を先読みし、ローダー表示と同時に再生が始まるようにする */}
+        <link rel="prefetch" href="/lottie/ES_loading01_2x_transparent_256_fps18.lottie" as="fetch" crossOrigin="anonymous" />
         <JsonLd data={websiteSchema()} />
         <JsonLd data={organizationSchema()} />
         <GlobalRouteLoader />

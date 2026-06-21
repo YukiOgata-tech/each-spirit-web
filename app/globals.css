@@ -168,16 +168,6 @@
   }
 }
 
-
-.loader-panel {
-  width: min(92vw, 320px);
-  border: 1px solid rgba(226, 232, 240, 0.88);
-  border-radius: 0.75rem;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 24px 80px rgba(15, 23, 42, 0.18);
-  padding: 1.5rem;
-}
-
 @keyframes rise-in {
   from {
     opacity: 0;
