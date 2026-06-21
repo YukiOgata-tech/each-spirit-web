@@ -138,7 +138,7 @@ export function GlobalRouteLoader() {
       aria-label="ページを切り替えています"
       aria-hidden={!visible}
       className={cn(
-        "fixed inset-0 z-[90] flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm transition-opacity duration-200",
+        "fixed inset-0 z-90 flex flex-col items-center justify-center gap-3 bg-white/30 backdrop-blur-sm transition-opacity duration-200",
         visible ? "opacity-100" : "pointer-events-none opacity-0",
       )}
     >
