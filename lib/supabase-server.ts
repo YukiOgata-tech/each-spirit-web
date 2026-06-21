@@ -12,7 +12,9 @@ const esContentFetch: typeof fetch = (input, init) => {
     headers,
     next: {
       ...(init as (RequestInit & { next?: { revalidate?: number; tags?: string[] } }) | undefined)?.next,
-      revalidate: 3600,
+      // ページISR（app/layout.tsx = 2592000）と揃えて1か月。コンテンツ更新は es-content タグの
+      // on-demand revalidation（/api/revalidate・seed/管理保存）で即時反映するため、これはフォールバック。
+      revalidate: 2592000,
       tags: [ES_CONTENT_CACHE_TAG],
     },
   } as RequestInit & { next: { revalidate: number; tags: string[] } });

@@ -2,7 +2,8 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { LoadingScreen } from "@/components/layout/LoadingScreen";
+import Lottie, { type LottieRefCurrentProps } from "lottie-react";
+import { cn } from "@/lib/utils";
 
 const MIN_MS = 350;
 const MAX_MS = 5000;
@@ -32,7 +33,27 @@ export function GlobalRouteLoader() {
   const nav = useRef({ active: false, startedAt: 0, maxTimer: 0, minTimer: 0 });
   const observerRef = useRef<MutationObserver | null>(null);
 
-  // Shared teardown — clears all timers and any pending observer
+  // lottie-web（JSON・wasm 不要）。マウント時に一度フェッチして「ウォーム」し、表示時は即 play。
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
+  const [animationData, setAnimationData] = useState<object | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    fetch("/lottie/es-loading.json")
+      .then((res) => res.json())
+      .then((data) => { if (alive) setAnimationData(data); })
+      .catch(() => {});
+    return () => { alive = false; };
+  }, []);
+
+  // 表示状態に合わせて再生/停止（非表示中は停止して CPU を使わない）
+  useEffect(() => {
+    const l = lottieRef.current;
+    if (!l) return;
+    if (visible) l.play();
+    else l.pause();
+  }, [visible, animationData]);
+
   const teardown = useRef(() => {
     const n = nav.current;
     window.clearTimeout(n.maxTimer);
@@ -41,7 +62,6 @@ export function GlobalRouteLoader() {
     observerRef.current = null;
   });
 
-  // Schedule final hide with minimum display guarantee
   const scheduleHide = useRef(() => {
     const n = nav.current;
     const delay = Math.max(0, MIN_MS - (Date.now() - n.startedAt));
@@ -52,7 +72,6 @@ export function GlobalRouteLoader() {
     }, delay);
   });
 
-  // Show loader and arm the safety max timer
   const start = useRef(() => {
     const n = nav.current;
     teardown.current();
@@ -65,28 +84,19 @@ export function GlobalRouteLoader() {
     setVisible(true);
   });
 
-  // Called when pathname changes.
-  // At this point Next.js has committed the new page shell:
-  //   - If a loading.tsx fallback is in <main>, wait for it to be replaced.
-  //   - Otherwise the full page is already in the DOM; hide after MIN_MS.
   const onPathnameChange = useRef(() => {
     const n = nav.current;
     if (!n.active) return;
-
-    // Clear any previous observer (rapid navigation guard)
     observerRef.current?.disconnect();
     observerRef.current = null;
 
     const main = document.querySelector("main");
     if (!main || !main.querySelector(".each-spirit-loader")) {
-      // No page-level loading fallback — page is fully rendered
       scheduleHide.current();
       return;
     }
-
-    // loading.tsx is showing; watch for it to leave the DOM
     const observer = new MutationObserver(() => {
-      if (main.querySelector(".each-spirit-loader")) return; // still loading
+      if (main.querySelector(".each-spirit-loader")) return;
       observer.disconnect();
       observerRef.current = null;
       scheduleHide.current();
@@ -95,7 +105,6 @@ export function GlobalRouteLoader() {
     observer.observe(main, { childList: true, subtree: true });
   });
 
-  // Register click and popstate listeners once
   useEffect(() => {
     const n = nav.current;
     const obs = observerRef;
@@ -119,11 +128,32 @@ export function GlobalRouteLoader() {
     };
   }, []);
 
-  // pathname changes when Next.js commits the new route's layout/shell
   useEffect(() => {
     onPathnameChange.current();
   }, [pathname]);
 
-  if (!visible) return null;
-  return <LoadingScreen fullScreen compact label="ページを切り替えています" />;
+  return (
+    <div
+      role="status"
+      aria-label="ページを切り替えています"
+      aria-hidden={!visible}
+      className={cn(
+        "fixed inset-0 z-[90] flex flex-col items-center justify-center gap-3 bg-white/80 backdrop-blur-sm transition-opacity duration-200",
+        visible ? "opacity-100" : "pointer-events-none opacity-0",
+      )}
+    >
+      <div className="h-44 w-44 sm:h-52 sm:w-52" aria-hidden="true">
+        {animationData && (
+          <Lottie
+            lottieRef={lottieRef}
+            animationData={animationData}
+            loop
+            autoplay={false}
+            style={{ width: "100%", height: "100%" }}
+          />
+        )}
+      </div>
+      <p className="text-sm font-semibold text-slate-700">ページを切り替えています</p>
+    </div>
+  );
 }
