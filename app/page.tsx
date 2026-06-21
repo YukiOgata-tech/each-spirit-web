@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Newspaper, TrendingUp } from "lucide-react";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsArticleRow, NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { HomeVisualStory } from "@/components/home/HomeVisualStory";
 import { DiscoverySearch } from "@/components/search/DiscoverySearch";
@@ -84,16 +84,26 @@ export default async function HomePage() {
 
       <section className="section-shell grid gap-6 sm:gap-8 lg:grid-cols-[1.25fr_0.85fr]">
         <div>
-          <div className="mb-4 flex items-center gap-2.5 sm:mb-6">
-            <Newspaper className="h-6 w-6 shrink-0 text-[var(--primary)]" />
-            <h2 className="section-heading">最新記事</h2>
+          <div className="mb-3 flex items-center justify-between gap-2 sm:mb-5">
+            <div className="flex items-center gap-2.5">
+              <Newspaper className="h-6 w-6 shrink-0 text-[var(--primary)]" />
+              <h2 className="section-heading">最新記事</h2>
+            </div>
+            <Link href={routes.articles} className="flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">もっと見る<ArrowRight className="h-4 w-4" /></Link>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-            {articles.map((article) => <ArticleCard key={article.category + article.slug} article={article} href={articleHref(article)} />)}
-          </div>
+          {articles.length > 0 && (
+            <div>
+              <NewsFeatureCard article={articles[0]} href={articleHref(articles[0])} />
+              <div className="mt-2 divide-y divide-slate-100 sm:mt-3">
+                {articles.slice(1).map((article) => (
+                  <NewsArticleRow key={article.category + article.slug} article={article} href={articleHref(article)} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div>
-          <div className="mb-4 flex items-center gap-2.5 sm:mb-6">
+          <div className="mb-3 flex items-center gap-2.5 sm:mb-5">
             <TrendingUp className="h-6 w-6 shrink-0 text-[var(--accent)]" />
             <h2 className="section-heading">ランキング</h2>
           </div>

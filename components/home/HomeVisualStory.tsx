@@ -1,104 +1,91 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import type { Category } from "@/lib/types";
 
-const visuals = [
-  {
-    label: "Food",
-    title: "地域グルメ",
-    image:
-      "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    label: "Travel",
-    title: "旅と街歩き",
-    image:
-      "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=900&q=80",
-  },
-  {
-    label: "Tools",
-    title: "道具と比較",
-    image:
-      "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=80",
-  },
-];
+const fallbackImage =
+  "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=900&q=80";
 
 export function HomeVisualStory({ categories }: { categories: Category[] }) {
-  const storyVisuals = visuals.map((visual, index) => {
-    const category = categories[index];
-    return {
-      label: category?.name ?? visual.label,
-      title: category?.tagline ?? visual.title,
-      image: category?.images?.[0]?.url ?? visual.image,
-    };
-  });
+  const tiles = categories
+    .filter((category) => category.status === "live")
+    .map((category) => ({
+      slug: category.slug,
+      name: category.name,
+      tagline: category.tagline,
+      href: category.href,
+      image: category.images?.[0]?.url ?? fallbackImage,
+    }));
+
+  if (tiles.length === 0) return null;
+
+  const [featured, ...rest] = tiles;
 
   return (
     <motion.div
-      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 shadow-soft sm:min-h-[520px] sm:rounded-lg sm:p-3"
+      className="relative overflow-hidden rounded-2xl border border-slate-200 bg-slate-950 p-2 shadow-soft sm:rounded-lg sm:p-3"
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
     >
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,0.68))]" />
-      <div className="relative grid gap-3 sm:h-full sm:min-h-[494px] sm:grid-rows-[1fr_auto]">
-        <div className="flex snap-x gap-3 overflow-x-auto pb-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:grid sm:overflow-visible sm:pb-0 sm:grid-cols-[1.08fr_0.92fr] sm:gap-3">
-          <motion.div
-            className="group relative h-[238px] min-w-full snap-center overflow-hidden rounded-xl sm:h-auto sm:min-w-0 sm:rounded-md"
-            whileHover={{ scale: 0.992 }}
-            transition={{ type: "spring", stiffness: 260, damping: 24 }}
-          >
-            <Image
-              src={storyVisuals[0].image}
-              alt={storyVisuals[0].title}
-              fill
-              sizes="(min-width: 1024px) 540px, 100vw"
-              className="object-cover transition duration-700 group-hover:scale-105"
-              priority
-            />
-            <VisualCaption label={storyVisuals[0].label} title={storyVisuals[0].title} />
-          </motion.div>
-          <div className="contents sm:grid sm:gap-3">
-            {storyVisuals.slice(1).map((visual, index) => (
-              <motion.div
-                key={visual.label}
-                className="group relative h-[238px] min-w-full snap-center overflow-hidden rounded-xl sm:min-h-48 sm:min-w-0 sm:rounded-md"
-                initial={{ opacity: 0, x: 18 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.16 + index * 0.09, duration: 0.55 }}
-                whileHover={{ y: -4 }}
-              >
-                <Image
-                  src={visual.image}
-                  alt={visual.title}
-                  fill
-                  sizes="(min-width: 1024px) 360px, 100vw"
-                  className="object-cover transition duration-700 group-hover:scale-105"
-                />
-                <VisualCaption label={visual.label} title={visual.title} compact />
-              </motion.div>
-            ))}
-          </div>
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_10%,rgba(255,255,255,0.18),transparent_28%),linear-gradient(180deg,rgba(15,23,42,0),rgba(15,23,42,0.55))]" />
+      <div className="relative">
+        <div className="mb-2 flex items-center justify-between px-1">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">Categories</p>
+          <p className="text-[10px] font-semibold text-white/55">タップでカテゴリへ</p>
         </div>
-
+        <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+          <CategoryTile tile={featured} featured priority />
+          {rest.map((tile, index) => (
+            <CategoryTile key={tile.slug} tile={tile} delay={0.12 + index * 0.07} />
+          ))}
+        </div>
       </div>
     </motion.div>
   );
 }
 
-function VisualCaption({ label, title, compact = false }: { label: string; title: string; compact?: boolean }) {
+type Tile = { slug: string; name: string; tagline: string; href: string; image: string };
+
+function CategoryTile({ tile, featured = false, priority = false, delay = 0 }: { tile: Tile; featured?: boolean; priority?: boolean; delay?: number }) {
   return (
-    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/90 via-slate-950/52 to-transparent p-4 text-white">
-      <div className="flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/72">{label}</p>
-          <p className={compact ? "line-clamp-2 text-xl font-black leading-tight sm:text-lg" : "line-clamp-2 text-xl font-black leading-tight sm:text-2xl"}>{title}</p>
+    <motion.div
+      className={featured ? "col-span-2" : ""}
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay, duration: 0.5 }}
+    >
+      <Link
+        href={tile.href}
+        aria-label={`${tile.name}カテゴリを見る`}
+        className={`group relative block overflow-hidden rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-slate-950 ${
+          featured ? "h-[200px] sm:h-[264px]" : "h-[132px] sm:h-[168px]"
+        }`}
+      >
+        <Image
+          src={tile.image}
+          alt={tile.name}
+          fill
+          priority={priority}
+          sizes={featured ? "(min-width: 1024px) 540px, 100vw" : "(min-width: 1024px) 270px, 50vw"}
+          className="object-cover transition-transform duration-700 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/92 via-slate-950/35 to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 p-3 text-white sm:p-4">
+          <div className="flex items-end justify-between gap-2">
+            <div className="min-w-0">
+              <p className={`font-black leading-tight ${featured ? "text-2xl sm:text-3xl" : "text-lg sm:text-xl"}`}>{tile.name}</p>
+              {featured && <p className="mt-1 line-clamp-1 text-xs font-medium text-white/75 sm:text-sm">{tile.tagline}</p>}
+            </div>
+            <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/15 backdrop-blur transition group-hover:bg-white/30">
+              <ArrowUpRight className="h-4 w-4 text-white" />
+            </span>
+          </div>
         </div>
-        <ArrowUpRight className="h-5 w-5 shrink-0 text-white/80" />
-      </div>
-    </div>
+      </Link>
+    </motion.div>
   );
 }

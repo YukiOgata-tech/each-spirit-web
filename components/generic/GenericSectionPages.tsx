@@ -6,6 +6,7 @@ import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
+import { TagList } from "@/components/cards/TagList";
 import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
@@ -176,11 +177,9 @@ function GenericItemCard({ section, item, theme }: { section: ContentSection; it
 
       <div className="flex flex-col gap-4 p-4 sm:p-5">
         <div className="min-w-0">
-          <div className="mb-3 flex flex-wrap gap-2">
-            {item.tags.slice(0, 3).map((tag) => <Badge key={tag}>{tag}</Badge>)}
-          </div>
           <h3 className="text-lg font-bold tracking-normal text-slate-950 transition group-hover:text-[var(--primary)]">{item.name}</h3>
           <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">{item.description}</p>
+          <TagList tags={item.tags} className="mt-2.5" />
         </div>
         <div className="mt-auto space-y-3 text-sm text-slate-500">
           {(item.area || item.address) && (
@@ -374,14 +373,18 @@ export async function GenericItemDetailPage({
                 <Badge>{section.label}</Badge>
                 {item.region && <Badge>{item.region}</Badge>}
               </div>
-              <h1 data-speakable="title" className="mt-5 text-4xl font-black tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">{item.name}</h1>
-              <p data-speakable="description" className="mt-5 max-w-2xl text-sm leading-7 text-slate-700 sm:text-base">{item.description}</p>
+              <h1 data-speakable="title" className="mt-5 text-[1.75rem] font-black leading-[1.12] tracking-normal text-slate-950 sm:text-4xl lg:text-5xl">{item.name}</h1>
+              <p data-speakable="description" className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:mt-5 sm:text-base">{item.description}</p>
             </div>
 
-            <div className="mt-8 flex flex-wrap gap-2">
-              {item.area && <Badge>{item.area}</Badge>}
-              {item.priceRange && <Badge>{item.priceRange}</Badge>}
-              {item.tags.slice(0, 6).map((tag) => <Badge key={tag}>{tag}</Badge>)}
+            <div className="mt-8 space-y-3">
+              {(item.area || item.priceRange) && (
+                <div className="flex flex-wrap gap-2">
+                  {item.area && <Badge>{item.area}</Badge>}
+                  {item.priceRange && <Badge>{item.priceRange}</Badge>}
+                </div>
+              )}
+              <TagList tags={item.tags} max={6} />
             </div>
           </div>
 
@@ -554,13 +557,12 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
                 {entry.isPr && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">PR</span>}
               </div>
               <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  {item?.region && <Badge>{item.region}</Badge>}
-                  {item?.area && <Badge>{item.area}</Badge>}
-                  {(item?.tags ?? []).slice(0, 2).map((tag) => <Badge key={tag}>{tag}</Badge>)}
-                </div>
-                <h3 className="mt-2 text-lg font-bold tracking-normal text-slate-950 transition-colors group-hover:text-[var(--primary)] sm:text-xl">{name}</h3>
+                <h3 className="text-lg font-bold tracking-normal text-slate-950 transition-colors group-hover:text-[var(--primary)] sm:text-xl">{name}</h3>
+                {(item?.region || item?.area) && (
+                  <p className="mt-1 text-xs font-medium text-slate-400">{[item?.region, item?.area].filter(Boolean).join(" ・ ")}</p>
+                )}
                 {entry.reason && <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">{entry.reason}</p>}
+                <TagList tags={item?.tags ?? []} max={3} className="mt-2" />
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {entry.score > 0 && (
                     <span className="inline-flex items-baseline gap-1 rounded-md bg-[var(--muted)] px-2.5 py-1 text-sm font-black text-[var(--primary)]">

@@ -120,7 +120,8 @@ export async function saveArticle(formData: FormData) {
   const placement = text(formData, "placement") === "independent" ? "independent" : "major";
   const majorCategoryInput = text(formData, "major_category").toLowerCase();
   const majorCategory = placement === "independent" ? null : slugify(majorCategoryInput);
-  const sectionSlug = slugify(text(formData, "section_slug"));
+  const sectionSlugInput = slugify(text(formData, "section_slug"));
+  const sectionSlug = placement === "independent" ? null : sectionSlugInput;
   const category = slugify(text(formData, "article_category")) || sectionSlug || majorCategory || "general";
   const regionRaw = slugify(text(formData, "region"));
   const region = regionRaw || null;
@@ -136,7 +137,7 @@ export async function saveArticle(formData: FormData) {
   if (placement === "major" && (!majorCategory || !majorCategories.has(majorCategory))) {
     throw new Error("大カテゴリ配下の記事では food, health, beauty, travel, leisure のいずれかを選択してください");
   }
-  if (majorCategoryInput.includes(".") || sectionSlug.includes(".") || category.includes(".")) {
+  if (majorCategoryInput.includes(".") || sectionSlugInput.includes(".") || category.includes(".")) {
     throw new Error("slugにドットは使えません");
   }
 
@@ -169,7 +170,7 @@ export async function saveArticle(formData: FormData) {
     slug,
     category,
     major_category: majorCategory,
-    section_slug: sectionSlug || null,
+    section_slug: sectionSlug,
     canonical_path: path,
     region,
     title,

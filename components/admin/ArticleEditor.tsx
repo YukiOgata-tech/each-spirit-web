@@ -215,10 +215,11 @@ export function ArticleEditor({ action, categoryOptions }: ArticleEditorProps) {
                   setSectionSlug(event.target.value);
                   setArticleCategory((current) => current === sectionSlug || !current ? nextSectionSlug : current);
                 }}
+                disabled={placement === "independent"}
                 className={inputClass}
                 placeholder="ramen / cafe / protein / hair-salon"
               />
-              <span className="mt-1 block text-[11px] leading-5 text-slate-500">カテゴリ配下の細分化に使います。独立記事では任意です。</span>
+              <span className="mt-1 block text-[11px] leading-5 text-slate-500">カテゴリ配下の細分化に使います。独立記事では保存されません。</span>
             </Field>
             <Field label="記事カテゴリslug（公開URLの分類）">
               <input
