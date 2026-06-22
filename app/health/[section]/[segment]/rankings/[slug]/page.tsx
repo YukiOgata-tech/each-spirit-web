@@ -33,6 +33,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: ranking.title,
     description: ranking.description,
     path: routes.proteinRanking(ranking.target, slug),
+    image: ranking.imageUrl,
   });
 }
 

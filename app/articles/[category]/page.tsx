@@ -14,10 +14,13 @@ export async function generateStaticParams() {
 
 export async function generateMetadata({ params }: PageProps) {
   const { category } = await params;
+  const articles = await getGenericArticlesByCategory(category);
+  const cover = articles.find((a) => a.coverImageUrl)?.coverImageUrl;
   return pageMetadata({
     title: `${category}の記事一覧`,
     description: `Each Spirit の ${category} に関する記事を掲載しています。`,
     path: routes.articleCategory(category),
+    image: cover,
   });
 }
 

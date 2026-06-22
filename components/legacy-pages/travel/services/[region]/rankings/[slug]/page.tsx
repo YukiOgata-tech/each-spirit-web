@@ -31,6 +31,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: ranking.title,
     description: ranking.description,
     path: routes.travelServicesRanking(region, slug),
+    image: ranking.imageUrl,
     keywords: ranking.criteria,
   });
 }

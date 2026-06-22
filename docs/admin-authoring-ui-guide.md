@@ -1,7 +1,7 @@
 # 作成UI（管理者向け投稿・編集）ガイド
 
 リポジトリの管理画面から DB（`es` スキーマ）へ直接コンテンツを投入・編集するためのガイド。
-関連: [content-display-path-slug-spec.md](./content-display-path-slug-spec.md)（パス/スラグ/表示の確定仕様）、[major-category-url-and-db-migration-plan.md](./major-category-url-and-db-migration-plan.md)
+関連: [content-display-path-slug-spec.md](./content-display-path-slug-spec.md)（パス/スラグ/表示の確定仕様）
 
 ## 全体概要
 

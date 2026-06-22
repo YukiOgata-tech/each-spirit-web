@@ -25,7 +25,7 @@ export const site = {
     "暮らし",
     "ツール比較",
   ],
-  ogImage: "/opengraph-image",
+  ogImage: "/brand/each-spirit-mainmeta.jpg",
   icon: "/brand/each-spirit-mark.png",
   // SNS / external profiles for Organization.sameAs (E-E-A-T signal)
   sameAs: [] as string[],

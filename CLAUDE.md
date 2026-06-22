@@ -16,8 +16,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 サイトは **大カテゴリ（major category）× section** の2層構造です（2026-06 の再設計で ramen 単独構造から移行）。
 
-- **大カテゴリ**: `food` / `health` / `beauty` / `travel` / `leisure`。URL は `/{major}` 直下。
-- **section**: 各大カテゴリの下にぶら下がる具体テーマ。`food/ramen`・`food/cafe`・`health/protein`・`beauty/hair-salon`・`travel/stays`・`travel/services`・`leisure/spots` など。section の定義は **`es.content_sections` テーブル**が正（`major_category`・`section_slug`・`content_model`・`item_path_segment`・`region_mode`・`target_mode`・`status` を持つ）。`lib/content.ts` の `getContentSections()` が読み取り（DB 未設定時は `fallbackContentSections` にフォールバック）。
+- **大カテゴリ**: `food` / `health` / `beauty` / `travel` / `entertainment` / `leisure`。URL は `/{major}` 直下。
+- **section**: 各大カテゴリの下にぶら下がる具体テーマ。`food/ramen`・`food/cafe`・`health/protein`・`beauty/hair-salon`・`travel/stays`・`travel/services`・`entertainment/anime`・`entertainment/drama`・`leisure/spots` など。section の定義は **`es.content_sections` テーブル**が正（`major_category`・`section_slug`・`content_model`・`item_path_segment`・`region_mode`・`target_mode`・`status` を持つ）。`lib/content.ts` の `getContentSections()` が読み取り（DB 未設定時は `fallbackContentSections` にフォールバック）。
 - **正規 URL（canonical_path）**: コンテンツの URL は `lib/section-map.ts` と `lib/routes.ts` が一元決定する。店舗・商品などは `/{major}/{section}/{itemPathSegment}/{slug}`、ランキングは `/{major}/{section}/rankings/{slug}`。記事は ramen/cafe/beauty などの専用分岐を作らず、すべて `/articles/{category}/{slug}` に集約する。`major_category` / `section_slug` は記事の文脈付け・section 一覧への掲載に使い、記事詳細 URL には使わない。
 - 旧 `content_type`（`ramen_item`・`protein`・`beauty_salon` など）→ 新 `major/section/item_kind` の変換も `lib/section-map.ts` に集約。seed・import・アプリ側の双方から使う純粋モジュール。
 
@@ -37,7 +37,7 @@ content/**/*.ts (+ .md)  ──npm run db:seed──>  Supabase es.{articles,ite
 
 ### ISR（増分静的再生成）
 
-`app/layout.tsx` が `export const revalidate = 3600` を持ち、コンテンツページは **ISR（1時間ごとに再生成）** されます。`content/**` を編集して `npm run db:seed` すれば、再デプロイ無しで最大1時間で本番反映されます。
+`app/layout.tsx` が `export const revalidate = 2592000` を持ち、コンテンツページは **ISR（30日ごとに再生成）** されます。`content/**` を編集して `npm run db:seed` しただけでは即時反映されないため、公開反映を急ぐ場合は `app/api/revalidate/route.ts` の on-demand revalidate を使います。
 
 ISR を壊さないため、**root layout の配下（ヘッダー等）で `cookies()` / `headers()` を使わないこと**（使うと全ページが動的レンダリングになり ISR が無効化される）。ヘッダーの認証表示は `components/auth/AuthButtonClient.tsx`（クライアントで `getUser`）で行っています。ユーザー固有ページ（`/account` など）は `cookies()` 利用で自動的に動的のままです。
 
@@ -48,7 +48,7 @@ ISR を壊さないため、**root layout の配下（ヘッダー等）で `coo
 | `lib/types.ts` | 共有型定義（`Article`、`Item`、`Ranking`、`Source`、`FAQ` など） |
 | `lib/content.ts` | コンテンツ取得関数の唯一の境界（`getContentSections`・`getGenericItemsBySection`・`getRankingBySection`・`getArticlesBySection` など section ベースの汎用関数 ＋ `getRamenItem`・`getBeautySalon` などカテゴリ別関数）。記事・店舗・ランキングは全カテゴリ Supabase `es` スキーマから取得 |
 | `lib/section-map.ts` | 旧 `content_type` / article category → 新 `major/section/item_kind/canonical_path` の変換と canonical path 生成（`itemCanonicalPath`・`rankingCanonicalPath`・`articleCanonicalPath`）。`"server-only"` を付けない純粋モジュール（seed・import・アプリ共用） |
-| `lib/routes.ts` | 正規ルート文字列ヘルパーと `absoluteUrl()`。section 汎用ヘルパー（`sectionItem`・`sectionRanking`・`sectionArticle` など）＋ 各カテゴリ別ヘルパー |
+| `lib/routes.ts` | 正規ルート文字列ヘルパーと `absoluteUrl()`。記事は `articleCategory` / `articleByCategory`、section コンテンツは `sectionItem` / `sectionRanking` などを使う |
 | `lib/seo.ts` | `pageMetadata()` と JSON-LD スキーマビルダー（`articleSchema`、`restaurantSchema` など） |
 | `lib/admin.ts` / `lib/admin-item-schema.ts` / `lib/admin-ranking-schema.ts` | 投稿・編集 UI（`app/account/**` の記事・店舗・ランキング投稿）用の権限判定とフォームスキーマ |
 | `lib/fortune.ts` / `lib/fortune-server.ts` | デイリー運勢機能のスコア算出・解説（クライアント側 `fortune.ts` / サーバー側 `fortune-server.ts`） |
@@ -97,7 +97,7 @@ export default async function Page({ params }) {
 
 - **専用実装**: 個別にデザインされた section ページは `components/legacy-pages/{major}/{section}/**` に置く（`app/` の `[section]` ルートから委譲呼び出し）。
 - **汎用ページ**: 専用実装を持たない section は `components/generic/GenericSectionPages.tsx`（index / 一覧）と `components/generic/SectionNavigation.tsx` がレンダリングし、`es.content_sections` の設定（`content_model`・`region_mode` 等）で表示を切り替える。
-- 記事・ランキングの一覧/詳細も同様に `app/{major}/[section]/articles/**`・`.../rankings/**` を `components/articles/SectionArticleRoutes.tsx`・`SectionRankingRoutes.tsx` 経由でレンダリング。
+- 記事詳細は section 配下ではなく `app/articles/[category]/[slug]/page.tsx` に集約する。section ページには `getArticlesBySection()` で該当記事を掲載し、リンクは必ず `articleHref()` を使う。ランキング一覧/詳細は `app/{major}/[section]/rankings/**` と `components/articles/SectionRankingRoutes.tsx` / 汎用 ranking 詳細でレンダリングする。
 
 各 `page.tsx` の中身は従来どおり `generateStaticParams` / `generateMetadata`（`lib/seo` の `pageMetadata()`）/ `lib/content.ts` 経由のデータ取得 → レンダリングの3点セット。
 
@@ -133,4 +133,4 @@ export default async function Page({ params }) {
 
 5. `components/legacy-pages/{major}/{section}/**` に専用実装を置き、`app/{major}/[section]/**` のディスパッチ（`generateStaticParams` と if 分岐）に section を追加
 
-新しい**大カテゴリ**を増やす場合は、`content/categories.ts` にエントリを追加し、`app/<major>/[section]/**` の動的ルート群（食・美容など既存大カテゴリの構成を踏襲）を作成する。
+新しい**大カテゴリ**を増やす場合は、`content/categories.ts` にエントリを追加し、`app/<major>/[section]/**` の動的ルート群（食・美容・entertainment など既存大カテゴリの構成を踏襲）を作成する。DB の `content_sections` 追加だけでは大カテゴリトップや sitemap の導線は完結しない。

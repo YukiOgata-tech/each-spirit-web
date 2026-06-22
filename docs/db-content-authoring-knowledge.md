@@ -10,14 +10,14 @@ DB（Supabase `es` スキーマ）を直接読み書きしてコンテンツを�
 
 - すべてのコンテンツは Supabase の **`es` スキーマ**が配信の正（静的ファイルは旧入力ソースで、表示には使われない）。
 - API/PostgREST から `es` を使うには Exposed schemas に `es` 追加が必要（設定済み）。クエリは `es` スキーマのテーブルに対して行う。
-- ページは **ISR（1時間ごと再生成）**。DB を更新しても**反映に最大1時間**かかる（即時ではない）。
+- ページは **ISR（30日ごと再生成）**。DB を更新しただけでは即時反映されない。管理UI保存時は on-demand revalidate で即時反映され、SQL や外部 import で直接更新した場合は `/api/revalidate` を叩く。
 - 公開判定は各テーブルの **`status = 'published'`**。`draft` はサイトに一切表示されない。
 
 ---
 
 ## 1. ページ配備済みの major カテゴリ
 
-公開ページとルーティングが**配備済み（live）**の大カテゴリは以下の5つ。これら以外（`gadget` / `life` / `tools` 等）は planned で未配備のため、配下に行を入れても表示されない。
+公開ページとルーティングが**配備済み（live）**の大カテゴリは以下の6つ。これら以外（`gadget` / `life` / `tools` 等）は planned で未配備のため、配下に行を入れても表示されない。
 
 | major | トップページ | 代表 section（例） | 備考 |
 |---|---|---|---|
@@ -25,6 +25,7 @@ DB（Supabase `es` スキーマ）を直接読み書きしてコンテンツを�
 | `health` | `/health` | `protein` | 健康 |
 | `beauty` | `/beauty` | `hair-salon` | 美容 |
 | `travel` | `/travel` | `stays`, `services` | 旅行（宿・旅行サービス） |
+| `entertainment` | `/entertainment` | `anime`, `drama` | エンターテインメント |
 | `leisure` | `/leisure` | `spots` | レジャー |
 
 - section の実体は **`es.content_sections`**（`status='published'` のものが配信）。`major_category` × `section_slug` で識別。

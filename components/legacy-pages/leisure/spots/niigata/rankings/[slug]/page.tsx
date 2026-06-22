@@ -28,6 +28,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: ranking.title,
     description: ranking.description,
     path: routes.leisureRanking(region, ranking.slug),
+    image: ranking.imageUrl,
   });
 }
 

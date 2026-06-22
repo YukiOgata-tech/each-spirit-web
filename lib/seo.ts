@@ -19,7 +19,7 @@ import type {
   TravelApp,
 } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
-import { majorMetaImage } from "@/lib/category-media";
+import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
 import { site } from "@/content/site";
 
 // ─── Core metadata ───────────────────────────────────────────────────────────
@@ -42,8 +42,12 @@ export function pageMetadata({
   image?: string;
   keywords?: string[];
 }): Metadata {
-  // 明示画像 > メジャー配下の共通 meta 画像 > サイト既定 OG の順でフォールバック
-  const resolvedImage = image ?? majorImageForPath(path) ?? site.ogImage;
+  // 明示画像 >（ランキングページは ranking-fallback / それ以外はメジャー配下の共通 meta 画像）> サイト既定 OG
+  // 個別ページ・ランキングは generateMetadata 側で DB の image_url を image に渡すため、
+  // image_url があればそれが最優先。無い場合のみこのフォールバックが効く。
+  const isRankingPath = /\/rankings(?:\/|$)/.test(path);
+  const fallbackImage = isRankingPath ? RANKING_FALLBACK_IMAGE : majorImageForPath(path);
+  const resolvedImage = image ?? fallbackImage ?? site.ogImage;
   const fullTitle =
     title === site.name || title === site.title ? title : title + " | " + site.titleSuffix;
   return {

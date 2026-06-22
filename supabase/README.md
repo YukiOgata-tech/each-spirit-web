@@ -46,7 +46,17 @@ es.*                ← each-spirit 専用スキーマ
 | `20260619214911_major_category_canonical_paths.sql` | `major_category` / `section_slug` / `canonical_path` 追加、`es.content_sections` 中カテゴリ管理テーブル追加 | 2026-06-19 |
 | `20260619222405_section_slug_primary_urls.sql` | item/ranking の canonical URL を大カテゴリ/中カテゴリ基準へ更新、`ranking_items.item_id` 追加 | 2026-06-19 |
 | `20260619225244_item_kind_for_section_items.sql` | `es.items.item_kind` 追加、主要 item の kind backfill、kind 別 index 追加 | 2026-06-20 |
+| `20260620000002_es_content_regions_and_targets.sql` | `es.content_regions` / `es.content_targets` 追加、地域・target 候補を DB 配信へ移行 | 2026-06-20 |
+| `20260620000003_es_content_regions_targets_grants.sql` | regions / targets の権限・公開読み取り設定 | 2026-06-20 |
+| `20260620000004_es_likes_reviews_canonical_key.sql` | likes / reviews / counts の識別を `content_kind + target_id` へ移行 | 2026-06-20 |
 | `20260620074642_remove_legacy_content_type_columns.sql` | `es.items.content_type` / `es.rankings.content_type` / `es.ranking_items.item_content_type` 削除、section ベース index へ置換 | 2026-06-20 |
+| `20260620121157_remove_legacy_content_reference_columns.sql` | likes / reviews の旧 `content_type` / `content_id` 参照列を削除 | 2026-06-20 |
+| `20260620151241_each_spirit_images_bucket.sql` | コンテンツ画像用 Storage bucket と policy を追加 | 2026-06-20 |
+| `20260620163722_article_category_canonical_paths.sql` | article canonical を `/articles/{category}/{slug}` へ統一 | 2026-06-20 |
+| `20260621000001_es_rankings_image_url.sql` | `es.rankings.image_url` 追加、ランキングカード/OG画像に対応 | 2026-06-21 |
+| `20260622172750_es_entertainment_anime_section.sql` | `entertainment` major を許可し、anime section を追加 | 2026-06-22 |
+| `20260622183317_es_entertainment_drama_section.sql` | entertainment / drama section を追加 | 2026-06-22 |
+| `20260622191816_es_entertainment_planned_sections.sql` | entertainment 配下の追加予定 section を登録 | 2026-06-22 |
 
 ## es スキーマ テーブル一覧
 
@@ -69,7 +79,9 @@ es.*                ← each-spirit 専用スキーマ
 | `es.items` | 全ジャンル汎用アイテム（カフェ・ラーメン・ホテル・家電・アプリ等）。現在の正は `major_category + section_slug + slug` |
 | `es.rankings` | 全ジャンル汎用ランキング（カテゴリ・地域・タイトル・criteria）。現在の正は `major_category + section_slug + slug` |
 | `es.ranking_items` | ランキング内の順位リスト（ranking_id FK + rank UNIQUE）。`item_id` で `es.items` へ参照 |
-| `es.content_sections` | 大カテゴリ配下の中カテゴリ管理。`food/ramen`、`health/protein` などの表示名、URL、content model、地域/ターゲット要否を保持 |
+| `es.content_sections` | 大カテゴリ配下の中カテゴリ管理。`food/ramen`、`health/protein`、`entertainment/anime` などの表示名、URL、content model、地域/ターゲット要否を保持 |
+| `es.content_regions` | section 別の地域候補と表示用 data jsonb |
+| `es.content_targets` | section 別の target 候補と表示用 data jsonb |
 
 ## content_likes の content_kind 値
 

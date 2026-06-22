@@ -3,28 +3,25 @@
 投稿・編集UIを作る前に、表示側 / パス / スラグの扱いをここで確定する。
 対象は **トップと `/fortune` 以外の公開コンテンツ**。原則「**情報コンテンツはすべて `es` スキーマ（DB）が正**」。リポジトリ側は (1) もれなく表示する、(2) 投稿・編集する、の2役。
 
-関連: [major-category-url-and-db-migration-plan.md](./major-category-url-and-db-migration-plan.md)
-
 ---
 
 ## 1. パス（canonical_path）規則 ＝ 確定
 
-DBの `canonical_path` を唯一の真実とする（実データ確認済み・全行で一貫）。生成規則:
+item / ranking は DB の `canonical_path` を表示URLとして扱う。article は `category + slug` から `/articles/{category}/{slug}` をアプリ側で導出し、`canonical_path` は整合用に同じ値を保存する。生成規則:
 
 ```txt
-section index   /{major}/{section}
-region 一覧     /{major}/{section}/{region}
-articles 一覧   /{major}/{section}/articles
-article 詳細    /{major}/{section}/articles/{slug}
-rankings 一覧   /{major}/{section}/rankings
-ranking 詳細    /{major}/{section}/rankings/{slug}        ← region は入れない
-item 詳細       /{major}/{section}/{item_path_segment}/{slug}  ← region は入れない
-独立記事        /articles/{slug}                          ← major/section を持たない記事
+section index        /{major}/{section}
+region 一覧          /{major}/{section}/{region}
+article category     /articles/{category}
+article 詳細         /articles/{category}/{slug}
+rankings 一覧        /{major}/{section}/rankings
+ranking 詳細         /{major}/{section}/rankings/{slug}        ← region は入れない
+item 詳細            /{major}/{section}/{item_path_segment}/{slug}  ← region は入れない
 ```
 
 - `{item_path_segment}` は `content_sections.item_path_segment`（shops / products / salons / hotels / agencies / spots）。
 - region は **DB列・地域ページ・一覧フィルタ・内部導線**でのみ扱い、詳細の canonical には含めない。
-- **canonical_path は書き込み時にアプリ側で生成して保存**する（DBトリガでは生成しない）。生成は1か所に集約する（後述 `buildCanonicalPath()`）。
+- **canonical_path は書き込み時にアプリ側で生成して保存**する（DBトリガでは生成しない）。生成は `lib/section-map.ts` と管理UI/server action 側の保存処理に集約する。
 
 ### 投稿UIでの canonical 生成（確定）
 保存時に以下で算出して `canonical_path` 列へ格納:
@@ -33,8 +30,7 @@ item 詳細       /{major}/{section}/{item_path_segment}/{slug}  ← region は�
 |---|---|
 | item | `/{major}/{section}/{item_path_segment}/{slug}` |
 | ranking | `/{major}/{section}/rankings/{slug}` |
-| article（section配下） | `/{major}/{section}/articles/{slug}` |
-| article（独立） | `/articles/{slug}` |
+| article | `/articles/{category}/{slug}` |
 
 ---
 
@@ -48,15 +44,15 @@ item 詳細       /{major}/{section}/{item_path_segment}/{slug}  ← region は�
 | `es.rankings` | **(major_category, section_slug, slug)** | 同上 |
 | `es.articles` | **slug 単独（全体で一意）** | 独立記事も含め全記事で衝突不可 |
 
-### 予約スラグ（major / 独立記事 top-level で使用不可）
+### 予約スラグ（major / article category で使用不可）
 `app/account/articles/new` の予約リストを正とする:
 `about, account, api, apple-icon.png, articles, auth, contact, disclaimer, fortune, icon.png, llms.txt, opengraph-image, privacy, robots.txt, search, sitemap.xml`
-（major カテゴリ `food/health/beauty/travel/leisure` も予約。section slug はその配下なので衝突しない）
+（major カテゴリ `food/health/beauty/travel/entertainment/leisure` も予約。section slug はその配下なので衝突しない）
 
 ### 投稿UIのバリデーション（確定）
 - 形式: `^[a-z0-9]+(?:-[a-z0-9]+)*$`
 - 重複チェック: 上記スコープで保存前に存在確認（編集時は自分を除外）。
-- article 独立投稿時は予約スラグを禁止。
+- article category と major category では予約スラグを禁止。
 
 
 ---
@@ -66,7 +62,7 @@ item 詳細       /{major}/{section}/{item_path_segment}/{slug}  ← region は�
 |---|---|---|
 | 記事 / items / rankings / ranking_items | DB ✓ | DBが正（変更なし） |
 | content_sections（中カテゴリ） | DB ✓（fallback list あり） | DBが正 |
-| major カテゴリ（food/health/beauty/travel/leisure） | repo `content/categories.ts` | **リポジトリ固定（意図どおり維持）** |
+| major カテゴリ（food/health/beauty/travel/entertainment/leisure） | repo `content/categories.ts` | **リポジトリ固定（意図どおり維持）** |
 | 地域（region 名称・SEO・featured・画像） | repo `content/*/regions.ts` ＋ leisure はハードコード | **要決定 D1** |
 | protein targets | repo `content/protein/targets.ts` | **要決定 D2** |
 | site メタ | repo `content/site.ts` | リポジトリ固定（維持） |

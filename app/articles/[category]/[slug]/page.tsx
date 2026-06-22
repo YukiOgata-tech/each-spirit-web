@@ -3,7 +3,7 @@ import { ArticleDetailPage } from "@/components/articles/ArticleDetailPage";
 import { getGenericArticle, getGenericArticleMarkdown, getLatestArticles } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { site } from "@/content/site";
+import { majorMetaImage } from "@/lib/category-media";
 
 type PageProps = { params: Promise<{ category: string; slug: string }> };
 
@@ -22,7 +22,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: article.title,
     description: article.description,
     path: routes.articleByCategory(category, slug),
-    image: article.coverImageUrl ?? site.icon,
+    image: article.coverImageUrl ?? majorMetaImage(article.majorCategory),
   });
 }
 

@@ -398,6 +398,7 @@ export type ProteinRanking = {
   target: ProteinTarget;
   title: string;
   description: string;
+  imageUrl?: string;
   criteria: string[];
   conclusion: string;
   quickTableLabel: string;
@@ -526,6 +527,7 @@ export type CafeRanking = {
   slug: string;
   title: string;
   description: string;
+  imageUrl?: string;
   criteria: string[];
   conclusion: string;
   quickTableLabel: string;

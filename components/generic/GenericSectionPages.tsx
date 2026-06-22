@@ -151,7 +151,7 @@ export async function genericItemMetadata(majorCategory: string, sectionSlug: st
 export async function genericRankingMetadata(majorCategory: string, sectionSlug: string, slug: string) {
   const ranking = await getRankingBySection(majorCategory, sectionSlug, slug);
   if (!ranking) return {};
-  return pageMetadata({ title: ranking.title, description: ranking.description, path: rankingHref(ranking), image: ranking.imageUrl ?? majorMetaImage(majorCategory) });
+  return pageMetadata({ title: ranking.title, description: ranking.description, path: rankingHref(ranking), image: ranking.imageUrl });
 }
 
 function itemHref(section: ContentSection, item: GenericItem) {

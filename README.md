@@ -2,7 +2,7 @@
 
 Next.js 15 App Router + TypeScript + Tailwind CSS v4 + Supabase で構築している、each-spirit.com 向けの比較・ランキング型メディア MVP です。
 
-ラーメン、プロテイン、美容室、カフェ、旅行、レジャー、旅行アプリ・旅行会社などを、記事・ランキング・店舗/商品カードとして配信します。
+ラーメン、プロテイン、美容室、カフェ、旅行、エンターテインメント、レジャー、旅行アプリ・旅行会社などを、記事・ランキング・店舗/商品カードとして配信します。
 
 ## セットアップ
 
@@ -58,7 +58,7 @@ UI コンポーネントでは `content/**` を直接 import せず、原則と�
 4. 必要に応じて `app/api/revalidate/route.ts` の on-demand revalidate で ISR キャッシュを更新します。
 5. アプリ側は `lib/content.ts` 経由で Supabase から読み取ります。
 
-記事は大カテゴリと中カテゴリに紐づく場合、`/{major}/{section}/articles/{slug}` で表示します。例: `/food/ramen/articles/niigata-ramen-first-guide`。大カテゴリに属さない独立記事は `/articles/{slug}` で表示します。中カテゴリは Supabase `es.content_sections` を正とし、`food`, `health`, `beauty`, `travel`, `leisure` の大カテゴリ配下に配置します。
+記事詳細は大カテゴリ配下・独立を問わず、すべて `/articles/{category}/{slug}` で表示します。例: `/articles/ramen/niigata-ramen-first-guide`。記事の `major_category` と `section_slug` は文脈付けや section ページの記事欄への掲載に使い、詳細 URL には使いません。中カテゴリは Supabase `es.content_sections` を正とし、`food`, `health`, `beauty`, `travel`, `entertainment`, `leisure` の大カテゴリ配下に配置します。
 
 記事作成UIでは、カテゴリslugの使用可否、サムネイル、本文Markdown、公式情報・確認日・出典URL、関連記事・関連店舗リンク、FAQ、SEO項目を入力できます。公開時は記事パス、一覧、`/sitemap.xml` を再検証します。
 
@@ -93,7 +93,7 @@ REVALIDATE_SECRET=
 
 ## ISR / 再検証
 
-root layout の既定 ISR は `app/layout.tsx` の `revalidate` で管理しています。コンテンツ更新直後に即時反映したい場合は `app/api/revalidate/route.ts` の on-demand revalidate を使います。
+root layout の既定 ISR は `app/layout.tsx` の `revalidate = 2592000`（30日）で管理しています。コンテンツ更新直後に即時反映したい場合は `app/api/revalidate/route.ts` の on-demand revalidate を使います。
 
 旧 seed script は、`SITE_REVALIDATE_URL` と `REVALIDATE_SECRET` が設定されている場合に再検証リクエストを送信します。通常の DB 直接更新後は、必要に応じて `POST /api/revalidate` を実行してください。
 
@@ -114,8 +114,9 @@ root layout の既定 ISR は `app/layout.tsx` の `revalidate` で管理して�
 - `/health`、`/health/protein`、目的別ページ、ランキング、商品詳細
 - `/beauty`、`/beauty/hair-salon`、地域ページ、記事、ランキング、サロン詳細
 - `/travel`、`/travel/stays`、`/travel/services`、地域ページ、ランキング、宿・旅行会社・旅行アプリ
+- `/entertainment`、`/entertainment/anime`、`/entertainment/drama`、作品カード
 - `/leisure`、`/leisure/spots`、地域ページ、ランキング、スポット詳細
-- `/articles`、独立記事詳細
+- `/articles`、`/articles/{category}`、`/articles/{category}/{slug}`
 - `/fortune`
 - `/auth/login`、`/auth/signup`、`/auth/callback`
 - `/account`、`/account/likes`、`/account/articles/new`

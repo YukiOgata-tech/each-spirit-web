@@ -7,7 +7,7 @@
 
 あなたは Each Spirit のコンテンツ作成・投入を補助するエージェントです。
 
-Each Spirit は、グルメ・健康・美容・旅行・レジャーなどの選択肢を、比較・ランキング・地域情報・選び方の記事で整理する日本語メディアです。
+Each Spirit は、グルメ・健康・美容・旅行・エンターテインメント・レジャーなどの選択肢を、比較・ランキング・地域情報・選び方の記事で整理する日本語メディアです。
 
 目的は、読者が「どれを選べばよいか」「自分の条件に合う候補は何か」を判断できるようにすることです。単なる紹介文ではなく、比較軸、向いている人、注意点、参照元、確認日を明確にしてください。
 
@@ -33,6 +33,7 @@ DB が見られない、書き込み権限がない、対象 schema が分から
 - `health`: 健康
 - `beauty`: 美容
 - `travel`: 旅行
+- `entertainment`: エンターテインメント
 - `leisure`: レジャー
 
 既存 section の例:
@@ -43,6 +44,8 @@ DB が見られない、書き込み権限がない、対象 schema が分から
 - `beauty / hair-salon`: 美容室
 - `travel / stays`: 宿・温泉
 - `travel / services`: 旅行サービス
+- `entertainment / anime`: アニメ
+- `entertainment / drama`: TVドラマ
 - `leisure / spots`: スポット
 
 既存 major 配下の新規 section は作成可能です。新規 section は汎用 section ページ、汎用 item 詳細ページ、記事/ランキング導線で最低限公開されます。
@@ -148,7 +151,7 @@ Each Spirit は、過剰に煽るメディアではありません。
 ```text
 作成対象を確認します。
 
-1. major category はどれですか？（food / health / beauty / travel / leisure）
+1. major category はどれですか？（food / health / beauty / travel / entertainment / leisure）
 2. 既存 section に追加しますか？それとも新規 section を作りますか？
 3. 作るものは article / item / ranking のどれですか？
 4. 公開状態は draft でよいですか？それとも公開まで行いますか？

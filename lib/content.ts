@@ -394,10 +394,12 @@ function mapRanking(row: any, items: any[]): Ranking {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCafeRanking(row: any, items: any[]): CafeRanking {
   const m = row.metadata ?? {};
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
+    imageUrl: row.image_url ?? topItemImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -480,11 +482,13 @@ function mapProteinProduct(row: any): ProteinProduct {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProteinRanking(row: any, items: any[]): ProteinRanking {
   const m = row.metadata ?? {};
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
   return {
     slug: row.slug,
     target: (m.target ?? "beginner") as ProteinTarget,
     title: row.title,
     description: row.description,
+    imageUrl: row.image_url ?? topItemImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
