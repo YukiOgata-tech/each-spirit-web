@@ -7,7 +7,6 @@ import { RankingCard } from "@/components/cards/RankingCard";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { TagList } from "@/components/cards/TagList";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -238,8 +237,7 @@ export async function GenericSectionIndex({ majorCategory, sectionSlug }: { majo
     <main className={`${theme.className} section-shell`}>
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={speakableWebPageSchema(section.href || `/${majorCategory}/${sectionSlug}`, section.label)} />
-      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-
+      
       <section className={`overflow-hidden rounded-lg border border-[var(--border)] ${theme.hero} shadow-soft`}>
         <div className="grid gap-0 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="flex min-h-[360px] flex-col justify-between p-5 sm:p-8 lg:p-10">
@@ -372,8 +370,7 @@ export async function GenericItemDetailPage({
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={speakableWebPageSchema(path, item.name)} />
       {item.faqs.length > 0 && <JsonLd data={faqSchema(item.faqs)} />}
-      <Breadcrumbs items={breadcrumbs.map((entry, index) => ({ label: entry.name, href: index === breadcrumbs.length - 1 ? undefined : entry.href }))} />
-
+      
       <section className={`overflow-hidden rounded-lg border border-[var(--border)] ${theme.hero} shadow-soft`}>
         <div className="grid lg:grid-cols-[1.04fr_0.96fr]">
           <div className="flex min-h-[360px] flex-col justify-between p-5 sm:p-8 lg:p-10">
@@ -518,8 +515,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
     <main className={`${theme.className} section-shell max-w-5xl`}>
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={speakableWebPageSchema(path, ranking.title)} />
-      <Breadcrumbs items={breadcrumbs.map((entry, index) => ({ label: entry.name, href: index === breadcrumbs.length - 1 ? undefined : entry.href }))} />
-
+      
       {/* Hero */}
       <section className={`overflow-hidden rounded-lg border border-[var(--border)] shadow-soft ${theme.hero}`}>
         <div className="grid lg:grid-cols-[1.05fr_0.95fr]">

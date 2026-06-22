@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Building2, CheckCircle2, Trophy } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -59,8 +58,7 @@ export default async function TravelServiceRankingPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.travelServicesRanking(region, slug), ranking.title)} />
       <JsonLd data={travelAgencyRankingItemListSchema(region, ranking, entries)} />
 
-      <Breadcrumbs items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))} />
-
+      
       <header className="mt-5 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft">
         <Badge className="bg-[var(--muted)] text-[var(--primary)]"><Trophy className="mr-1 h-3.5 w-3.5" />Ranking</Badge>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">{ranking.title}</h1>

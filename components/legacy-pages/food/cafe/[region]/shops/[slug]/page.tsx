@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Car, Clock, ExternalLink, Instagram, MapPin, Phone, Plug, Wifi } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -69,10 +68,7 @@ export default async function CafeItemPage({ params }: PageProps) {
       <JsonLd data={faqSchema(cafe.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.cafeItem(region, slug), cafe.name)} />
 
-      <Breadcrumbs
-        items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-      />
-
+      
       <section className="mt-4 grid gap-6 overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-soft lg:grid-cols-[1.2fr_0.8fr]">
         {/* Image */}
         {cafe.imageUrl ? (

@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Coffee, Trophy } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { CafeCard } from "@/components/cafe/CafeCard";
 import { RankingCard } from "@/components/cards/RankingCard";
@@ -73,11 +72,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
         )}
         <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
-            <Breadcrumbs
-              items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-              className="text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white"
-            />
-            <Badge className="mt-4 border-[var(--border)] bg-white/10 text-amber-100 backdrop-blur-sm">{regionData.heroBadge}</Badge>
+                        <Badge className="mt-4 border-[var(--border)] bg-white/10 text-amber-100 backdrop-blur-sm">{regionData.heroBadge}</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-normal text-white sm:text-5xl">
               {regionData.headline}
             </h1>

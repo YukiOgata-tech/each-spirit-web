@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Car, Clock, Droplets, ExternalLink, MapPin, Phone, UtensilsCrossed } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -68,10 +67,7 @@ export default async function HotelPage({ params }: PageProps) {
       <JsonLd data={faqSchema(hotel.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.travelHotel(region, slug), hotel.name)} />
 
-      <Breadcrumbs
-        items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-      />
-
+      
       <section className="mt-4 grid gap-6 rounded-xl border border-[var(--border)] bg-white shadow-soft overflow-hidden lg:grid-cols-[1.2fr_0.8fr]">
         {/* Image */}
         {hotel.imageUrl ? (

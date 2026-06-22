@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { ProteinRankingEntriesClient } from "@/components/protein/ProteinRankingEntriesClient";
@@ -71,13 +70,7 @@ export default async function ProteinRankingPage({ params }: PageProps) {
       {/* hero */}
       <div className="protein-hero-bg border-b border-blue-900 px-4 py-10">
         <div className="mx-auto max-w-4xl">
-          <Breadcrumbs
-            items={breadcrumbs.map((item, i) => ({
-              label: item.name,
-              href: i === breadcrumbs.length - 1 ? undefined : item.href,
-            }))}
-          />
-          <div className="mt-6 animate-rise">
+                    <div className="mt-6 animate-rise">
             <span className="inline-block rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-blue-200">
               Ranking
             </span>

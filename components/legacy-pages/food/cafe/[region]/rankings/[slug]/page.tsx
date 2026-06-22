@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Trophy } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { CafeCard } from "@/components/cafe/CafeCard";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
@@ -70,10 +69,7 @@ export default async function CafeRankingPage({ params }: PageProps) {
       <JsonLd data={faqSchema(ranking.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.cafeRanking(region, slug), ranking.title)} />
 
-      <Breadcrumbs
-        items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-      />
-
+      
       {/* Hero */}
       <section className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-gradient-to-br from-[var(--muted)] to-[#f0e4cc]">
         <div className="p-6 sm:p-8">

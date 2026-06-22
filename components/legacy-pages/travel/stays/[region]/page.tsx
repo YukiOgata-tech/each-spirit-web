@@ -4,7 +4,6 @@ import Link from "next/link";
 import { ArrowRight, MapPin, Thermometer, Trophy } from "lucide-react";
 import { HotelCard } from "@/components/travel/HotelCard";
 import { RankingCard } from "@/components/cards/RankingCard";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,11 +67,7 @@ export default async function TravelRegionPage({ params }: PageProps) {
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(28,56,41,0.96)_0%,rgba(45,90,61,0.92)_40%,rgba(74,140,96,0.80)_75%,rgba(245,237,224,0.30)_100%)]" />
         <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
-            <Breadcrumbs
-              items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-              className="[&_a]:text-white/60 [&_li]:text-white/40"
-            />
-            <Badge className="mt-4 border-white/20 bg-white/12 text-white">{regionData.heroBadge}</Badge>
+                        <Badge className="mt-4 border-white/20 bg-white/12 text-white">{regionData.heroBadge}</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-normal text-white sm:text-5xl">
               {regionData.headline}
             </h1>

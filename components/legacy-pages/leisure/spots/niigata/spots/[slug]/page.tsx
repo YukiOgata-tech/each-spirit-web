@@ -5,7 +5,6 @@ import { ExternalLink, MapPin, Phone } from "lucide-react";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { LeisureIcon } from "@/components/leisure/LeisureIcon";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -60,8 +59,7 @@ export default async function LeisureSpotPage({ params }: PageProps) {
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(spot.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.leisureSpot(region, spot.slug), spot.name)} />
-      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-      <section className="overflow-hidden rounded-lg border border-cyan-200 bg-white shadow-soft">
+            <section className="overflow-hidden rounded-lg border border-cyan-200 bg-white shadow-soft">
         <div className="relative min-h-[260px] sm:min-h-[360px]">
           <Image src={visual.imageUrl} alt={visual.imageAlt} fill className="object-cover" priority sizes="100vw" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/76 via-slate-950/18 to-transparent" />

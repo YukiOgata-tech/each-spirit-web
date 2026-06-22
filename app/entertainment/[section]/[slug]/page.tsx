@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import type { Metadata } from "next";
 import { ExternalLink } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { SourceList } from "@/components/cards/SourceList";
 import { TagList } from "@/components/cards/TagList";
@@ -83,8 +82,7 @@ export default async function EntertainmentTitlePage({ params }: PageProps) {
 
       <section className="border-b border-[var(--border)] bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_55%,#fdf2f8_100%)]">
         <div className="section-shell">
-          <Breadcrumbs items={breadcrumbs.map((b, i) => ({ label: b.name, href: i === breadcrumbs.length - 1 ? undefined : b.href }))} />
-          <div className="mt-4 grid gap-6 lg:grid-cols-[300px_1fr] lg:items-start">
+                    <div className="mt-4 grid gap-6 lg:grid-cols-[300px_1fr] lg:items-start">
             {src && (
               <div className="relative aspect-[3/4] w-full max-w-[300px] overflow-hidden rounded-xl border border-[var(--border)] bg-[var(--muted)] shadow-sm">
                 <Image src={src} alt={item.name} fill sizes="(min-width:1024px) 300px, 70vw" className="object-cover" priority />

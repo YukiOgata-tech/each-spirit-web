@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowRight, Car, CheckCircle2, Clock, ExternalLink, Instagram, MapPin, Phone, Users } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
@@ -92,13 +91,7 @@ export default async function BeautySalonPage({ params }: PageProps) {
       </div>
 
       <div className="section-shell mx-auto max-w-4xl">
-        <Breadcrumbs
-          items={breadcrumbs.map((item, i) => ({
-            label: item.name,
-            href: i === breadcrumbs.length - 1 ? undefined : item.href,
-          }))}
-        />
-
+        
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_320px]">
           <div className="space-y-6">
             <div className="animate-rise rounded-2xl border border-[#f2d5e8] bg-white p-6">

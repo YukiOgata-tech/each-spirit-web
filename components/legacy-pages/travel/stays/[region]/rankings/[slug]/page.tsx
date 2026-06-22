@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { HotelCard } from "@/components/travel/HotelCard";
@@ -56,10 +55,7 @@ export default async function TravelRankingPage({ params }: PageProps) {
       <JsonLd data={faqSchema(ranking.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.travelRanking(region, slug), ranking.title)} />
 
-      <Breadcrumbs
-        items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-      />
-
+      
       <section className="mt-4 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft sm:p-8">
         <Badge className="bg-[var(--muted)] text-[var(--primary)]">Ranking</Badge>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-4xl">{ranking.title}</h1>

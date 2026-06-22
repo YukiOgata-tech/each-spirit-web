@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, Trophy } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { ItemCard } from "@/components/cards/ItemCard";
@@ -72,11 +71,7 @@ export default async function RankingPage({ params }: PageProps) {
       {/* Hero */}
       <section className="border-b border-[var(--border)] bg-[linear-gradient(135deg,#3d1508_0%,#a64019_45%,#e5a126_100%)]">
         <div className="mx-auto w-[min(1360px,calc(100%-40px))] py-10 sm:py-14">
-          <Breadcrumbs
-            items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-            className="[&_a]:text-white/60 [&_li]:text-white/40 [&_svg]:text-white/30"
-          />
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+                    <div className="mt-4 flex flex-wrap items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
               <Trophy className="h-5 w-5 text-white" />
             </span>

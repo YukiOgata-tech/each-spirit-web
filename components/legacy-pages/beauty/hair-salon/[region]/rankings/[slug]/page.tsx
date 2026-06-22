@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
@@ -55,13 +54,7 @@ export default async function BeautyRankingPage({ params }: PageProps) {
 
       <div className="border-b border-[#f2d5e8] beauty-hero-bg px-4 py-10">
         <div className="mx-auto max-w-4xl">
-          <Breadcrumbs
-            items={breadcrumbs.map((item, i) => ({
-              label: item.name,
-              href: i === breadcrumbs.length - 1 ? undefined : item.href,
-            }))}
-          />
-          <div className="mt-6 animate-rise">
+                    <div className="mt-6 animate-rise">
             <span className="inline-block rounded-full border border-[#f2d5e8] bg-white/80 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-[#8b3a7e]">
               Ranking
             </span>

@@ -1,5 +1,4 @@
 import { ArticleCard } from "@/components/cards/ArticleCard";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articleHref, getGenericArticlesByCategory, getLatestArticles } from "@/lib/content";
 import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
@@ -20,7 +19,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: `${category}の記事一覧`,
     description: `Each Spirit の ${category} に関する記事を掲載しています。`,
     path: routes.articleCategory(category),
-    image: cover,
+    image: cover ?? "/images/articles/meta.jpg",
   });
 }
 
@@ -36,8 +35,7 @@ export default async function ArticleCategoryPage({ params }: PageProps) {
   return (
     <main className="section-shell">
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
-      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-      <div className="mb-6">
+            <div className="mb-6">
         <p className="text-sm font-semibold text-[var(--primary)]">Articles / {category}</p>
         <h1 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 sm:text-5xl">{category}の記事一覧</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">このカテゴリに紐づく公開記事を新しい順に表示しています。</p>

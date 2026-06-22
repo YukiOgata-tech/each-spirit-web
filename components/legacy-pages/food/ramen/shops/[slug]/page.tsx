@@ -2,7 +2,6 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ExternalLink, MapPin, Phone } from "lucide-react";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -56,8 +55,7 @@ export default async function ItemPage({ params }: PageProps) {
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(item.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.ramenItem(item.slug), item.name)} />
-      <Breadcrumbs items={breadcrumbs.map((value, index) => ({ label: value.name, href: index === breadcrumbs.length - 1 ? undefined : value.href }))} />
-      <section className="overflow-hidden rounded-lg border border-orange-200 bg-white shadow-soft">
+            <section className="overflow-hidden rounded-lg border border-orange-200 bg-white shadow-soft">
         <div className="relative h-[260px] w-full sm:h-[320px]">
           {imageUrl ? (
             <>

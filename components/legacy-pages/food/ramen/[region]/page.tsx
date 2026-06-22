@@ -5,7 +5,6 @@ import { ArrowRight, MapPin, Soup, Trophy } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { ItemCard } from "@/components/cards/ItemCard";
 import { RankingCard } from "@/components/cards/RankingCard";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -85,10 +84,7 @@ export default async function RamenRegionPage({ params }: PageProps) {
         )}
         <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
-            <Breadcrumbs
-              items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-            />
-            <Badge className="mt-4 border-orange-200 bg-white text-orange-800">{regionData.heroBadge}</Badge>
+                        <Badge className="mt-4 border-orange-200 bg-white text-orange-800">{regionData.heroBadge}</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-normal text-slate-950 sm:text-5xl">
               {regionData.headline}
             </h1>

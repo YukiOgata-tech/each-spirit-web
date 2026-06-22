@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Bus, MapPin, Trophy } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { TravelAgencyCard } from "@/components/travel-services/TravelAgencyCard";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -58,11 +57,7 @@ export default async function TravelServicesRegionPage({ params }: PageProps) {
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(18,53,69,0.96)_0%,rgba(40,90,111,0.88)_52%,rgba(224,143,62,0.50)_100%)]" />
         <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">
           <div>
-            <Breadcrumbs
-              items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-              className="text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white"
-            />
-            <Badge className="mt-4 border-white/20 bg-white/12 text-white">{regionData.heroBadge}</Badge>
+                        <Badge className="mt-4 border-white/20 bg-white/12 text-white">{regionData.heroBadge}</Badge>
             <h1 className="mt-5 text-4xl font-bold leading-[1.08] tracking-normal text-white sm:text-5xl">{regionData.headline}</h1>
             <p className="mt-5 max-w-2xl text-base leading-8 text-white/80">{regionData.subtext}</p>
             <div className="mt-6 flex flex-wrap gap-3">

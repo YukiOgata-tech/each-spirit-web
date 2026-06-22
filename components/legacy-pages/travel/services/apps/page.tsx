@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ExternalLink, Smartphone } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -43,11 +42,7 @@ export default async function TravelAppsPage() {
         />
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(18,53,69,0.96)_0%,rgba(40,90,111,0.88)_55%,rgba(224,143,62,0.45)_100%)]" />
         <div className="relative z-10 mx-auto w-[min(1120px,calc(100%-40px))] py-10 max-sm:w-[min(1120px,calc(100%-24px))] sm:py-14">
-          <Breadcrumbs
-            items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))}
-            className="text-white/70 [&_a]:text-white/70 [&_a:hover]:text-white"
-          />
-          <Badge className="mt-4 border-white/20 bg-white/12 text-white">Travel Apps</Badge>
+                    <Badge className="mt-4 border-white/20 bg-white/12 text-white">Travel Apps</Badge>
           <h1 className="mt-5 text-4xl font-bold leading-tight tracking-normal text-white sm:text-5xl">おすすめ旅行アプリを用途別に選ぶ。</h1>
           <p className="mt-5 max-w-2xl text-base leading-8 text-white/80">
             旅行アプリは都道府県ではなく、移動計画・乗換検索・旅程管理・予約などの使う場面で整理します。初回は移動計画系の基礎アプリから掲載しています。

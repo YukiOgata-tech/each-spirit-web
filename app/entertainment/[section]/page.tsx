@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { EntertainmentCatalog } from "@/components/entertainment/EntertainmentCatalog";
@@ -58,8 +57,7 @@ export default async function EntertainmentSectionPage({ params }: PageProps) {
 
       <section className="border-b border-[var(--border)] bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_55%,#fdf2f8_100%)]">
         <div className="section-shell">
-          <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-          <p className="section-kicker mt-3">Entertainment / {s.label}</p>
+                    <p className="section-kicker mt-3">Entertainment / {s.label}</p>
           <h1 className="section-heading mt-2">{s.label}の作品を探す</h1>
           <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600">{s.description}</p>
         </div>

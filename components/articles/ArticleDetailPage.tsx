@@ -1,4 +1,3 @@
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import { RelatedLinks } from "@/components/cards/RelatedLinks";
@@ -30,8 +29,7 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
       <JsonLd data={articleSchema(article, path)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(article.faqs)} />
-      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-
+      
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:p-8 max-sm:shadow-none">
         <div className="flex flex-wrap gap-2">
           <Badge>{categoryLabel}</Badge>

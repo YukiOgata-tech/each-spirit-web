@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { SiteFooter } from "@/components/layout/SiteFooter";
 import { SiteHeader } from "@/components/layout/SiteHeader";
+import { SiteBreadcrumbs } from "@/components/layout/SiteBreadcrumbs";
 import { GlobalRouteLoader } from "@/components/layout/GlobalRouteLoader";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -71,6 +72,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <GlobalRouteLoader />
         <SmoothScroll />
         <SiteHeader />
+        <SiteBreadcrumbs />
         <main>{children}</main>
         <SiteFooter />
       </body>

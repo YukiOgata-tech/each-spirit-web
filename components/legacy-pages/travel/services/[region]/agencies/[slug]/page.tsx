@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Bus, ExternalLink, MapPin, Phone, ShieldCheck, Users } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -64,8 +63,7 @@ export default async function TravelAgencyPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.travelAgency(region, slug), agency.name)} />
       <JsonLd data={travelAgencySchema(region, agency, editorialScore)} />
 
-      <Breadcrumbs items={breadcrumbs.map((b, i) => ({ label: b.name, href: i < breadcrumbs.length - 1 ? b.href : undefined }))} />
-
+      
       <section className="mt-4 grid gap-6 overflow-hidden rounded-xl border border-[var(--border)] bg-white shadow-soft lg:grid-cols-[1.15fr_0.85fr]">
         <div className="relative min-h-[280px] lg:min-h-[380px]">
           <AttributedImage

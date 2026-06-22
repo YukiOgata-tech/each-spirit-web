@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { ArrowRight, FileText } from "lucide-react";
-import { Breadcrumbs } from "@/components/layout/Breadcrumbs";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { getArticleCategories } from "@/lib/content";
@@ -11,6 +10,7 @@ export const metadata = pageMetadata({
   title: "記事カテゴリ一覧 気になることは記事でチェック",
   description: "Each Spirit の記事をカテゴリ別に掲載しています。気になるカテゴリから記事を探せます。",
   path: routes.articles,
+  image: "/images/articles/meta.jpg",
 });
 
 export default async function ArticleCategoriesPage() {
@@ -23,8 +23,7 @@ export default async function ArticleCategoriesPage() {
   return (
     <main className="section-shell">
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
-      <Breadcrumbs items={breadcrumbs.map((item, index) => ({ label: item.name, href: index === breadcrumbs.length - 1 ? undefined : item.href }))} />
-      <div className="mb-6">
+            <div className="mb-6">
         <p className="text-sm font-semibold text-[var(--primary)]">Articles</p>
         <h1 className="mt-2 text-3xl font-bold tracking-normal text-slate-950 sm:text-5xl">記事カテゴリ一覧</h1>
         <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">記事をカテゴリ別にまとめています。気になるカテゴリを選ぶと、その記事一覧を新しい順で表示します。</p>
