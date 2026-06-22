@@ -14,6 +14,7 @@ export const metadata: Metadata = pageMetadata({
   description:
     "総合運・恋愛運・金運・仕事運・健康運・対人運・おでかけ運を毎日チェック。誕生日と性別であなただけの運勢を占います。",
   path: routes.fortune,
+  image: "/images/fortune/meta.jpg",
 });
 
 export default async function FortunePage() {
