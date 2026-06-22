@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { ImagePlus, LinkIcon, List, Pilcrow, Plus, Quote, Send, Sparkles, Trash2, Type, Underline } from "lucide-react";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
+import { decodeHeicIfNeeded, optimizeImage } from "@/lib/image-client";
 
 type ArticleEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
@@ -89,27 +90,6 @@ function id() {
   return Math.random().toString(36).slice(2);
 }
 
-async function optimizeImage(file: File) {
-  if (!file.type.startsWith("image/") || file.type === "image/gif") return file;
-  const bitmap = await createImageBitmap(file).catch(() => null);
-  if (!bitmap) return file;
-
-  const maxWidth = 1600;
-  const scale = Math.min(1, maxWidth / bitmap.width);
-  const width = Math.round(bitmap.width * scale);
-  const height = Math.round(bitmap.height * scale);
-  const canvas = document.createElement("canvas");
-  canvas.width = width;
-  canvas.height = height;
-  const ctx = canvas.getContext("2d");
-  if (!ctx) return file;
-  ctx.drawImage(bitmap, 0, 0, width, height);
-
-  const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/webp", 0.82));
-  if (!blob) return file;
-  return new File([blob], file.name.replace(/\.[^.]+$/, ".webp"), { type: "image/webp" });
-}
-
 export function ArticleEditor({ action, categoryOptions, initial }: ArticleEditorProps) {
   const isEdit = Boolean(initial);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -165,7 +145,8 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
   };
 
   const uploadAsset = async (file: File) => {
-    const optimized = await optimizeImage(file); // 記事エディタは常に webp 化して容量を抑える
+    const decoded = await decodeHeicIfNeeded(file); // iPhone の HEIC を先に JPEG 化
+    const optimized = await optimizeImage(decoded, "image/webp"); // 記事エディタは常に webp 化して容量を抑える
     const formData = new FormData();
     formData.set("file", optimized);
     // 新方針: each-spirit-images/articles/{slug}/{uuid}.webp（slug 単位フォルダ）
@@ -301,7 +282,7 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
             <input
               ref={coverFileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];
@@ -386,7 +367,7 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
             <input
               ref={fileRef}
               type="file"
-              accept="image/png,image/jpeg,image/webp,image/gif"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
               className="hidden"
               onChange={(event) => {
                 const file = event.target.files?.[0];

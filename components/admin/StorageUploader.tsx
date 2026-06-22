@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Check, Copy, ImagePlus, Search, UploadCloud } from "lucide-react";
+import { AlertCircle, Check, Copy, ImagePlus, Search, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { mimeForPath, optimizeImage } from "@/lib/image-client";
+import { decodeHeicIfNeeded, isHeic, mimeForPath, optimizeImage } from "@/lib/image-client";
 
 export type UploadArticle = {
   slug: string;
@@ -65,6 +65,7 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
   const [previewUrl, setPreviewUrl] = useState("");
   const [upsert, setUpsert] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [converting, setConverting] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<{ bucket: string; path: string; publicUrl: string } | null>(null);
   const [copied, setCopied] = useState("");
@@ -99,11 +100,27 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
     uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
-  const onPickFile = (f: File | null) => {
-    setFile(f);
+  const onPickFile = async (f: File | null) => {
     setResult(null);
-    if (previewUrl) URL.revokeObjectURL(previewUrl);
-    setPreviewUrl(f ? URL.createObjectURL(f) : "");
+    setError("");
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); setPreviewUrl(""); }
+    if (!f) { setFile(null); return; }
+    try {
+      // HEIC（iPhone）はブラウザで描画できないので、選択時に JPEG へデコードして
+      // プレビュー・後段の最適化に使えるようにする。
+      let prepared = f;
+      if (isHeic(f)) {
+        setConverting(true);
+        prepared = await decodeHeicIfNeeded(f);
+      }
+      setFile(prepared);
+      setPreviewUrl(URL.createObjectURL(prepared));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "HEICの変換に失敗しました");
+      setFile(null);
+    } finally {
+      setConverting(false);
+    }
   };
 
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
@@ -125,11 +142,21 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
       formData.set("path", normalized);
       formData.set("upsert", upsert ? "true" : "false");
       const res = await fetch("/api/admin/upload", { method: "POST", body: formData });
-      const data = (await res.json()) as { ok: boolean; bucket?: string; path?: string; publicUrl?: string; message?: string };
-      if (!res.ok || !data.ok || !data.publicUrl) throw new Error(data.message ?? "アップロードに失敗しました");
+      // レスポンスが JSON でない場合（プラットフォームのサイズ上限超過など）でも原因を出す
+      const data = (await res.json().catch(() => null)) as
+        | { ok: boolean; bucket?: string; path?: string; publicUrl?: string; message?: string }
+        | null;
+      if (!res.ok || !data?.ok || !data.publicUrl) {
+        const reason =
+          data?.message ??
+          (res.status === 413
+            ? "ファイルが大きすぎます（サーバ受信上限を超過）。圧縮して再度お試しください。"
+            : `アップロードに失敗しました（HTTP ${res.status}）`);
+        throw new Error(reason);
+      }
       setResult({ bucket: data.bucket!, path: data.path!, publicUrl: data.publicUrl });
       setRefreshKey((k) => k + 1);
-      onPickFile(null);
+      void onPickFile(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : "アップロードに失敗しました");
     } finally {
@@ -245,9 +272,9 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif"
+                accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
                 className="hidden"
-                onChange={(e) => onPickFile(e.target.files?.[0] ?? null)}
+                onChange={(e) => { void onPickFile(e.target.files?.[0] ?? null); }}
               />
               {previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -255,11 +282,12 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
               ) : (
                 <button
                   type="button"
+                  disabled={converting}
                   onClick={() => fileRef.current?.click()}
-                  className="flex aspect-[16/9] w-full max-w-md flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 transition hover:border-orange-400 hover:text-orange-500"
+                  className="flex aspect-[16/9] w-full max-w-md flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 transition hover:border-orange-400 hover:text-orange-500 disabled:opacity-60"
                 >
                   <ImagePlus className="h-7 w-7" />
-                  <span className="text-sm font-semibold">画像を選択</span>
+                  <span className="text-sm font-semibold">{converting ? "HEICを変換中…" : "画像を選択（HEIC可）"}</span>
                 </button>
               )}
               {previewUrl && (
@@ -272,12 +300,20 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
               既存ファイルを上書きする（差し替え。公開キャッシュが残る場合あり）
             </label>
 
-            {error && <p className="mt-3 text-sm font-semibold text-red-600">{error}</p>}
+            {error && (
+              <div
+                role="alert"
+                className="mt-3 flex items-start gap-1.5 rounded-md border border-red-200 bg-red-50 px-2.5 py-1.5 text-xs font-semibold text-red-700"
+              >
+                <AlertCircle className="mt-px h-3.5 w-3.5 shrink-0" />
+                <span className="break-words">{error}</span>
+              </div>
+            )}
 
             <div className="mt-4">
-              <Button type="button" disabled={uploading || !file} onClick={upload} className="bg-orange-500 text-white hover:bg-orange-600">
+              <Button type="button" disabled={uploading || converting || !file} onClick={upload} className="bg-orange-500 text-white hover:bg-orange-600">
                 <UploadCloud className="h-4 w-4" />
-                {uploading ? "アップロード中…" : "この パスにアップロード"}
+                {uploading ? "アップロード中…" : "このパスにアップロード"}
               </Button>
             </div>
 

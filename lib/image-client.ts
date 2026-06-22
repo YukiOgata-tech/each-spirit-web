@@ -4,6 +4,28 @@
 
 const MAX_WIDTH = 1600;
 
+/** HEIC/HEIF か（type が空で来る端末があるので拡張子でも判定） */
+export function isHeic(file: File): boolean {
+  const t = file.type.toLowerCase();
+  if (t === "image/heic" || t === "image/heif") return true;
+  return /\.(heic|heif)$/i.test(file.name);
+}
+
+/**
+ * iPhone の HEIC/HEIF はブラウザ（Safari 以外）の canvas でデコードできないため、
+ * heic2any（libheif の WASM）で一旦 JPEG にデコードしてから後段の最適化に流す。
+ * heic2any は約1.4MB なので、HEIC のときだけ動的 import してロードする。
+ * 非 HEIC はそのまま返す（無駄なロードをしない）。
+ */
+export async function decodeHeicIfNeeded(file: File): Promise<File> {
+  if (!isHeic(file)) return file;
+  const { default: heic2any } = await import("heic2any");
+  const out = await heic2any({ blob: file, toType: "image/jpeg", quality: 0.92 });
+  const blob = Array.isArray(out) ? out[0] : out;
+  const name = file.name.replace(/\.[^.]+$/, "") + ".jpg";
+  return new File([blob], name, { type: "image/jpeg" });
+}
+
 /** path/ファイル名の拡張子から配信時の MIME を判定 */
 export function mimeForPath(path: string): string {
   const ext = path.toLowerCase().match(/\.([a-z0-9]+)$/)?.[1];
