@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, ShieldCheck, UploadCloud,
+  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, UploadCloud,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
@@ -94,6 +94,32 @@ export default async function AccountPage() {
   const wantToVisitCount = likes.filter(l => l.like_type === "want_to_visit").length;
   const recentLikes      = likes.slice(0, 8);
 
+  // 最近のアクティビティの target_id(uuid) を実際のタイトル / リンクへ解決する
+  const es = supabase.schema("es");
+  const recItemIds    = recentLikes.filter((l) => l.content_kind === "item").map((l) => l.target_id);
+  const recArticleIds = recentLikes.filter((l) => l.content_kind === "article").map((l) => l.target_id);
+  const recRankingIds = recentLikes.filter((l) => l.content_kind === "ranking").map((l) => l.target_id);
+  const [recItemsRes, recArticlesRes, recRankingsRes] = await Promise.all([
+    recItemIds.length ? es.from("items").select("id, name, canonical_path").in("id", recItemIds) : Promise.resolve({ data: [] }),
+    recArticleIds.length ? es.from("articles").select("id, title, canonical_path").in("id", recArticleIds) : Promise.resolve({ data: [] }),
+    recRankingIds.length ? es.from("rankings").select("id, title, canonical_path").in("id", recRankingIds) : Promise.resolve({ data: [] }),
+  ]);
+  type Resolved = { name: string; href: string | null };
+  const resolvedActivity = new Map<string, Resolved>();
+  for (const it of (recItemsRes.data ?? []) as { id: string; name: string; canonical_path: string | null }[]) {
+    resolvedActivity.set(`item:${it.id}`, { name: it.name, href: it.canonical_path });
+  }
+  for (const a of (recArticlesRes.data ?? []) as { id: string; title: string; canonical_path: string | null }[]) {
+    resolvedActivity.set(`article:${a.id}`, { name: a.title, href: a.canonical_path });
+  }
+  for (const r of (recRankingsRes.data ?? []) as { id: string; title: string; canonical_path: string | null }[]) {
+    resolvedActivity.set(`ranking:${r.id}`, { name: r.title, href: r.canonical_path });
+  }
+  const recentActivity = recentLikes.map((l) => {
+    const r = resolvedActivity.get(`${l.content_kind}:${l.target_id}`);
+    return { ...l, name: r?.name ?? "タイトルを取得できません", href: r?.href ?? null };
+  });
+
   const displayName  = profile?.display_name ?? user.email?.split("@")[0] ?? "ゲスト";
   const memberSince  = new Date(user.created_at).toLocaleDateString("ja-JP", { year: "numeric", month: "long" });
   const initials     = displayName.slice(0, 2).toUpperCase();
@@ -177,21 +203,32 @@ export default async function AccountPage() {
               />
             ) : (
               <ul className="grid gap-2 sm:grid-cols-2">
-                {recentLikes.map((like, i) => {
+                {recentActivity.map((like, i) => {
                   const LikeIcon = LIKE_TYPE_LABELS[like.like_type]?.icon ?? Heart;
                   const likeColor = LIKE_TYPE_LABELS[like.like_type]?.color ?? "text-slate-400";
                   const likeLabel = LIKE_TYPE_LABELS[like.like_type]?.label ?? like.like_type;
                   const contentLabel = CONTENT_KIND_LABELS[like.content_kind] ?? like.content_kind;
-                  return (
-                    <li key={i} className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/50 px-3 py-2.5">
+                  const inner = (
+                    <>
                       <LikeIcon className={`h-4 w-4 shrink-0 ${likeColor}`} />
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-sm font-medium text-slate-800">{like.target_id}</p>
-                        <p className="mt-0.5 text-xs text-slate-400">{contentLabel} · {likeLabel}</p>
+                        <p className="truncate text-sm font-medium text-slate-800">{like.name}</p>
+                        <p className="mt-0.5 truncate text-xs text-slate-400">
+                          {contentLabel} · {likeLabel} · {new Date(like.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
+                        </p>
                       </div>
-                      <span className="shrink-0 text-[11px] tabular-nums text-slate-400">
-                        {new Date(like.created_at).toLocaleDateString("ja-JP", { month: "numeric", day: "numeric" })}
-                      </span>
+                    </>
+                  );
+                  const base = "flex min-w-0 items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/50 px-3 py-2.5";
+                  return (
+                    <li key={i} className="min-w-0">
+                      {like.href ? (
+                        <Link href={like.href} className={`${base} transition hover:border-[var(--primary)]/40 hover:bg-white`}>
+                          {inner}
+                        </Link>
+                      ) : (
+                        <div className={base}>{inner}</div>
+                      )}
                     </li>
                   );
                 })}
@@ -201,10 +238,6 @@ export default async function AccountPage() {
 
           {admin && (
             <DashboardCard title="管理メニュー" className="border-orange-300 bg-orange-50/70">
-              <div className="mb-3 inline-flex items-center gap-1.5 rounded-full border border-orange-300 bg-orange-100 px-2.5 py-1 text-[11px] font-bold text-orange-700">
-                <ShieldCheck className="h-3.5 w-3.5" />
-                管理者のみに表示
-              </div>
               <div className="space-y-2">
                 <Link
                   href="/account/manage"
@@ -212,7 +245,7 @@ export default async function AccountPage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <ClipboardList className="h-4 w-4" />
-                    コンテンツを修正・管理
+                    コンテンツ修正/管理
                   </span>
                   <ArrowRight className="h-4 w-4 text-white/80" />
                 </Link>
@@ -222,7 +255,7 @@ export default async function AccountPage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <PenLine className="h-4 w-4 text-orange-500" />
-                    記事を作成する
+                    記事を作成
                   </span>
                   <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
@@ -232,7 +265,7 @@ export default async function AccountPage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <PenLine className="h-4 w-4 text-orange-500" />
-                    店舗・商品を作成する
+                    店舗/商品を作成
                   </span>
                   <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
@@ -242,7 +275,7 @@ export default async function AccountPage() {
                 >
                   <span className="inline-flex items-center gap-2">
                     <PenLine className="h-4 w-4 text-orange-500" />
-                    ランキングを作成する
+                    ランキングを作成
                   </span>
                   <ArrowRight className="h-4 w-4 text-orange-300" />
                 </Link>
@@ -265,7 +298,7 @@ export default async function AccountPage() {
 
           {/* ── ポイント ────────────────────────────── */}
           <DashboardCard title="ポイント">
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-2 sm:gap-4">
               <div className="flex items-end gap-2">
                 <span className="text-[2rem] font-black tabular-nums leading-none text-slate-900">
                   {(points?.balance ?? 0).toLocaleString("ja-JP")}

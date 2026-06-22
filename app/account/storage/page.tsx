@@ -9,7 +9,8 @@ import { StorageUploader, type UploadArticle } from "@/components/admin/StorageU
 
 export const metadata: Metadata = { title: "画像アップロード", robots: { index: false } };
 
-const ALLOWED_BUCKETS = new Set(["each-spirit-images", "article-assets"]);
+const ALLOWED_BUCKETS = ["each-spirit-images", "article-assets"];
+const ALLOWED_BUCKET_SET = new Set(ALLOWED_BUCKETS);
 
 type ArticleRow = {
   slug: string;
@@ -29,9 +30,32 @@ function extractReferences(text: string): { bucket: string; path: string }[] {
   while ((m = re.exec(text)) !== null) {
     const bucket = m[1];
     const path = m[2].replace(/[).,]+$/, ""); // 末尾の記号を除去
-    if (ALLOWED_BUCKETS.has(bucket)) out.push({ bucket, path });
+    if (ALLOWED_BUCKET_SET.has(bucket)) out.push({ bucket, path });
   }
   return out;
+}
+
+// バケット内の既存フォルダ（プレフィックス）を浅く再帰的に収集する（自由パスモードの候補用）。
+// Supabase storage の list はフォルダを id=null のエントリとして返す。データ量は小さい前提で深さを制限。
+async function listFolders(
+  service: ReturnType<typeof createServerClient>,
+  bucket: string,
+): Promise<string[]> {
+  const found = new Set<string>();
+  async function walk(prefix: string, depth: number) {
+    if (depth > 4) return;
+    const { data } = await service.storage.from(bucket).list(prefix, { limit: 1000, sortBy: { column: "name", order: "asc" } });
+    if (!data) return;
+    for (const entry of data) {
+      if (entry.id === null) { // フォルダ
+        const next = prefix ? `${prefix}/${entry.name}` : entry.name;
+        found.add(next);
+        await walk(next, depth + 1);
+      }
+    }
+  }
+  await walk("", 0);
+  return Array.from(found).sort();
 }
 
 export default async function StoragePage() {
@@ -66,6 +90,10 @@ export default async function StoragePage() {
     };
   });
 
+  const folders = await Promise.all(
+    ALLOWED_BUCKETS.map(async (bucket) => ({ bucket, prefixes: await listFolders(service, bucket) })),
+  );
+
   const publicPrefix = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/`;
 
   return (
@@ -82,14 +110,14 @@ export default async function StoragePage() {
           </div>
           <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">画像アップロード</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-            記事を選び、<span className="font-mono text-slate-700">articles/&#123;slug&#125;/</span> 配下の指定パスに画像をアップロードします。
-            本文（MD）に先に書いたURLのパスへ後から実ファイルを置く用途です。アップロード時に拡張子へ合わせて最適化し、容量を抑えます。
+            「記事から選ぶ」では本文（MD）に先に書いた <span className="font-mono text-slate-700">articles/&#123;slug&#125;/</span> のパスへ実ファイルを後から置けます。
+            「自由パスで入れる」ではバケットと既存フォルダを選び、任意のパスにアップロードできます。アップロード時に拡張子へ合わせて最適化し、容量を抑えます。
           </p>
         </div>
       </header>
 
       <div className="mx-auto mt-6 w-[min(1080px,calc(100%-24px))] sm:w-[min(1080px,calc(100%-32px))]">
-        <StorageUploader articles={articles} publicPrefix={publicPrefix} />
+        <StorageUploader articles={articles} folders={folders} publicPrefix={publicPrefix} />
       </div>
     </main>
   );

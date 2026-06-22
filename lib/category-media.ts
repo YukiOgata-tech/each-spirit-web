@@ -14,6 +14,10 @@
 const BASE = "/images/categories";
 const EXT = "jpg";
 
+/** ランキングに画像が無い（1位アイテム画像のフォールバックも無い）場合に使う共通画像。
+ *  `public/images/categories/ranking-fallback.jpg` に配置する。 */
+export const RANKING_FALLBACK_IMAGE = `${BASE}/ranking-fallback.${EXT}`;
+
 export type MajorCategoryMedia = {
   major: string;
   label: string;

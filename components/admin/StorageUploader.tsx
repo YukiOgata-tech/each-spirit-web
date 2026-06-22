@@ -15,6 +15,7 @@ export type UploadArticle = {
 
 type Props = {
   articles: UploadArticle[];
+  folders: { bucket: string; prefixes: string[] }[]; // バケットごとの既存フォルダ一覧
   publicPrefix: string; // 例: https://xxx.supabase.co/storage/v1/object/public/
 };
 
@@ -56,7 +57,8 @@ function ExistenceBadge({ url, refreshKey }: { url: string; refreshKey: number }
   return <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[11px] font-bold text-amber-700">未アップロード</span>;
 }
 
-export function StorageUploader({ articles, publicPrefix }: Props) {
+export function StorageUploader({ articles, folders, publicPrefix }: Props) {
+  const [mode, setMode] = useState<"article" | "free">("article");
   const [query, setQuery] = useState("");
   const [selectedSlug, setSelectedSlug] = useState("");
   const [bucket, setBucket] = useState<string>(BUCKETS[0]);
@@ -99,6 +101,22 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
     setError("");
     uploaderRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
+
+  const switchMode = (m: "article" | "free") => {
+    setMode(m);
+    setResult(null);
+    setError("");
+    if (m === "free") {
+      setSelectedSlug("");
+      setPath("");
+    }
+  };
+
+  const bucketFolders = useMemo(
+    () => folders.find((f) => f.bucket === bucket)?.prefixes ?? [],
+    [folders, bucket],
+  );
+  const showUploader = mode === "free" || !!selected;
 
   const onPickFile = async (f: File | null) => {
     setResult(null);
@@ -181,7 +199,29 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
 
   return (
     <div className="space-y-4">
-      {/* 1. 記事選択 */}
+      {/* モード切替 */}
+      <div className="flex flex-wrap gap-2">
+        {([["article", "記事から選ぶ"], ["free", "自由パスで入れる"]] as const).map(([value, label]) => {
+          const active = mode === value;
+          return (
+            <button
+              key={value}
+              type="button"
+              onClick={() => switchMode(value)}
+              className={
+                active
+                  ? "rounded-full bg-orange-500 px-4 py-2 text-sm font-bold text-white"
+                  : "rounded-full border border-orange-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:border-orange-400 hover:text-slate-900"
+              }
+            >
+              {label}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 1. 記事選択（記事モードのみ） */}
+      {mode === "article" && (
       <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <h2 className="text-sm font-bold text-slate-900">1. 記事を選ぶ</h2>
         <label className="relative mt-3 block">
@@ -221,11 +261,10 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
           {filtered.length === 0 && <p className="px-1 py-6 text-center text-sm text-slate-400">該当する記事がありません。</p>}
         </div>
       </section>
+      )}
 
-      {selected && (
-        <>
-          {/* 2. 参照画像（アップロード待ち検出） */}
-          {selected.references.length > 0 && (
+      {/* 参照画像（記事モード・アップロード待ち検出） */}
+      {mode === "article" && selected && selected.references.length > 0 && (
             <section className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <h2 className="text-sm font-bold text-slate-900">2. この記事が参照している画像</h2>
               <p className="mt-1 text-xs leading-5 text-slate-500">本文・カバーに書かれた画像URLです。「未アップロード」のスロットへファイルを置いてください。</p>
@@ -243,11 +282,12 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
                 ))}
               </ul>
             </section>
-          )}
+      )}
 
-          {/* 3. アップロード */}
+      {/* アップロード（記事モード・自由パスモード共通） */}
+      {showUploader && (
           <section ref={uploaderRef} className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-            <h2 className="text-sm font-bold text-slate-900">{selected.references.length > 0 ? "3" : "2"}. アップロード</h2>
+            <h2 className="text-sm font-bold text-slate-900">アップロード</h2>
 
             <div className="mt-3 grid gap-3 sm:grid-cols-[200px_1fr]">
               <label>
@@ -258,9 +298,38 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
               </label>
               <label>
                 <span className="mb-1.5 block text-xs font-bold text-slate-600">パス（バケット内・拡張子まで）</span>
-                <input value={path} onChange={(e) => setPath(e.target.value)} className={`${inputClass} font-mono`} placeholder={`articles/${selected.slug}/hero.webp`} />
+                <input
+                  value={path}
+                  onChange={(e) => setPath(e.target.value)}
+                  className={`${inputClass} font-mono`}
+                  placeholder={mode === "free" ? "folder/sub/name.webp" : `articles/${selected?.slug ?? "slug"}/hero.webp`}
+                />
               </label>
             </div>
+
+            {/* 既存フォルダから選ぶ（自由パスモード） */}
+            {mode === "free" && bucketFolders.length > 0 && (
+              <div className="mt-3">
+                <p className="mb-1.5 text-xs font-bold text-slate-600">既存フォルダから選ぶ（クリックでパス先頭に挿入）</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {bucketFolders.map((p) => (
+                    <button
+                      key={p}
+                      type="button"
+                      onClick={() => { setPath(p.endsWith("/") ? p : p + "/"); setResult(null); setError(""); }}
+                      className="rounded-full border border-slate-200 bg-white px-2.5 py-1 font-mono text-[11px] text-slate-600 transition hover:border-orange-400 hover:text-orange-700"
+                    >
+                      {p}/
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+            {mode === "free" && (
+              <p className="mt-2 text-xs leading-5 text-slate-500">
+                既存フォルダを選んでから末尾にファイル名を足すか、フォルダ・ファイル名を自由に入力できます（例: <span className="font-mono">food/ramen/2026/new-shop.webp</span>）。
+              </p>
+            )}
 
             <div className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs">
               <p className="break-all text-slate-500">公開URL: <span className="font-mono text-slate-700">{finalUrl || "—"}</span></p>
@@ -327,7 +396,6 @@ export function StorageUploader({ articles, publicPrefix }: Props) {
               </div>
             )}
           </section>
-        </>
       )}
     </div>
   );

@@ -4,12 +4,11 @@ import { MainNav } from "@/components/layout/MainNav";
 import { MobileHeaderMenu } from "@/components/layout/MobileHeaderMenu";
 import { AuthButtonClient } from "@/components/auth/AuthButtonClient";
 import { SearchForm } from "@/components/search/SearchForm";
-import { getCategories, getSearchResults } from "@/lib/content";
+import { getCategories } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 export async function SiteHeader() {
   const categories = getCategories();
-  const searchResults = await getSearchResults();
 
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur">
@@ -24,7 +23,7 @@ export async function SiteHeader() {
         <MainNav categories={categories} />
         <SearchForm size="compact" className="hidden min-w-[260px] max-w-md flex-1 xl:flex" placeholder="記事・店舗を検索" />
         <AuthButtonClient />
-        <MobileHeaderMenu categories={categories} results={searchResults} />
+        <MobileHeaderMenu />
       </div>
     </header>
   );

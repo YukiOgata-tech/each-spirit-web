@@ -26,7 +26,8 @@ import {
 } from "@/lib/content";
 import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
-import { majorMetaImage } from "@/lib/category-media";
+import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
+import { safeImageSrc } from "@/lib/image-hosts";
 import type { ContentSection, GenericItem } from "@/lib/types";
 
 type GenericTheme = {
@@ -529,11 +530,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
             </div>
           </div>
           <div className="relative min-h-[200px] overflow-hidden lg:min-h-[360px]">
-            {ranking.imageUrl ? (
-              <Image src={ranking.imageUrl} alt={ranking.title} fill priority sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
-            ) : (
-              <div className={`flex h-full min-h-[200px] items-center justify-center ${theme.imageFallback}`}><Trophy className="h-12 w-12 text-[var(--primary)]/50" /></div>
-            )}
+            <Image src={safeImageSrc(ranking.imageUrl, RANKING_FALLBACK_IMAGE)} alt={ranking.title} fill priority sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.04)_0%,rgba(15,23,42,0.42)_100%)]" />
           </div>
         </div>

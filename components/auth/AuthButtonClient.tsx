@@ -66,7 +66,7 @@ export function AuthButtonClient() {
           マイページ
         </Link>
       </Button>
-      <Button variant="ghost" size="sm" onClick={() => setConfirmOpen(true)}>
+      <Button variant="ghost" size="sm" className="hidden sm:inline-flex" onClick={() => setConfirmOpen(true)}>
         <LogOut className="h-4 w-4" />
         <span className="hidden sm:inline">ログアウト</span>
       </Button>
