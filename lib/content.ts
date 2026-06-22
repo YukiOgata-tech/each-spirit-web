@@ -507,14 +507,19 @@ function mapProteinRanking(row: any, items: any[]): ProteinRanking {
 export function getSite() { return site; }
 export function getCategories() { return categories; }
 export function getCategory(slug: string) { return categories.find((c) => c.slug === slug); }
-export async function getContentSections(majorCategory?: string): Promise<ContentSection[]> {
+export async function getContentSections(
+  majorCategory?: string,
+  options?: { includeUnpublished?: boolean },
+): Promise<ContentSection[]> {
   const sb = createServerClient();
-  let query = sb.from("content_sections").select("*").eq("status", "published").order("sort_order", { ascending: true });
+  let query = sb.from("content_sections").select("*").order("sort_order", { ascending: true });
+  if (!options?.includeUnpublished) query = query.eq("status", "published");
   if (majorCategory) query = query.eq("major_category", majorCategory);
   const { data, error } = await query;
   if (error) {
     return fallbackContentSections
       .filter((section) => !majorCategory || section.majorCategory === majorCategory)
+      .filter((section) => options?.includeUnpublished || section.status === "published")
       .sort((a, b) => a.sortOrder - b.sortOrder);
   }
   return (data ?? []).map(mapContentSection);
