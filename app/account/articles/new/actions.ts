@@ -9,7 +9,7 @@ import type { FAQ, RelatedLink, Source, SourceType } from "@/lib/types";
 
 type ArticleStatus = "draft" | "published";
 
-const majorCategories = new Set(["food", "health", "beauty", "travel", "leisure"]);
+const majorCategories = new Set(["food", "health", "beauty", "travel", "leisure", "entertainment"]);
 
 function text(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();

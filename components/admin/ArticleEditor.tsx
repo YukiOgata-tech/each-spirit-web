@@ -217,6 +217,7 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
                 <option value="beauty">美容 / beauty</option>
                 <option value="travel">旅行 / travel</option>
                 <option value="leisure">レジャー / leisure</option>
+                <option value="entertainment">エンタメ / entertainment</option>
               </select>
               <span className="mt-1 block text-[11px] leading-5 text-slate-500">記事URLには使いません。記事を紐づける大カテゴリです（独立記事では無効）。</span>
             </Field>

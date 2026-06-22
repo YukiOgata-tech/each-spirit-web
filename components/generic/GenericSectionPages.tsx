@@ -45,6 +45,7 @@ export const majorCategoryLabels: Record<string, string> = {
   beauty: "美容",
   travel: "旅行",
   leisure: "レジャー",
+  entertainment: "エンターテインメント",
 };
 
 const genericThemes: Record<string, GenericTheme> = {
@@ -87,6 +88,14 @@ const genericThemes: Record<string, GenericTheme> = {
     imageFallback: "bg-[linear-gradient(135deg,#ecfeff,#fff4e6)]",
     soft: "bg-cyan-50 text-cyan-950",
     label: "天候・同行者・移動手段で比較",
+  },
+  entertainment: {
+    className: "entertainment-theme",
+    hero: "bg-[linear-gradient(135deg,#f5f3ff_0%,#ffffff_50%,#fdf2f8_100%)]",
+    accentPanel: "border-violet-200 bg-violet-50/70",
+    imageFallback: "bg-[linear-gradient(135deg,#f5f3ff,#fce7f3)]",
+    soft: "bg-violet-50 text-violet-950",
+    label: "原作・ジャンル・メディア展開で比較",
   },
 };
 

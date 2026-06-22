@@ -44,6 +44,7 @@ export const majorCategoryMedia: Record<string, MajorCategoryMedia> = {
   beauty: media("beauty", "美容", "beauty-theme"),
   travel: media("travel", "旅行", "travel-theme"),
   leisure: media("leisure", "レジャー", "leisure-theme"),
+  entertainment: media("entertainment", "エンターテインメント", "entertainment-theme"),
 };
 
 /** メジャー配下ページの meta 画像フォールバック。未定義なら undefined（呼び出し側で site.ogImage に既定） */

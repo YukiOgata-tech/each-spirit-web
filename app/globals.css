@@ -149,6 +149,13 @@
   --border: #cde8ea;
 }
 
+.entertainment-theme {
+  --primary: #6d28d9;
+  --accent: #ec4899;
+  --muted: #f1ecfe;
+  --border: #e0d5fb;
+}
+
 .compact-scroll {
   display: flex;
   gap: 0.8rem;

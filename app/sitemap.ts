@@ -1,7 +1,7 @@
 import type { MetadataRoute } from "next";
 
 export const revalidate = 2592000;
-import { articleHref, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getContentSections, getLatestArticles, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
+import { articleHref, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getContentSections, getGenericItemsBySection, getLatestArticles, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
@@ -71,7 +71,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getProteinRankings(),
   ]);
 
-  const staticRoutes = [routes.home, routes.search, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein];
+  // エンターテインメント（作品カタログ型・section 汎用）
+  const entertainmentSections = sections.filter((s) => s.majorCategory === "entertainment");
+  const entertainmentPairs = await Promise.all(
+    entertainmentSections.map(async (s) => ({ section: s.sectionSlug, items: await getGenericItemsBySection("entertainment", s.sectionSlug) })),
+  );
+
+  const staticRoutes = [routes.home, routes.search, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein, routes.entertainment];
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
@@ -104,5 +110,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...proteinTargets.map((t) => ({ url: absoluteUrl(routes.proteinTarget(t.slug)), lastModified: new Date("2026-06-09") })),
     ...proteinProducts.map((p) => ({ url: absoluteUrl(routes.proteinProduct(p.slug)), lastModified: new Date(p.lastVerifiedAt) })),
     ...proteinRankings.map((r) => ({ url: absoluteUrl(routes.proteinRanking(r.target, r.slug)), lastModified: new Date(r.lastUpdatedAt) })),
+    ...entertainmentPairs.map(({ section }) => ({ url: absoluteUrl(routes.entertainmentSection(section)), lastModified: new Date("2026-06-22") })),
+    ...entertainmentPairs.flatMap(({ section, items }) => items.map((it) => ({ url: absoluteUrl(it.canonicalPath ?? routes.entertainmentTitle(section, it.slug)), lastModified: new Date(it.lastVerifiedAt || "2026-06-22") }))),
   ];
 }
