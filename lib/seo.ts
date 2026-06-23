@@ -20,6 +20,8 @@ import type {
 } from "@/lib/types";
 import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
 import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
+import { itemClassDef } from "@/lib/content-models";
+import type { GenericItem } from "@/lib/types";
 import { site } from "@/content/site";
 
 // ─── Core metadata ───────────────────────────────────────────────────────────
@@ -100,6 +102,111 @@ export function organizationSchema() {
     logo: absoluteUrl(site.icon),
     sameAs: site.sameAs ?? [],
   };
+}
+
+// ─── Item (型別 schema.org) ────────────────────────────────────────────────────
+
+/** content_model → 精密な schema.org 型。無ければ item_class の既定型にフォールバック。 */
+const CONTENT_MODEL_SCHEMA_TYPE: Record<string, string> = {
+  restaurant: "Restaurant",
+  salon: "HairSalon",
+  hotel: "Hotel",
+  spot: "TouristAttraction",
+  "travel-service": "TravelAgency",
+  product: "Product",
+  title: "CreativeWork",
+};
+
+/** major:section 単位の型上書き（content_model が同じでも型を分けたい場合。例: cafe は CafeOrCoffeeShop）。 */
+const SECTION_SCHEMA_TYPE: Record<string, string> = {
+  "food:cafe": "CafeOrCoffeeShop",
+};
+
+/** 真偽 metadata → schema.org amenityFeature の表示名 */
+const AMENITY_LABELS: Record<string, string> = {
+  parking: "駐車場", wifi: "WiFi", power: "電源", onsen: "温泉",
+  pet_friendly: "ペット可", children_welcome: "子連れ可", men_welcome: "メンズ可",
+};
+
+/**
+ * item の精密 schema.org を生成（汎用詳細エンジン用）。content_model で型を精密化し、
+ * 構造化列（addressRegion/geo）・metadata・公式リンク・編集スコアから組み立てる。
+ * item ごとに値が異なる前提で「在る項目だけ」出力する（疎データでも妥当）。
+ */
+export function itemSchema(
+  item: GenericItem,
+  path: string,
+  opts?: { contentModel?: string; aggregateRating?: number },
+) {
+  const m = (item.metadata ?? {}) as Record<string, unknown>;
+  const strArr = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : undefined);
+  const str = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : undefined);
+  const schemaType =
+    SECTION_SCHEMA_TYPE[`${item.majorCategory}:${item.sectionSlug}`] ||
+    (opts?.contentModel && CONTENT_MODEL_SCHEMA_TYPE[opts.contentModel]) ||
+    itemClassDef(item.itemClass).schemaType;
+
+  const data: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": schemaType,
+    name: item.name,
+    description: item.description,
+    url: absoluteUrl(path),
+  };
+  if (item.imageUrl) data.image = item.imageUrl;
+
+  // sameAs: 公式リンク（型不正な要素はスキップ）
+  const links: string[] = Array.isArray(m.official_links)
+    ? m.official_links.flatMap((l) =>
+        l && typeof l === "object" && typeof (l as Record<string, unknown>).url === "string"
+          ? [String((l as Record<string, unknown>).url)] : [])
+    : [];
+  if (item.officialUrl) links.push(item.officialUrl);
+  if (links.length) data.sameAs = Array.from(new Set(links));
+
+  if (item.itemClass === "physical_service" || item.itemClass === "intangible_service") {
+    if (item.address) {
+      data.address = {
+        "@type": "PostalAddress",
+        streetAddress: item.address,
+        ...(item.addressRegion ? { addressRegion: item.addressRegion } : {}),
+        addressCountry: "JP",
+      };
+    }
+    if (item.phone) data.telephone = item.phone;
+    if (item.priceRange) data.priceRange = item.priceRange;
+    const hours = str(m.business_hours);
+    if (hours) data.openingHours = hours;
+    if (item.mapUrl) data.hasMap = item.mapUrl;
+    if (item.latitude != null && item.longitude != null) {
+      data.geo = { "@type": "GeoCoordinates", latitude: item.latitude, longitude: item.longitude };
+    }
+    if (schemaType === "Restaurant" || schemaType === "CafeOrCoffeeShop") {
+      const cuisine = str(m.genre);
+      if (cuisine) data.servesCuisine = cuisine;
+    }
+    const amenities = Object.entries(AMENITY_LABELS)
+      .filter(([k]) => m[k] === true)
+      .map(([, label]) => ({ "@type": "LocationFeatureSpecification", name: label, value: true }));
+    if (amenities.length > 0) data.amenityFeature = amenities;
+  } else if (item.itemClass === "product") {
+    const brand = str(m.brand);
+    if (brand) data.brand = { "@type": "Brand", name: brand };
+  } else if (item.itemClass === "media") {
+    const genres = strArr(m.genres);
+    if (genres?.length) data.genre = genres;
+  }
+
+  if (opts?.aggregateRating !== undefined && Number.isFinite(opts.aggregateRating)) {
+    data.aggregateRating = {
+      "@type": "AggregateRating",
+      ratingValue: (opts.aggregateRating / 20).toFixed(1),
+      bestRating: "5",
+      worstRating: "1",
+      ratingCount: 1,
+    };
+  }
+  return data;
 }
 
 // ─── Navigation ───────────────────────────────────────────────────────────────

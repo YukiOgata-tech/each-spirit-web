@@ -59,6 +59,8 @@ export type ContentSection = {
   displayConfig: Record<string, unknown>;
   seoConfig: Record<string, unknown>;
   metadata: Record<string, unknown>;
+  /** 作成/編集フォームのフィールド定義（DB駆動）。{ itemClass?, itemKind?, itemKinds?, fields[] } */
+  itemSchema?: Record<string, unknown>;
 };
 
 export type SearchResult = {
@@ -129,6 +131,11 @@ export type Item = {
   relatedRankingSlugs: string[];
 };
 
+export type HistoryEntry = { date: string; description: string };
+export type ServiceModelEntry = { service: string; url?: string; note?: string };
+export type ItemRelatedLink = { label: string; url: string };
+export type ImageCredit = { name: string; url: string };
+
 export type GenericItem = {
   id?: string;
   slug: string;
@@ -137,12 +144,19 @@ export type GenericItem = {
   majorCategory: string;
   sectionSlug: string;
   itemKind: string;
+  /** 粗い型（place/work/product/app/service/event/person/concept）。表示・SEO・検索の出し分け軸 */
+  itemClass: string;
   canonicalPath?: string;
   region?: string;
   area: string;
   address: string;
+  addressRegion?: string;
+  latitude?: number;
+  longitude?: number;
   phone?: string;
   imageUrl?: string;
+  seoTitle?: string;
+  seoDescription?: string;
   tags: string[];
   priceRange: string;
   officialUrl: string;
@@ -152,6 +166,14 @@ export type GenericItem = {
   metadata: Record<string, unknown>;
   sources: Source[];
   faqs: FAQ[];
+  genres: string[];
+  imageAlt?: string;
+  imageCredit?: ImageCredit;
+  seoKeywords?: string[];
+  seoOgImage?: string;
+  history: HistoryEntry[];
+  serviceModel: ServiceModelEntry[];
+  relatedLink: ItemRelatedLink[];
 };
 
 export type RankingItem = {

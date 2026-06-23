@@ -5,7 +5,31 @@ import { redirect } from "next/navigation";
 import { requireAdminUser } from "@/lib/admin";
 import { createServerClient, ES_CONTENT_CACHE_TAG } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
-import { getSectionItemSchema, SECTION_ITEM_SCHEMAS, type ItemField, type SectionItemSchema } from "@/lib/admin-item-schema";
+import { SECTION_ITEM_SCHEMAS, type ItemField, type SectionItemSchema } from "@/lib/admin-item-schema";
+import { deriveItemClass, isLocationRelevant } from "@/lib/content-models";
+import { getEditorSectionSchema } from "@/lib/content";
+
+/** 住所から都道府県を抽出（列 address_region / JSON-LD addressRegion 用）。 */
+function prefectureFromAddress(address: string | null | undefined): string | null {
+  if (!address) return null;
+  const m = address.match(/^(東京都|北海道|.{2,3}[都道府県])/);
+  return m?.[1] ?? null;
+}
+
+/** textarea を 1行1レコードでパース（各行を "|" 区切りで keys に対応づけ。先頭キー空の行は除外）。 */
+function parseLines(formData: FormData, key: string, keys: string[]): Record<string, string>[] {
+  return String(formData.get(key) ?? "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const parts = line.split("|").map((p) => p.trim());
+      const obj: Record<string, string> = {};
+      keys.forEach((k, i) => { if (parts[i]) obj[k] = parts[i]; });
+      return obj;
+    })
+    .filter((o) => o[keys[0]]);
+}
 
 const NEW_SECTION_SCHEMA_KEY = "__new_section__";
 const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
@@ -53,6 +77,7 @@ function schemaFromNewSectionForm(formData: FormData): SectionItemSchema {
     itemKind,
     itemPathSegment,
     label,
+    itemClass: deriveItemClass({ majorCategory, itemKind }),
     regionMode,
     fields: [],
   };
@@ -112,7 +137,7 @@ export async function saveItem(formData: FormData) {
 
   const schemaKey = text(formData, "schema_key");
   const isNewSection = schemaKey === NEW_SECTION_SCHEMA_KEY;
-  const schema = isNewSection ? schemaFromNewSectionForm(formData) : getSectionItemSchema(schemaKey);
+  const schema = isNewSection ? schemaFromNewSectionForm(formData) : await getEditorSectionSchema(schemaKey);
   if (!schema) throw new Error("不明な section です: " + schemaKey);
 
   const id = text(formData, "id") || null;
@@ -156,29 +181,68 @@ export async function saveItem(formData: FormData) {
     throw new Error("この section に同じ slug の item が既に存在します");
   }
 
-  const canonical = routes.sectionItem(schema.majorCategory, schema.sectionSlug, schema.itemPathSegment, slug);
+  // item_kind: schema が選択肢(itemKinds)を持つ型（作品の原作タイプ等）は送信値を採用、無ければ固定。
+  const itemKind = schema.itemKinds && schema.itemKinds.length > 0
+    ? (schema.itemKinds.find((k) => k.value === text(formData, "item_kind"))?.value ?? schema.itemKinds[0].value)
+    : schema.itemKind;
+
+  // canonical: item_path_segment があれば4階層、無ければ /{major}/{section}/{slug}（作品カタログ型）。
+  const canonical = schema.itemPathSegment
+    ? routes.sectionItem(schema.majorCategory, schema.sectionSlug, schema.itemPathSegment, slug)
+    : `/${schema.majorCategory}/${schema.sectionSlug}/${slug}`;
+
+  // place 以外の型では所在地系カラムを保存しない（型ごとに不要項目を持たせない）
+  const loc = isLocationRelevant(schema.itemClass);
+  const address = loc ? text(formData, "address") || null : null;
+
+  // image / address_info は JSONB へ集約（旧 image_url/address/area/map_url/address_region は廃止）
+  const imgUrl = text(formData, "image_url");
+  const image: Record<string, unknown> = imgUrl ? { url: imgUrl } : {};
+  const imageAlt = text(formData, "image_alt"); if (imageAlt) image.alt = imageAlt;
+  const creditUrl = text(formData, "image_credit_url");
+  if (creditUrl) image.credit = { name: text(formData, "image_credit_name"), url: creditUrl };
+
+  const addressInfo: Record<string, unknown> = {};
+  if (loc) {
+    if (address) addressInfo.address = address;
+    const pref = address ? prefectureFromAddress(address) : null;
+    if (pref) addressInfo.prefecture = pref;
+    const areaVal = text(formData, "area"); if (areaVal) addressInfo.area = areaVal;
+    const mapUrl = text(formData, "map_url"); if (mapUrl) addressInfo.map_url = mapUrl;
+  }
+
+  // SEO 上書き（任意・空キーは入れない）
+  const seo: Record<string, unknown> = {};
+  { const t = text(formData, "seo_title"); if (t) seo.title = t; }
+  { const d = text(formData, "seo_description"); if (d) seo.description = d; }
+  { const k = list(formData, "seo_keywords"); if (k.length) seo.keywords = k; }
 
   const payload = {
     slug,
     major_category: schema.majorCategory,
     section_slug: schema.sectionSlug,
-    item_kind: schema.itemKind,
+    item_kind: itemKind,
+    item_class: schema.itemClass,
     canonical_path: canonical,
-    region,
+    region: loc ? region : null,
     name,
     description,
-    image_url: text(formData, "image_url") || null,
-    address: text(formData, "address") || null,
-    area: text(formData, "area") || null,
-    phone: text(formData, "phone") || null,
-    price_range: text(formData, "price_range") || null,
+    image,
+    address_info: addressInfo,
+    seo,
+    genres: list(formData, "genres"),
+    phone: loc ? text(formData, "phone") || null : null,
+    price_range: loc ? text(formData, "price_range") || null : null,
     official_url: text(formData, "official_url") || null,
-    map_url: text(formData, "map_url") || null,
     tags: list(formData, "tags"),
     status,
-    last_verified_at: text(formData, "last_verified_at") || null,
     editor_comment: text(formData, "editor_comment"),
     metadata,
+    sources: parseLines(formData, "sources", ["url", "title", "sourceType", "collectedAt", "note"]),
+    faq: parseLines(formData, "faq", ["question", "answer"]),
+    history: parseLines(formData, "history", ["date", "description"]),
+    service_model: parseLines(formData, "service_model", ["service", "url", "note"]),
+    related_link: parseLines(formData, "related_link", ["label", "url"]),
   };
 
   if (id) {

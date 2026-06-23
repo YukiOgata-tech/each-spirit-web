@@ -184,6 +184,26 @@ function normalize(data: ResearchJson) {
   return { items, rankings, slugMap };
 }
 
+// 旧 location/image 列は廃止。新 JSONB（image / address_info / genres / sources / faq）へ変換するヘルパー。
+function researchPrefecture(address?: string | null): string | undefined {
+  if (!address) return undefined;
+  return address.match(/^(東京都|北海道|.{2,3}[都道府県])/)?.[1];
+}
+function researchAddressInfo(item: { address?: string | null; area?: string | null; map_url?: string | null }): Record<string, unknown> {
+  const ai: Record<string, unknown> = {};
+  if (item.address) { ai.address = item.address; const p = researchPrefecture(item.address); if (p) ai.prefecture = p; }
+  if (item.area) ai.area = item.area;
+  if (item.map_url) ai.map_url = item.map_url;
+  return ai;
+}
+function researchGenres(meta: unknown): string[] {
+  const m = (meta ?? {}) as Record<string, unknown>;
+  const g = new Set<string>();
+  if (Array.isArray(m.genres)) for (const x of m.genres) if (typeof x === "string" && x) g.add(x);
+  if (typeof m.genre === "string" && m.genre) g.add(m.genre);
+  return [...g];
+}
+
 async function main() {
   const data = JSON.parse(readFileSync(inputPath, "utf8")) as ResearchJson;
 
@@ -201,17 +221,17 @@ async function main() {
       region: item.region,
       name: item.name,
       description: item.description,
-      image_url: item.image_url,
-      address: item.address ?? null,
-      area: item.area ?? null,
+      image: item.image_url ? { url: item.image_url } : {},
+      address_info: researchAddressInfo(item),
       phone: item.phone ?? null,
       price_range: item.price_range ?? null,
       official_url: item.official_url ?? null,
-      map_url: item.map_url ?? null,
       tags: item.tags,
-      last_verified_at: item.last_verified_at,
       editor_comment: item.editor_comment,
       metadata: item.metadata,
+      genres: researchGenres(item.metadata),
+      sources: Array.isArray((item.metadata as Record<string, unknown>)?.sources) ? (item.metadata as Record<string, unknown>).sources : [],
+      faq: Array.isArray((item.metadata as Record<string, unknown>)?.faqs) ? (item.metadata as Record<string, unknown>).faqs : [],
     };
   });
 

@@ -99,13 +99,50 @@ function ok(label: string, count: number) {
 }
 
 /** items 行に新構造の列（major/section/item_kind/canonical）を付与 */
+// 旧 location/image フィールド → 新 JSONB へ変換するヘルパー（items の image_url/address/area/map_url 列は廃止済み）
+function seedPrefecture(address?: unknown): string | undefined {
+  if (typeof address !== "string" || !address) return undefined
+  return address.match(/^(東京都|北海道|.{2,3}[都道府県])/)?.[1]
+}
+function seedImage(url?: unknown): Record<string, unknown> {
+  return typeof url === "string" && url ? { url } : {}
+}
+function seedAddressInfo(o: { address?: unknown; area?: unknown; mapUrl?: unknown }): Record<string, unknown> {
+  const ai: Record<string, unknown> = {}
+  if (typeof o.address === "string" && o.address) {
+    ai.address = o.address
+    const p = seedPrefecture(o.address); if (p) ai.prefecture = p
+  }
+  if (typeof o.area === "string" && o.area) ai.area = o.area
+  if (typeof o.mapUrl === "string" && o.mapUrl) ai.map_url = o.mapUrl
+  return ai
+}
+function seedGenres(meta: Record<string, unknown>): string[] {
+  const g = new Set<string>()
+  if (Array.isArray(meta.genres)) for (const x of meta.genres) if (typeof x === "string" && x) g.add(x)
+  if (typeof meta.genre === "string" && meta.genre) g.add(meta.genre)
+  return [...g]
+}
+
 function withItemSection<T extends { content_type: string; slug: string }>(rows: T[]) {
   return rows.map((r) => {
     const m = ITEM_CONTENT_TYPE_TO_SECTION[r.content_type]
     if (!m) throw new Error(`Unknown legacy item mapping for ${r.content_type}`)
-    const { content_type: _contentType, ...row } = r
-    void _contentType
-    return { ...row, major_category: m.majorCategory, section_slug: m.sectionSlug, item_kind: m.itemKind, canonical_path: itemCanonicalPath(r.content_type, r.slug) }
+    const {
+      content_type: _contentType, image_url, address, area, map_url, last_verified_at: _lv, ...row
+    } = r as Record<string, unknown> & { content_type: string }
+    void _contentType; void _lv
+    const meta = (row.metadata ?? {}) as Record<string, unknown>
+    return {
+      ...row,
+      major_category: m.majorCategory, section_slug: m.sectionSlug, item_kind: m.itemKind,
+      canonical_path: itemCanonicalPath(r.content_type, r.slug),
+      image: seedImage(image_url),
+      address_info: seedAddressInfo({ address, area, mapUrl: map_url }),
+      genres: seedGenres(meta),
+      sources: Array.isArray(meta.sources) ? meta.sources : [],
+      faq: Array.isArray(meta.faqs) ? meta.faqs : [],
+    }
   })
 }
 

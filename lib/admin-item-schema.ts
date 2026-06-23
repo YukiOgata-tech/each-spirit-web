@@ -8,6 +8,8 @@
  * 各 section の metadata キーは lib/content.ts の map*Item と一致させること。
  */
 
+import type { ItemClass } from "@/lib/content-models";
+
 export type ItemFieldType = "text" | "textarea" | "number" | "boolean" | "list" | "select" | "date";
 
 export type ItemField = {
@@ -27,7 +29,12 @@ export type SectionItemSchema = {
   itemKind: string;
   itemPathSegment: string;
   label: string;
+  /** 粗い型。place 以外は所在地系の共通欄を出さない／保存しない */
+  itemClass: ItemClass;
   regionMode: "none" | "optional" | "required";
+  /** item_kind を作成時に選ばせる場合の選択肢（作品の原作タイプ等）。
+   *  未指定なら itemKind 固定。指定時は item_path_segment 無しの3階層URLになる型を想定。 */
+  itemKinds?: { value: string; label: string }[];
   /** section 固有フィールド（metadata に格納） */
   fields: ItemField[];
 };
@@ -38,7 +45,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "food:ramen",
     majorCategory: "food", sectionSlug: "ramen", itemKind: "shop",
-    itemPathSegment: "shops", label: "ラーメン店", regionMode: "optional",
+    itemPathSegment: "shops", label: "ラーメン店", itemClass: "physical_service", regionMode: "optional",
     fields: [
       { name: "genre", label: "ジャンル", type: "text", placeholder: "あっさり醤油 / 濃厚味噌 など" },
       { name: "recommended_menu", label: "おすすめメニュー", type: "text" },
@@ -51,7 +58,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "food:cafe",
     majorCategory: "food", sectionSlug: "cafe", itemKind: "shop",
-    itemPathSegment: "shops", label: "カフェ", regionMode: "required",
+    itemPathSegment: "shops", label: "カフェ", itemClass: "physical_service", regionMode: "required",
     fields: [
       { name: "style", label: "スタイル", type: "text", placeholder: "スペシャルティコーヒー / 古民家 など" },
       { name: "signature_menu", label: "看板メニュー", type: "text" },
@@ -70,7 +77,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "health:protein",
     majorCategory: "health", sectionSlug: "protein", itemKind: "product",
-    itemPathSegment: "products", label: "プロテイン商品", regionMode: "none",
+    itemPathSegment: "products", label: "プロテイン商品", itemClass: "product", regionMode: "none",
     fields: [
       { name: "brand", label: "ブランド", type: "text", required: true },
       { name: "protein_type", label: "種類", type: "select", options: [
@@ -94,7 +101,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "beauty:hair-salon",
     majorCategory: "beauty", sectionSlug: "hair-salon", itemKind: "salon",
-    itemPathSegment: "salons", label: "美容室", regionMode: "required",
+    itemPathSegment: "salons", label: "美容室", itemClass: "physical_service", regionMode: "required",
     fields: [
       { name: "tagline", label: "キャッチコピー", type: "text" },
       { name: "access", label: "アクセス", type: "text" },
@@ -113,7 +120,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "travel:stays",
     majorCategory: "travel", sectionSlug: "stays", itemKind: "hotel",
-    itemPathSegment: "hotels", label: "宿・ホテル", regionMode: "required",
+    itemPathSegment: "hotels", label: "宿・ホテル", itemClass: "physical_service", regionMode: "required",
     fields: [
       { name: "style", label: "スタイル", type: "text", placeholder: "温泉旅館 / 古民家宿 など" },
       { name: "highlight", label: "ハイライト", type: "textarea" },
@@ -129,7 +136,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "travel:services:agency",
     majorCategory: "travel", sectionSlug: "services", itemKind: "agency",
-    itemPathSegment: "agencies", label: "旅行会社", regionMode: "required",
+    itemPathSegment: "agencies", label: "旅行会社", itemClass: "intangible_service", regionMode: "required",
     fields: [
       { name: "tagline", label: "キャッチコピー", type: "text" },
       { name: "highlight", label: "ハイライト", type: "textarea" },
@@ -144,7 +151,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "travel:services:app",
     majorCategory: "travel", sectionSlug: "services", itemKind: "app",
-    itemPathSegment: "agencies", label: "旅行アプリ", regionMode: "none",
+    itemPathSegment: "agencies", label: "旅行アプリ", itemClass: "product", regionMode: "none",
     fields: [
       { name: "brand", label: "提供元", type: "text" },
       { name: "platforms", label: "対応プラットフォーム", type: "list", help: "iOS, Android, Web など" },
@@ -154,7 +161,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "leisure:spots",
     majorCategory: "leisure", sectionSlug: "spots", itemKind: "spot",
-    itemPathSegment: "spots", label: "レジャースポット", regionMode: "required",
+    itemPathSegment: "spots", label: "レジャースポット", itemClass: "physical_service", regionMode: "required",
     fields: [
       { name: "kind", label: "種別", type: "select", options: [
         { value: "outdoor", label: "アウトドア" }, { value: "indoor", label: "インドア" },
@@ -166,6 +173,39 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
       { name: "closed_days", label: "定休日", type: "text" },
       BOOL("parking", "駐車場あり"),
       { name: "parking_note", label: "駐車場メモ", type: "text" },
+    ],
+  },
+  // ── エンターテインメント（作品カタログ型 = work）。所在地なし・URLは /entertainment/{section}/{slug} ──
+  {
+    key: "entertainment:anime",
+    majorCategory: "entertainment", sectionSlug: "anime", itemKind: "anime_manga_series",
+    itemPathSegment: "", label: "アニメ作品", itemClass: "media", regionMode: "none",
+    itemKinds: [
+      { value: "anime_manga_series", label: "漫画原作" },
+      { value: "anime_light_novel_series", label: "ライトノベル原作" },
+      { value: "anime_original_series", label: "アニメオリジナル" },
+      { value: "anime_game_series", label: "ゲーム原作" },
+      { value: "anime_webtoon_series", label: "Webtoon原作" },
+    ],
+    fields: [
+      { name: "genres", label: "ジャンル", type: "list", help: "SF, 異世界, コメディ など（カンマ/改行区切り）" },
+      { name: "media_types", label: "メディア展開", type: "list", help: "anime, manga, movie, game, novel, live_action など" },
+    ],
+  },
+  {
+    key: "entertainment:drama",
+    majorCategory: "entertainment", sectionSlug: "drama", itemKind: "drama_original_series",
+    itemPathSegment: "", label: "ドラマ作品", itemClass: "media", regionMode: "none",
+    itemKinds: [
+      { value: "drama_original_series", label: "オリジナル脚本" },
+      { value: "drama_novel_series", label: "小説原作" },
+      { value: "drama_manga_series", label: "漫画原作" },
+      { value: "drama_light_novel_series", label: "ライトノベル原作" },
+      { value: "drama_game_series", label: "ゲーム原作" },
+    ],
+    fields: [
+      { name: "genres", label: "ジャンル", type: "list", help: "企業, 社会派, ヒューマンドラマ など" },
+      { name: "media_types", label: "メディア展開", type: "list", help: "drama, novel, manga, movie など" },
     ],
   },
 ];
@@ -186,5 +226,5 @@ export function itemSchemaKey(majorCategory: string, sectionSlug: string, itemKi
 export const COMMON_ITEM_COLUMNS = [
   "name", "description", "region", "area", "address", "phone",
   "price_range", "image_url", "official_url", "map_url", "tags",
-  "editor_comment", "last_verified_at",
+  "editor_comment",
 ] as const;

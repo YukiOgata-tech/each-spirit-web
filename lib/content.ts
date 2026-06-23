@@ -10,6 +10,8 @@ import { cafeRegions } from "@/content/cafe/regions";
 import { proteinTargets } from "@/content/protein/targets";
 import { site } from "@/content/site";
 import { routes } from "@/lib/routes";
+import { deriveItemClass } from "@/lib/content-models";
+import { SECTION_ITEM_SCHEMAS, type SectionItemSchema, type ItemField } from "@/lib/admin-item-schema";
 import type {
   Article,
   CafeItem,
@@ -17,6 +19,7 @@ import type {
   CafeRankingItem,
   CafeRegion,
   ContentSection,
+  HistoryEntry,
   Hotel,
   Item,
   LeisureRanking,
@@ -33,8 +36,10 @@ import type {
   Ranking,
   RankingItem,
   RelatedLink,
+  ItemRelatedLink,
   Salon,
   SearchResult,
+  ServiceModelEntry,
   Source,
   FAQ,
   GenericItem,
@@ -78,7 +83,37 @@ function mapContentSection(row: any): ContentSection {
     displayConfig: row.display_config ?? {},
     seoConfig: row.seo_config ?? {},
     metadata: row.metadata ?? {},
+    itemSchema: row.item_schema ?? {},
   };
+}
+
+// JSONB アクセサ（新カラム image / address_info / seo から値を取り出す）
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jstr(o: any, k: string): string | undefined {
+  const v = o?.[k];
+  return typeof v === "string" && v !== "" ? v : undefined;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jnum(o: any, k: string): number | undefined {
+  const v = o?.[k];
+  return v != null && Number.isFinite(Number(v)) ? Number(v) : undefined;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jstrarr(o: any, k: string): string[] | undefined {
+  const v = o?.[k];
+  if (!Array.isArray(v)) return undefined;
+  const arr = v.filter((x: unknown): x is string => typeof x === "string" && x !== "");
+  return arr.length ? arr : undefined;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jcredit(o: any): { name: string; url: string } | undefined {
+  const c = o?.credit;
+  return c && typeof c === "object" && typeof c.url === "string"
+    ? { name: String(c.name ?? ""), url: String(c.url) } : undefined;
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function jarr<T>(v: any): T[] {
+  return Array.isArray(v) ? (v as T[]) : [];
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -92,21 +127,35 @@ function mapGenericItem(row: any): GenericItem {
     majorCategory: row.major_category,
     sectionSlug: row.section_slug,
     itemKind: row.item_kind ?? "item",
+    itemClass: deriveItemClass({ itemClass: row.item_class, majorCategory: row.major_category, itemKind: row.item_kind }),
     canonicalPath: row.canonical_path ?? undefined,
     region: row.region ?? undefined,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
+    addressRegion: jstr(row.address_info, "prefecture"),
+    latitude: jnum(row.address_info, "lat"),
+    longitude: jnum(row.address_info, "lng"),
     phone: row.phone ?? undefined,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: jstr(row.image, "url"),
+    imageAlt: jstr(row.image, "alt"),
+    imageCredit: jcredit(row.image),
+    seoTitle: jstr(row.seo, "title"),
+    seoDescription: jstr(row.seo, "description"),
+    seoKeywords: jstrarr(row.seo, "keywords"),
+    seoOgImage: jstr(row.seo, "og_image"),
     tags: (row.tags ?? []) as string[],
+    genres: (Array.isArray(row.genres) ? row.genres : []) as string[],
     priceRange: row.price_range ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     editorComment: row.editor_comment ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     metadata: m,
-    sources: (m.sources ?? []) as Source[],
-    faqs: (m.faqs ?? []) as FAQ[],
+    sources: (Array.isArray(row.sources) && row.sources.length ? row.sources : (m.sources ?? [])) as Source[],
+    faqs: (Array.isArray(row.faq) && row.faq.length ? row.faq : (m.faqs ?? [])) as FAQ[],
+    history: jarr<HistoryEntry>(row.history),
+    serviceModel: jarr<ServiceModelEntry>(row.service_model),
+    relatedLink: jarr<ItemRelatedLink>(row.related_link),
   };
 }
 
@@ -139,10 +188,10 @@ function mapRamenItem(row: any): Item {
     slug: row.slug,
     name: row.name,
     description: row.description,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: jstr(row.image, "url"),
     genre: m.genre ?? "",
     tags: row.tags ?? [],
     recommendedMenu: m.recommended_menu ?? "",
@@ -152,10 +201,10 @@ function mapRamenItem(row: any): Item {
     businessHours: m.business_hours ?? "",
     closedDays: m.closed_days ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
@@ -170,10 +219,10 @@ function mapCafeItem(row: any): CafeItem {
     slug: row.slug,
     name: row.name,
     description: row.description,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
-    imageUrl: row.image_url ?? undefined,
+    imageUrl: jstr(row.image, "url"),
     style: m.style ?? "スペシャルティコーヒー",
     tags: row.tags ?? [],
     signatureMenu: m.signature_menu ?? "",
@@ -187,12 +236,12 @@ function mapCafeItem(row: any): CafeItem {
     businessHours: m.business_hours ?? "",
     closedDays: m.closed_days ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     instagramUrl: m.instagram_url ?? undefined,
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
     highlight: m.highlight ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
@@ -207,8 +256,8 @@ function mapHotelItem(row: any): Hotel {
     slug: row.slug,
     name: row.name,
     description: row.description,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
     style: m.style ?? "温泉旅館",
     tags: row.tags ?? [],
@@ -222,11 +271,11 @@ function mapHotelItem(row: any): Hotel {
     parking: m.parking ?? false,
     parkingNote: m.parking_note ?? undefined,
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
-    imageUrl: row.image_url ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    imageUrl: jstr(row.image, "url") ?? "",
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
@@ -242,8 +291,8 @@ function mapTravelAgencyItem(row: any): TravelAgency {
     name: row.name,
     tagline: m.tagline ?? "",
     description: row.description,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
     services: (m.services ?? []) as TravelAgency["services"],
     bestFor: (m.best_for ?? []) as string[],
@@ -254,12 +303,12 @@ function mapTravelAgencyItem(row: any): TravelAgency {
     closedDays: m.closed_days ?? "",
     registeredTravelAgency: m.registered_travel_agency ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
     highlight: m.highlight ?? "",
-    imageUrl: row.image_url ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    imageUrl: jstr(row.image, "url") ?? "",
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
@@ -274,15 +323,15 @@ function mapTravelAppItem(row: any): TravelApp {
     name: row.name,
     brand: m.brand ?? "",
     description: row.description,
-    useCase: row.area ?? "",
+    useCase: jstr(row.address_info, "area") ?? "",
     platforms: (m.platforms ?? []) as string[],
     priceRange: row.price_range ?? "",
     features: row.tags ?? [],
     bestFor: (m.best_for ?? []) as string[],
     officialUrl: row.official_url ?? "",
-    imageUrl: row.image_url ?? "",
+    imageUrl: jstr(row.image, "url") ?? "",
     editorComment: row.editor_comment ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
   };
@@ -297,8 +346,8 @@ function mapLeisureItem(row: any): LeisureSpot {
     name: row.name,
     description: row.description,
     region: row.region ?? "",
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
     kind: m.kind ?? "outdoor",
     genre: m.genre ?? "",
@@ -311,11 +360,11 @@ function mapLeisureItem(row: any): LeisureSpot {
     businessHours: m.business_hours ?? "",
     closedDays: m.closed_days ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
-    imageUrl: row.image_url ?? undefined,
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    imageUrl: jstr(row.image, "url"),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
@@ -331,8 +380,8 @@ function mapSalonItem(row: any): Salon {
     name: row.name,
     tagline: m.tagline ?? "",
     description: row.description,
-    area: row.area ?? "",
-    address: row.address ?? "",
+    area: jstr(row.address_info, "area") ?? "",
+    address: jstr(row.address_info, "address") ?? "",
     phone: row.phone ?? undefined,
     access: m.access ?? "",
     treatments: (m.treatments ?? []) as Salon["treatments"],
@@ -347,15 +396,15 @@ function mapSalonItem(row: any): Salon {
     businessHours: m.business_hours ?? "",
     closedDays: m.closed_days ?? "",
     officialUrl: row.official_url ?? "",
-    mapUrl: row.map_url ?? "",
+    mapUrl: jstr(row.address_info, "map_url") ?? "",
     instagram: m.instagram ?? undefined,
     officialLinks: (m.official_links ?? []) as OfficialLink[],
     editorComment: row.editor_comment ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
     relatedRankingSlugs: (m.related_ranking_slugs ?? []) as string[],
-    imageUrl: row.image_url ?? "",
+    imageUrl: jstr(row.image, "url") ?? "",
   };
 }
 
@@ -364,7 +413,7 @@ function mapRanking(row: any, items: any[]): Ranking {
   const m = row.metadata ?? {};
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
   // ランキング専用画像が無ければ、上位アイテムの画像をカード/メタ画像に流用する
-  const topItemImage = sorted.find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
+  const topItemImage = sorted.find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
@@ -372,7 +421,7 @@ function mapRanking(row: any, items: any[]): Ranking {
     majorCategory: row.major_category ?? undefined,
     sectionSlug: row.section_slug ?? undefined,
     canonicalPath: row.canonical_path ?? undefined,
-    imageUrl: row.image_url ?? topItemImage ?? undefined,
+    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
     region: row.region ?? undefined,
     target: m.target ?? undefined,
     criteria: (row.criteria ?? []) as string[],
@@ -394,12 +443,12 @@ function mapRanking(row: any, items: any[]): Ranking {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCafeRanking(row: any, items: any[]): CafeRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
-    imageUrl: row.image_url ?? topItemImage ?? undefined,
+    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -471,9 +520,9 @@ function mapProteinProduct(row: any): ProteinProduct {
     pros: (m.pros ?? []) as string[],
     cons: (m.cons ?? []) as string[],
     officialUrl: row.official_url ?? "",
-    imageUrl: row.image_url ?? "",
+    imageUrl: jstr(row.image, "url") ?? "",
     editorNote: row.editor_comment ?? "",
-    lastVerifiedAt: toDateStr(row.last_verified_at),
+    lastVerifiedAt: toDateStr(row.updated_at),
     sources: (m.sources ?? []) as Source[],
     faqs: (m.faqs ?? []) as FAQ[],
   };
@@ -482,13 +531,13 @@ function mapProteinProduct(row: any): ProteinProduct {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProteinRanking(row: any, items: any[]): ProteinRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image_url)?.items?.image_url as string | undefined;
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
   return {
     slug: row.slug,
     target: (m.target ?? "beginner") as ProteinTarget,
     title: row.title,
     description: row.description,
-    imageUrl: row.image_url ?? topItemImage ?? undefined,
+    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -546,6 +595,54 @@ export async function getContentSection(majorCategory: string, sectionSlug: stri
   );
 }
 
+// ── 作成/編集フォームのスキーマ（DB駆動 + コード fallback） ───────────────────
+// content_sections.item_schema があればそれを SectionItemSchema に変換。無い section は
+// コードの SECTION_ITEM_SCHEMAS を使う（travel:services の agency/app など kind 別はコード側）。
+function dbSectionToItemSchema(section: ContentSection): SectionItemSchema | null {
+  const is = (section.itemSchema ?? {}) as {
+    itemClass?: string; itemKind?: string;
+    itemKinds?: { value: string; label: string }[];
+    fields?: ItemField[];
+  };
+  if (!Array.isArray(is.fields)) return null;
+  return {
+    key: `${section.majorCategory}:${section.sectionSlug}`,
+    majorCategory: section.majorCategory,
+    sectionSlug: section.sectionSlug,
+    itemKind: is.itemKind ?? "item",
+    itemPathSegment: section.itemPathSegment ?? "items",
+    label: section.label,
+    itemClass: deriveItemClass({ itemClass: is.itemClass, majorCategory: section.majorCategory, itemKind: is.itemKind }),
+    regionMode: section.regionMode,
+    itemKinds: is.itemKinds,
+    fields: is.fields,
+  };
+}
+
+/** 作成/編集UIに出すセクションのスキーマ一覧（DB item_schema 優先、無い section はコード fallback） */
+export async function getEditorSectionSchemas(): Promise<SectionItemSchema[]> {
+  const sections = await getContentSections();
+  const dbSchemas = sections
+    .map(dbSectionToItemSchema)
+    .filter((s): s is SectionItemSchema => s !== null);
+  const covered = new Set(dbSchemas.map((s) => `${s.majorCategory}:${s.sectionSlug}`));
+  const codeExtra = SECTION_ITEM_SCHEMAS.filter((s) => !covered.has(`${s.majorCategory}:${s.sectionSlug}`));
+  return [...dbSchemas, ...codeExtra];
+}
+
+export async function getEditorSectionSchema(key: string): Promise<SectionItemSchema | undefined> {
+  return (await getEditorSectionSchemas()).find((s) => s.key === key);
+}
+
+/** item がランキングで得ている編集スコア（0-100）の最大値。JSON-LD aggregateRating 用。 */
+export async function getItemEditorialScore(itemId: string | undefined): Promise<number | undefined> {
+  if (!itemId) return undefined;
+  const sb = createServerClient();
+  const { data } = await sb.from("ranking_items").select("score").eq("item_id", itemId);
+  const scores = (data ?? []).map((r) => Number(r.score)).filter((n) => Number.isFinite(n));
+  return scores.length ? Math.max(...scores) : undefined;
+}
+
 export async function getGenericItemsBySection(majorCategory: string, sectionSlug: string): Promise<GenericItem[]> {
   const sb = createServerClient();
   const { data } = await sb
@@ -575,7 +672,7 @@ export async function getRankingBySection(majorCategory: string, sectionSlug: st
   const sb = createServerClient();
   const { data } = await sb
     .from("rankings")
-    .select("*, ranking_items(*, items(image_url))")
+    .select("*, ranking_items(*, items(image))")
     .eq("major_category", majorCategory)
     .eq("section_slug", sectionSlug)
     .eq("slug", slug)
@@ -665,7 +762,7 @@ export async function getProteinProductsByTarget(target: ProteinTarget): Promise
 
 export async function getProteinRankings(): Promise<ProteinRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "health").eq("section_slug", "protein");
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "health").eq("section_slug", "protein");
   return (data ?? []).map((r) => mapProteinRanking(r, r.ranking_items ?? []));
 }
 
@@ -676,7 +773,7 @@ export async function getProteinRankingsByTarget(target: ProteinTarget): Promise
 
 export async function getProteinRanking(slug: string): Promise<ProteinRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "health").eq("section_slug", "protein").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "health").eq("section_slug", "protein").eq("slug", slug).maybeSingle();
   return data ? mapProteinRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -756,7 +853,7 @@ export async function getRankingsBySection(majorCategory: string, sectionSlug: s
   const sb = createServerClient();
   const { data } = await sb
     .from("rankings")
-    .select("*, ranking_items(*, items(image_url))")
+    .select("*, ranking_items(*, items(image))")
     .eq("major_category", majorCategory)
     .eq("section_slug", sectionSlug)
     .eq("status", "published")
@@ -888,19 +985,19 @@ export async function getRamenItem(slug: string): Promise<Item | undefined> {
 
 export async function getRamenRankings(): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen");
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "food").eq("section_slug", "ramen");
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getRamenRankingsByRegion(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "food").eq("section_slug", "ramen").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getRamenRanking(slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "ramen").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "food").eq("section_slug", "ramen").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -914,7 +1011,7 @@ export async function getRankingEntries(slug: string) {
 
 export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
   const sb = createServerClient();
-  let q = sb.from("rankings").select("*, ranking_items(*, items(image_url))").order("last_updated_at", { ascending: false });
+  let q = sb.from("rankings").select("*, ranking_items(*, items(image))").order("last_updated_at", { ascending: false });
   if (typeof limit === "number") q = q.limit(limit);
   const { data } = await q;
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
@@ -1114,13 +1211,13 @@ export async function getLeisureSpot(region: string, slug: string): Promise<Leis
 
 export async function getLeisureRankings(region: string): Promise<LeisureRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "leisure").eq("section_slug", "spots").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "leisure").eq("section_slug", "spots").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getLeisureRanking(region: string, slug: string): Promise<LeisureRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "leisure").eq("section_slug", "spots").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "leisure").eq("section_slug", "spots").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1148,13 +1245,13 @@ export async function getBeautySalon(region: string, slug: string): Promise<Salo
 
 export async function getBeautyRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getBeautyRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "beauty").eq("section_slug", "hair-salon").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1188,13 +1285,13 @@ export async function getTravelAllHotels(): Promise<Hotel[]> {
 
 export async function getTravelRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "stays").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "travel").eq("section_slug", "stays").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getTravelRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "stays").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "travel").eq("section_slug", "stays").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1210,25 +1307,25 @@ export async function getTravelRankingEntries(region: string, slug: string) {
 
 export async function getTravelAgencies(region: string): Promise<TravelAgency[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "agency").eq("region", region);
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_class", "intangible_service").eq("region", region);
   return (data ?? []).map(mapTravelAgencyItem);
 }
 
 export async function getTravelAgency(region: string, slug: string): Promise<TravelAgency | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "agency").eq("region", region).eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_class", "intangible_service").eq("region", region).eq("slug", slug).maybeSingle();
   return data ? mapTravelAgencyItem(data) : undefined;
 }
 
 export async function getTravelServiceRankings(region: string): Promise<Ranking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "services").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "travel").eq("section_slug", "services").eq("region", region);
   return (data ?? []).map((r) => mapRanking(r, r.ranking_items ?? []));
 }
 
 export async function getTravelServiceRanking(region: string, slug: string): Promise<Ranking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "travel").eq("section_slug", "services").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "travel").eq("section_slug", "services").eq("slug", slug).maybeSingle();
   return data ? mapRanking(data, data.ranking_items ?? []) : undefined;
 }
 
@@ -1242,7 +1339,7 @@ export async function getTravelServiceRankingEntries(region: string, slug: strin
 
 export async function getTravelApps(): Promise<TravelApp[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_kind", "app");
+  const { data } = await sb.from("items").select("*").eq("major_category", "travel").eq("section_slug", "services").eq("item_class", "product");
   return (data ?? []).map(mapTravelAppItem);
 }
 
@@ -1262,13 +1359,13 @@ export async function getCafeItem(region: string, slug: string): Promise<CafeIte
 
 export async function getCafeRankingsByRegion(region: string): Promise<CafeRanking[]> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "cafe").eq("region", region);
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "food").eq("section_slug", "cafe").eq("region", region);
   return (data ?? []).map((r) => mapCafeRanking(r, r.ranking_items ?? []));
 }
 
 export async function getCafeRanking(region: string, slug: string): Promise<CafeRanking | undefined> {
   const sb = createServerClient();
-  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image_url))").eq("major_category", "food").eq("section_slug", "cafe").eq("slug", slug).maybeSingle();
+  const { data } = await sb.from("rankings").select("*, ranking_items(*, items(image))").eq("major_category", "food").eq("section_slug", "cafe").eq("slug", slug).maybeSingle();
   return data ? mapCafeRanking(data, data.ranking_items ?? []) : undefined;
 }
 

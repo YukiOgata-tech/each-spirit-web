@@ -21,6 +21,7 @@ export const ALLOWED_IMAGE_HOSTS = [
   "delightdesignersworks.com",
   "seabyluvism.jp",
   "agu-hair.com",
+  "management.adhpublic.com",
 ] as const;
 
 function supabaseHost(): string | null {
