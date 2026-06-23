@@ -14,7 +14,8 @@
 
 ## クラス分け
 
-- `item_class`: **place / work / product ...** UI 分岐・JSON-LD 型の最適化に使用。
+- `item_class`: **physical_service / intangible_service / media / person / product / other**。共通エンジンのブロック切替・JSON-LD 型の最適化軸（section/URL とは独立。例: food でもコンビニ商品は product）。
+  - `physical_service`/`intangible_service` は所在地あり（intangible は住所任意）。media/product/person/other は所在地なし。
 - `major_category`（food/health/beauty/travel/entertainment/leisure...）× `section_slug`（ramen/cafe/anime…）で URL と一覧をディスパッチ。
 
 ---
@@ -27,7 +28,7 @@
 | `slug` | text | URL slug（kebab-case） |
 | `name` | text | 名称 |
 | `description` | text | 説明 |
-| `region` | text | 地域（place の地域分割用） |
+| `region` | text | 地域（place の地域分割用）ページpath管理にも使われている |
 | `phone` | text | 電話（place） |
 | `price_range` | text | 価格帯（place/product） |
 | `official_url` | text | 公式サイト（全型） |
@@ -39,13 +40,13 @@
 | `major_category` | text | 大カテゴリ |
 | `section_slug` | text | section |
 | `canonical_path` | text | 正規URLパス 基本的に /[major_category]/[section_slug]/[slug] or /[major_category]/[section_slug]/[region] があるので注意|
-| `item_class` | text | place / work / product |
-| `item_kind` | text | ⚠️旧・形態値（anime_movie 等）。`genres` へ統合予定（Phase 2 で廃止候補） |
+| `item_class` | text | physical_service / intangible_service / media / person / product / other |
+| `item_kind` | text | 任意（genre 的な補助分類）。travel の agency/app 判定は item_class へ移行済み。あってもなくてもよい |
 | `created_at` / `updated_at` | timestamptz | 作成・更新（`lastVerifiedAt` は updated_at 由来） |
 
-### 旧カラム（移行済み・Phase 3 で DROP 予定）
+### 旧カラム（DROP 済み 2026-06）
 `image_url` → `image.url` ／ `address` `area` `map_url` `address_region` `latitude` `longitude` → `address_info` ／ `seo_title` `seo_description` → `seo`。
-※データはすべて新 JSONB へ漏れなく移行済み（検証済み）。現状はアプリが旧カラムを読むため残置。
+`item_kind` のみ travel(agency/app)判定・canonical でまだ使用中のため残置。
 
 ---
 
@@ -72,6 +73,7 @@ section ごとに異なる項目を保持。** `faqs`/`sources`/`genre` はこ�
 {
   "address": "新潟県新潟市西区笠木3629番地1",
   "prefecture": "新潟県",                   // JSON-LD addressRegion
+  "area": "新潟市西区",                      // エリア（市区・地区）
   "lat": 37.9, "lng": 139.0,               // 緯度経度（任意）
   "map_url": "https://maps.google.com/?q=…",
   "access": "○○駅から徒歩5分"               // アクセス説明（任意）
@@ -124,5 +126,4 @@ section ごとに異なる項目を保持。** `faqs`/`sources`/`genre` はこ�
 
 
 ## 関連
-- 大カテゴリ×section の全体設計: [universal-item-base-plan.md](./universal-item-base-plan.md)
 - パス/slug 規則: [content-display-path-slug-spec.md](./content-display-path-slug-spec.md)

@@ -1,14 +1,17 @@
 import { notFound } from "next/navigation";
 import { GenericItemDetailPage, genericItemMetadata } from "@/components/generic/GenericSectionPages";
-import RamenItemPage from "@/components/legacy-pages/food/ramen/shops/[slug]/page";
-import CafeItemPage from "@/components/legacy-pages/food/cafe/[region]/shops/[slug]/page";
-import { getCafeItemsByRegion, getCafeRegions, getRamenItems } from "@/lib/content";
+import { ItemDetail } from "@/components/detail/ItemDetail";
+import {
+  getCafeItemsByRegion, getCafeRegions, getRamenItems,
+  getContentSection, getGenericItemBySection, getItemEditorialScore,
+} from "@/lib/content";
+import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
 export async function generateMetadata({ params }: PageProps) {
   const { section, slug } = await params;
-  if (section === "ramen" || section === "cafe") return {};
+  // ramen/cafe/汎用すべて genericItemMetadata で per-page metadata を付与（旧 return {} の不備を解消）
   return genericItemMetadata("food", section, "shops", slug);
 }
 
@@ -25,17 +28,37 @@ export async function generateStaticParams() {
 
 export default async function FoodSectionShopPage({ params }: PageProps) {
   const { section, slug } = await params;
-  if (section === "ramen") return <RamenItemPage params={Promise.resolve({ slug })} />;
+  if (section === "ramen") {
+    const [sectionRow, item] = await Promise.all([
+      getContentSection("food", "ramen"),
+      getGenericItemBySection("food", "ramen", slug),
+    ]);
+    if (!sectionRow || !item) notFound();
+    const path = item.canonicalPath ?? routes.ramenItem(slug);
+    const score = await getItemEditorialScore(item.id);
+    const breadcrumbs = [
+      { name: "トップ", href: routes.home },
+      { name: "グルメ", href: routes.majorCategory("food") },
+      { name: "ラーメン", href: routes.ramen },
+      { name: item.name, href: path },
+    ];
+    return <ItemDetail item={item} section={sectionRow} majorLabel="グルメ" path={path} breadcrumbs={breadcrumbs} aggregateRating={score} />;
+  }
   if (section === "cafe") {
-    const pairs = await Promise.all((await getCafeRegions()).map(async (region) => ({ region: region.slug, item: await getCafeItemBySlug(region.slug, slug) })));
-    const match = pairs.find((pair) => pair.item);
-    if (!match) notFound();
-    return <CafeItemPage params={Promise.resolve({ region: match.region, slug })} />;
+    const [sectionRow, item] = await Promise.all([
+      getContentSection("food", "cafe"),
+      getGenericItemBySection("food", "cafe", slug),
+    ]);
+    if (!sectionRow || !item) notFound();
+    const path = item.canonicalPath ?? `/food/cafe/shops/${slug}`;
+    const score = await getItemEditorialScore(item.id);
+    const breadcrumbs = [
+      { name: "トップ", href: routes.home },
+      { name: "グルメ", href: routes.majorCategory("food") },
+      { name: "カフェ", href: routes.cafe },
+      { name: item.name, href: path },
+    ];
+    return <ItemDetail item={item} section={sectionRow} majorLabel="グルメ" path={path} breadcrumbs={breadcrumbs} aggregateRating={score} />;
   }
   return <GenericItemDetailPage majorCategory="food" sectionSlug={section} itemPathSegment="shops" slug={slug} />;
-}
-
-async function getCafeItemBySlug(region: string, slug: string) {
-  const items = await getCafeItemsByRegion(region);
-  return items.find((item) => item.slug === slug);
 }

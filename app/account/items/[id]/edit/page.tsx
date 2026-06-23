@@ -2,8 +2,9 @@ import { redirect, notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { getCurrentAdminUser } from "@/lib/admin";
 import { createServerClient } from "@/lib/supabase-server";
-import { itemSchemaKey, SECTION_ITEM_SCHEMAS } from "@/lib/admin-item-schema";
+import { itemSchemaKey } from "@/lib/admin-item-schema";
 import { ItemEditor, type ItemInitial } from "@/components/admin/ItemEditor";
+import { getEditorSectionSchemas } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { saveItem } from "../../actions";
 import { buildRegionOptions } from "../../region-options";
@@ -23,30 +24,46 @@ export default async function EditItemPage({ params }: PageProps) {
 
   const schemaKey = itemSchemaKey(row.major_category, row.section_slug, row.item_kind);
   const str = (v: unknown) => (v == null ? "" : String(v));
+  const obj = (v: unknown) => (v as Record<string, unknown> | null) ?? null;
+  // jsonb 配列 → "a | b | c" の1行1件テキスト（フォーム textarea 用）
+  const lines = (v: unknown, keys: string[]) =>
+    Array.isArray(v) ? v.map((o) => keys.map((k) => str((o as Record<string, unknown>)?.[k])).join(" | ")).join("\n") : "";
   const initial: ItemInitial = {
     id: row.id,
     schemaKey,
     slug: row.slug,
     status: row.status ?? "published",
+    itemKind: str(row.item_kind),
     common: {
       name: str(row.name),
       description: str(row.description),
       region: str(row.region),
-      area: str(row.area),
-      address: str(row.address),
+      area: str((row.address_info as Record<string, unknown> | null)?.area),
+      address: str((row.address_info as Record<string, unknown> | null)?.address),
       phone: str(row.phone),
       price_range: str(row.price_range),
-      image_url: str(row.image_url),
+      image_url: str((row.image as Record<string, unknown> | null)?.url),
       official_url: str(row.official_url),
-      map_url: str(row.map_url),
+      map_url: str(obj(row.address_info)?.map_url),
       editor_comment: str(row.editor_comment),
-      last_verified_at: row.last_verified_at ? String(row.last_verified_at).slice(0, 10) : "",
+      genres: ((row.genres as string[]) ?? []).join(", "),
+      image_alt: str(obj(row.image)?.alt),
+      image_credit_name: str(obj(obj(row.image)?.credit)?.name),
+      image_credit_url: str(obj(obj(row.image)?.credit)?.url),
+      seo_title: str(obj(row.seo)?.title),
+      seo_description: str(obj(row.seo)?.description),
+      seo_keywords: ((obj(row.seo)?.keywords as string[] | undefined) ?? []).join(", "),
+      sources: lines(row.sources, ["url", "title", "sourceType", "collectedAt", "note"]),
+      faq: lines(row.faq, ["question", "answer"]),
+      history: lines(row.history, ["date", "description"]),
+      service_model: lines(row.service_model, ["service", "url", "note"]),
+      related_link: lines(row.related_link, ["label", "url"]),
     },
     tags: (row.tags as string[]) ?? [],
     metadata: (row.metadata as Record<string, unknown>) ?? {},
   };
 
-  const regionOptions = await buildRegionOptions();
+  const [regionOptions, schemas] = await Promise.all([buildRegionOptions(), getEditorSectionSchemas()]);
 
   return (
     <main className="min-h-screen bg-slate-100 pb-12">
@@ -57,7 +74,7 @@ export default async function EditItemPage({ params }: PageProps) {
         </div>
       </header>
       <div className="mx-auto mt-6 w-[min(1080px,calc(100%-24px))] sm:w-[min(1080px,calc(100%-32px))]">
-        <ItemEditor action={saveItem} schemas={SECTION_ITEM_SCHEMAS} regionOptions={regionOptions} initial={initial} />
+        <ItemEditor action={saveItem} schemas={schemas} regionOptions={regionOptions} initial={initial} />
       </div>
     </main>
   );

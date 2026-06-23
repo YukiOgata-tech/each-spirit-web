@@ -3,13 +3,16 @@ import { ArrowRight, Car, MapPin, Soup } from "lucide-react";
 import type { Item } from "@/lib/types";
 import { routes } from "@/lib/routes";
 import { getRamenImageUrl } from "@/lib/ramen-images";
+import { isAllowedImageSrc } from "@/lib/image-hosts";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { RamenImagePlaceholder } from "@/components/ramen/RamenImagePlaceholder";
 
 export function ItemCard({ item }: { item: Item }) {
-  const imageUrl = getRamenImageUrl(item);
+  const rawImageUrl = getRamenImageUrl(item);
+  // 未許可ホスト（next.config 未登録）はクラッシュさせずプレースホルダへフォールバック
+  const imageUrl = isAllowedImageSrc(rawImageUrl) ? rawImageUrl : undefined;
 
   return (
     <Link

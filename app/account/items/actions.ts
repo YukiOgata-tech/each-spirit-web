@@ -215,6 +215,7 @@ export async function saveItem(formData: FormData) {
   const seo: Record<string, unknown> = {};
   { const t = text(formData, "seo_title"); if (t) seo.title = t; }
   { const d = text(formData, "seo_description"); if (d) seo.description = d; }
+  // keywords は自動生成（genericItemMetadata）＋ここで任意の追記分のみ保持
   { const k = list(formData, "seo_keywords"); if (k.length) seo.keywords = k; }
 
   const payload = {

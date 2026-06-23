@@ -31,6 +31,19 @@ function majorImageForPath(path: string): string | undefined {
   return majorMetaImage(path.split("/").filter(Boolean)[0]);
 }
 
+/** items ページの meta keywords。構造化フィールドから自動生成し、任意の手動追記(extra)を末尾にマージ。
+ *  name ＋ section ラベル ＋ genres ＋ tags ＋ 都道府県 ＋ エリア ＋ extra（seo.keywords）。重複除去。 */
+export function itemKeywords(
+  item: { name: string; genres: string[]; tags: string[]; addressRegion?: string; area: string },
+  sectionLabel?: string,
+  extra: string[] = [],
+): string[] {
+  return Array.from(new Set(
+    [item.name, sectionLabel, ...item.genres, ...item.tags, item.addressRegion, item.area, ...extra]
+      .filter((s): s is string => typeof s === "string" && s.trim() !== ""),
+  ));
+}
+
 export function pageMetadata({
   title,
   description,

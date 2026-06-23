@@ -4,12 +4,14 @@ import { useMemo, useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { SectionItemSchema, ItemField } from "@/lib/admin-item-schema";
+import { isLocationRelevant } from "@/lib/content-models";
 
 export type ItemInitial = {
   id: string;
   schemaKey: string;
   slug: string;
   status: string;
+  itemKind?: string;
   common: Record<string, string>;
   tags: string[];
   metadata: Record<string, unknown>;
@@ -33,6 +35,7 @@ const majorCategoryLabels: Record<string, string> = {
   health: "健康",
   beauty: "美容",
   travel: "旅行",
+  entertainment: "エンターテインメント",
   leisure: "レジャー",
 };
 const NEW_SECTION_SCHEMA_KEY = "__new_section__";
@@ -44,6 +47,10 @@ const itemKindOptions = [
   { value: "service", label: "サービス(service)" },
   { value: "agency", label: "旅行会社(agency)" },
   { value: "app", label: "アプリ(app)" },
+  { value: "event", label: "イベント(event)" },
+  { value: "person", label: "人物(person)" },
+  { value: "concept", label: "概念(concept)" },
+  { value: "work", label: "作品(work)" },
   { value: "item", label: "汎用(item)" },
 ];
 
@@ -82,6 +89,9 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
   const regionKey = schema ? `${schema.majorCategory}:${schema.sectionSlug}` : "";
   const regions = regionOptions.find((r) => r.key === regionKey)?.regions ?? [];
   const effectiveRegionMode = schema?.regionMode ?? (isNewSection ? newRegionMode : "none");
+  // place 以外（作品・商品・アプリ等）は所在地系の共通欄を出さない＝型ごとに不要項目を保存しない。
+  // 新規 section は既定で place 扱い（所在地あり）。
+  const locationRelevant = isNewSection ? true : isLocationRelevant(schema?.itemClass);
 
   const md = initial?.metadata ?? {};
   const common = initial?.common ?? {};
@@ -218,6 +228,14 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
             <label className={labelClass}>slug *</label>
             <input name="slug" defaultValue={initial?.slug ?? ""} className={inputClass} placeholder="niigata-ramen-ishiguro" required />
           </div>
+          {schema?.itemKinds && schema.itemKinds.length > 0 && (
+            <div>
+              <label className={labelClass}>原作タイプ(item kind) *</label>
+              <select name="item_kind" defaultValue={initial?.itemKind ?? schema.itemKinds[0].value} className={inputClass}>
+                {schema.itemKinds.map((k) => <option key={k.value} value={k.value}>{k.label}</option>)}
+              </select>
+            </div>
+          )}
           <div className="sm:col-span-2">
             <label className={labelClass}>名称 *</label>
             <input name="name" defaultValue={common.name ?? ""} className={inputClass} required />
@@ -265,19 +283,19 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
       <div className={sectionClass}>
         <h2 className="mb-3 text-sm font-black text-slate-800">共通情報</h2>
         <div className="grid gap-4 sm:grid-cols-2">
-          {([
-            ["area", "エリア"], ["address", "住所"], ["phone", "電話"], ["price_range", "価格帯"],
-            ["image_url", "画像URL"], ["official_url", "公式URL"], ["map_url", "地図URL"],
-          ] as const).map(([name, label]) => (
+          {(([
+            ["image_url", "画像URL"], ["official_url", "公式URL"],
+            // 所在地系（place 型のみ表示）
+            ...(locationRelevant ? [
+              ["area", "エリア"], ["address", "住所"], ["phone", "電話"],
+              ["price_range", "価格帯"], ["map_url", "地図URL"],
+            ] : []),
+          ]) as [string, string][]).map(([name, label]) => (
             <div key={name}>
               <label className={labelClass}>{label}</label>
               <input name={name} defaultValue={common[name] ?? ""} className={inputClass} />
             </div>
           ))}
-          <div>
-            <label className={labelClass}>最終確認日</label>
-            <input type="date" name="last_verified_at" defaultValue={common.last_verified_at ?? ""} className={inputClass} />
-          </div>
           <div className="sm:col-span-2">
             <label className={labelClass}>タグ（カンマ/改行区切り）</label>
             <input name="tags" defaultValue={(initial?.tags ?? []).join(", ")} className={inputClass} />
@@ -285,6 +303,67 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
           <div className="sm:col-span-2">
             <label className={labelClass}>編集部コメント</label>
             <textarea name="editor_comment" defaultValue={common.editor_comment ?? ""} rows={2} className={inputClass} />
+          </div>
+        </div>
+      </div>
+
+      <div className={sectionClass}>
+        <h2 className="mb-1 text-sm font-black text-slate-800">拡張情報（任意）</h2>
+        <p className="mb-3 text-[11px] text-slate-400">複数行の項目は「1行1件・各値を | で区切る」。空欄は保存されません。</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2">
+            <label className={labelClass}>ジャンル（カンマ/改行区切り）</label>
+            <input name="genres" defaultValue={common.genres ?? ""} className={inputClass} placeholder="豚骨, 味噌 / 異世界, アクション" />
+          </div>
+          <div>
+            <label className={labelClass}>画像 alt（代替テキスト）</label>
+            <input name="image_alt" defaultValue={common.image_alt ?? ""} className={inputClass} />
+          </div>
+          <div>
+            <label className={labelClass}>画像出典 名称</label>
+            <input name="image_credit_name" defaultValue={common.image_credit_name ?? ""} className={inputClass} placeholder="○○公式" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>画像出典 URL</label>
+            <input name="image_credit_url" defaultValue={common.image_credit_url ?? ""} className={inputClass} />
+          </div>
+          <div className="sm:col-span-2 rounded-md bg-slate-50 p-3">
+            <p className="mb-2 text-[11px] font-bold text-slate-500">SEO上書き（すべて任意・空欄なら自動）</p>
+            <div className="grid gap-3">
+              <div>
+                <label className={labelClass}>SEOタイトル上書き</label>
+                <input name="seo_title" defaultValue={common.seo_title ?? ""} className={inputClass} placeholder="空欄なら「名称」を使用" />
+              </div>
+              <div>
+                <label className={labelClass}>SEO説明上書き</label>
+                <textarea name="seo_description" defaultValue={common.seo_description ?? ""} rows={2} className={inputClass} placeholder="空欄なら「説明」を使用" />
+              </div>
+              <div>
+                <label className={labelClass}>追加キーワード（カンマ区切り・任意）</label>
+                <input name="seo_keywords" defaultValue={common.seo_keywords ?? ""} className={inputClass} placeholder="補足したい語のみ" />
+                <p className="mt-1 text-[11px] text-slate-400">名称 / カテゴリ / genres / tags / エリアは自動で含まれます。ここは追記分のみ。</p>
+              </div>
+            </div>
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>出典 sources</label>
+            <textarea name="sources" defaultValue={common.sources ?? ""} rows={3} className={inputClass} placeholder="URL | タイトル | 種別 | 確認日 | 備考" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>FAQ</label>
+            <textarea name="faq" defaultValue={common.faq ?? ""} rows={3} className={inputClass} placeholder="質問 | 回答" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>沿革・経歴 history</label>
+            <textarea name="history" defaultValue={common.history ?? ""} rows={2} className={inputClass} placeholder="日付 | 内容" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>視聴/購入/利用 service_model</label>
+            <textarea name="service_model" defaultValue={common.service_model ?? ""} rows={2} className={inputClass} placeholder="サービス名 | URL | 備考" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className={labelClass}>関連リンク related_link</label>
+            <textarea name="related_link" defaultValue={common.related_link ?? ""} rows={2} className={inputClass} placeholder="ラベル | URL" />
           </div>
         </div>
       </div>

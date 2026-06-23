@@ -1,16 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRight, ExternalLink, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, MapPin, Sparkles, Trophy } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
-import { FaqSection } from "@/components/cards/FaqSection";
-import { SourceList } from "@/components/cards/SourceList";
 import { TagList } from "@/components/cards/TagList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MajorSectionDirectory, SectionActionNav } from "@/components/generic/SectionNavigation";
+import { ItemDetail } from "@/components/detail/ItemDetail";
 import {
   articleHref,
   getArticlesBySection,
@@ -23,7 +22,7 @@ import {
   getRankingsBySection,
   rankingHref,
 } from "@/lib/content";
-import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
+import { breadcrumbSchema, itemKeywords, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
 import { safeImageSrc } from "@/lib/image-hosts";
@@ -140,10 +139,11 @@ export async function genericItemMetadata(majorCategory: string, sectionSlug: st
   const item = await getGenericItemBySection(majorCategory, sectionSlug, slug);
   if (!item) return {};
   return pageMetadata({
-    title: item.name,
-    description: item.description,
+    title: item.seoTitle || item.name,
+    description: item.seoDescription || item.description,
     path: itemHref(section, item),
-    image: item.imageUrl ?? majorMetaImage(majorCategory),
+    image: item.seoOgImage ?? item.imageUrl ?? majorMetaImage(majorCategory),
+    keywords: itemKeywords(item, section.label, item.seoKeywords),
   });
 }
 
@@ -205,13 +205,6 @@ function GenericItemCard({ section, item, theme }: { section: ContentSection; it
       </div>
     </Link>
   );
-}
-
-function metadataEntries(metadata: Record<string, unknown>) {
-  return Object.entries(metadata)
-    .filter(([key, value]) => !["sources", "faqs", "official_links", "related_ranking_slugs"].includes(key) && value !== "" && value != null)
-    .slice(0, 12)
-    .map(([key, value]) => ({ key, value: Array.isArray(value) ? value.join(", ") : String(value) }));
 }
 
 export async function GenericSectionIndex({ majorCategory, sectionSlug }: { majorCategory: string; sectionSlug: string }) {
@@ -355,7 +348,6 @@ export async function GenericItemDetailPage({
   if (!item) notFound();
 
   const majorLabel = majorCategoryLabels[majorCategory] ?? majorCategory;
-  const theme = genericTheme(majorCategory);
   const path = itemHref(section, item);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
@@ -363,134 +355,10 @@ export async function GenericItemDetailPage({
     { name: section.label, href: section.href || `/${majorCategory}/${sectionSlug}` },
     { name: item.name, href: path },
   ];
-  const details = metadataEntries(item.metadata);
 
-  return (
-    <main className={`${theme.className} section-shell max-w-6xl`}>
-      <JsonLd data={breadcrumbSchema(breadcrumbs)} />
-      <JsonLd data={speakableWebPageSchema(path, item.name)} />
-      {item.faqs.length > 0 && <JsonLd data={faqSchema(item.faqs)} />}
-      
-      <section className={`overflow-hidden rounded-lg border border-[var(--border)] ${theme.hero} shadow-soft`}>
-        <div className="grid lg:grid-cols-[1.04fr_0.96fr]">
-          <div className="flex min-h-[360px] flex-col justify-between p-5 sm:p-8 lg:p-10">
-            <div>
-              <div className="flex flex-wrap gap-2">
-                <Badge>{majorLabel}</Badge>
-                <Badge>{section.label}</Badge>
-                {item.region && <Badge>{item.region}</Badge>}
-              </div>
-              <h1 data-speakable="title" className="mt-5 text-[1.75rem] font-black leading-[1.12] tracking-normal text-slate-950 sm:text-4xl lg:text-5xl">{item.name}</h1>
-              <p data-speakable="description" className="mt-4 max-w-2xl text-sm leading-7 text-slate-700 sm:mt-5 sm:text-base">{item.description}</p>
-            </div>
-
-            <div className="mt-8 space-y-3">
-              {(item.area || item.priceRange) && (
-                <div className="flex flex-wrap gap-2">
-                  {item.area && <Badge>{item.area}</Badge>}
-                  {item.priceRange && <Badge>{item.priceRange}</Badge>}
-                </div>
-              )}
-              <TagList tags={item.tags} max={6} />
-            </div>
-          </div>
-
-          <div className="relative min-h-[300px] overflow-hidden lg:min-h-[460px]">
-            {item.imageUrl ? (
-              <Image
-                src={item.imageUrl}
-                alt={item.name}
-                fill
-                priority
-                sizes="(min-width: 1024px) 50vw, 100vw"
-                className="object-cover"
-              />
-            ) : (
-              <div className={`flex h-full min-h-[300px] items-center justify-center ${theme.imageFallback}`}>
-                <Sparkles className="h-10 w-10 text-[var(--primary)]/55" />
-              </div>
-            )}
-            <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.02)_0%,rgba(15,23,42,0.48)_100%)]" />
-          </div>
-        </div>
-      </section>
-
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_320px]">
-        <section className="rounded-lg border border-[var(--border)] bg-white p-5 shadow-sm sm:p-6">
-          <h2 className="text-xl font-bold tracking-normal text-slate-950">基本情報</h2>
-          <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-            {[
-              ["エリア", item.area],
-              ["住所", item.address],
-              ["電話", item.phone],
-              ["価格帯", item.priceRange],
-              ["最終確認日", item.lastVerifiedAt],
-            ].filter(([, value]) => value).map(([label, value]) => (
-              <div key={label} className={`rounded-md p-3 ${theme.soft}`}>
-                <dt className="text-xs font-bold text-slate-500">{label}</dt>
-                <dd className="mt-1 text-slate-900">{value}</dd>
-              </div>
-            ))}
-          </dl>
-
-          {details.length > 0 && (
-            <>
-              <h2 className="mt-8 text-xl font-bold tracking-normal text-slate-950">詳細</h2>
-              <dl className="mt-4 grid gap-4 text-sm sm:grid-cols-2">
-                {details.map((entry) => (
-                  <div key={entry.key} className={`rounded-md p-3 ${theme.soft}`}>
-                    <dt className="text-xs font-bold text-slate-500">{entry.key}</dt>
-                    <dd className="mt-1 text-slate-900">{entry.value}</dd>
-                  </div>
-                ))}
-              </dl>
-            </>
-          )}
-
-          {item.editorComment && (
-            <div className={`mt-8 rounded-lg border p-4 ${theme.accentPanel}`}>
-              <h2 className="text-base font-bold text-slate-950">編集部コメント</h2>
-              <p className="mt-2 text-sm leading-7 text-slate-700">{item.editorComment}</p>
-            </div>
-          )}
-
-          {item.faqs.length > 0 && <div className="mt-8"><FaqSection faqs={item.faqs} /></div>}
-          {item.sources.length > 0 && <div className="mt-8"><SourceList sources={item.sources} /></div>}
-        </section>
-
-        <aside className="space-y-3">
-          <div className="rounded-lg border border-[var(--border)] bg-white p-4 shadow-sm">
-            <p className="text-xs font-bold uppercase tracking-[0.16em] text-[var(--primary)]">Explore</p>
-            <div className="mt-3 space-y-2">
-              <Button asChild variant="outline" className="w-full justify-between">
-                <Link href={section.href || `/${majorCategory}/${sectionSlug}`}>カテゴリトップ<ArrowRight className="h-4 w-4" /></Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-between">
-                <Link href={routes.sectionRankings(majorCategory, sectionSlug)}>ランキング<Trophy className="h-4 w-4" /></Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-between">
-                <Link href={`${section.href || `/${majorCategory}/${sectionSlug}`}#articles`}>記事<ArrowRight className="h-4 w-4" /></Link>
-              </Button>
-              <Button asChild variant="outline" className="w-full justify-between">
-                <Link href={routes.majorCategory(majorCategory)}>{majorLabel}トップ<ArrowRight className="h-4 w-4" /></Link>
-              </Button>
-            </div>
-          </div>
-          {item.officialUrl && (
-            <Button asChild className="w-full justify-between">
-              <Link href={item.officialUrl} target="_blank" rel="noreferrer">公式サイト<ExternalLink className="h-4 w-4" /></Link>
-            </Button>
-          )}
-          {item.mapUrl && (
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link href={item.mapUrl} target="_blank" rel="noreferrer">地図を見る<MapPin className="h-4 w-4" /></Link>
-            </Button>
-          )}
-        </aside>
-      </div>
-    </main>
-  );
+  return <ItemDetail item={item} section={section} majorLabel={majorLabel} path={path} breadcrumbs={breadcrumbs} />;
 }
+
 
 export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slug }: { majorCategory: string; sectionSlug: string; slug: string }) {
   const section = await getContentSection(majorCategory, sectionSlug);
