@@ -22,7 +22,7 @@ export default async function EditItemPage({ params }: PageProps) {
   const { data: row } = await service.from("items").select("*").eq("id", id).maybeSingle();
   if (!row) notFound();
 
-  const schemaKey = itemSchemaKey(row.major_category, row.section_slug, row.item_kind);
+  const schemaKey = itemSchemaKey(row.major_category, row.section_slug, row.item_class);
   const str = (v: unknown) => (v == null ? "" : String(v));
   const obj = (v: unknown) => (v as Record<string, unknown> | null) ?? null;
   // jsonb 配列 → "a | b | c" の1行1件テキスト（フォーム textarea 用）
@@ -60,7 +60,12 @@ export default async function EditItemPage({ params }: PageProps) {
       related_link: lines(row.related_link, ["label", "url"]),
     },
     tags: (row.tags as string[]) ?? [],
-    metadata: (row.metadata as Record<string, unknown>) ?? {},
+    // nutrition(構造化) はフォームの数値フィールド用にフラット展開して初期表示
+    metadata: (() => {
+      const md = (row.metadata as Record<string, unknown>) ?? {};
+      const nut = (md.nutrition as Record<string, unknown> | undefined) ?? {};
+      return { ...md, ...nut, nutrition_basis: nut.basis };
+    })(),
   };
 
   const [regionOptions, schemas] = await Promise.all([buildRegionOptions(), getEditorSectionSchemas()]);

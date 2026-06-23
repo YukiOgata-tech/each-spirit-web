@@ -169,6 +169,20 @@ export async function saveItem(formData: FormData) {
   }
   const metadata = { ...baseMetadata, ...managed };
 
+  // 栄養成分フィールド(フラット入力) → 構造化 nutrition オブジェクトへ集約（食品商品・汎用）
+  const NUTRITION_KEYS = ["serving_size", "calories", "protein", "fat", "carbs", "sugar", "fiber", "salt"];
+  const nut: Record<string, unknown> = {};
+  for (const k of NUTRITION_KEYS) {
+    const v = metadata[k];
+    if (v != null && v !== "" && Number.isFinite(Number(v))) nut[k] = Number(v);
+    delete metadata[k];
+  }
+  const nutritionBasis = metadata["nutrition_basis"];
+  delete metadata["nutrition_basis"];
+  if (Object.keys(nut).length > 0) {
+    metadata.nutrition = { basis: nutritionBasis === "per_100g" ? "per_100g" : "per_serving", ...nut };
+  }
+
   // slug 重複チェック（同一 major+section 内、編集時は自分を除外）
   const dupQuery = service
     .from("items")

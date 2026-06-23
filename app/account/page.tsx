@@ -143,7 +143,7 @@ export default async function AccountPage() {
                   className="h-20 w-20 rounded-full border-2 border-white object-cover shadow-md sm:h-24 sm:w-24"
                 />
               ) : (
-                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-slate-200 bg-gradient-to-br from-[var(--primary)] to-blue-400 text-2xl font-black text-white shadow-md sm:h-24 sm:w-24">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full border-2 border-slate-200 bg-linear-to-br from-[var(--primary)] to-blue-400 text-2xl font-black text-white shadow-md sm:h-24 sm:w-24">
                   {initials}
                 </div>
               )}
@@ -329,7 +329,7 @@ export default async function AccountPage() {
           {/* ── 今日の占い ──────────────────────────── */}
           <DashboardCard title="今日の占い">
             <div className="flex h-full flex-col justify-between gap-4">
-              <div className="flex items-center justify-center rounded-xl bg-gradient-to-br from-violet-50 to-indigo-50 py-6">
+              <div className="flex items-center justify-center rounded-xl bg-linear-to-br from-violet-50 to-indigo-50 py-6">
                 <div className="text-center">
                   <Sparkles className="mx-auto h-8 w-8 text-violet-400" />
                   <p className="mt-2 text-sm font-semibold text-violet-700">7つの運勢を毎日チェック</p>

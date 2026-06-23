@@ -6,7 +6,7 @@ import type { ContentSection, GenericItem } from "@/lib/types";
 import { PlainHero, PosterHero, ProductHero, ProfileHero, SplitHero } from "./hero";
 import {
   AttributesBlock, EditorCommentBlock, GenresBlock, HistoryBlock, KeyInfoCard,
-  OfficialLinksBlock, ProsConsBlock, RelatedLinksBlock, ServiceModelBlock,
+  NutritionBlock, OfficialLinksBlock, ProsConsBlock, RelatedLinksBlock, ServiceModelBlock,
 } from "./blocks";
 
 export type LayoutCtx = {
@@ -109,6 +109,7 @@ export function ProductLayout(c: LayoutCtx) {
       <TwoCol
         side={<><ServiceModelBlock item={c.item} title="購入・入手" /><OfficialLinksBlock item={c.item} /></>}
         main={<>
+          <NutritionBlock item={c.item} />
           <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="スペック" />
           <GenresBlock item={c.item} />
           <ProsConsBlock item={c.item} />

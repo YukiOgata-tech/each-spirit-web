@@ -10,7 +10,7 @@ const METADATA_EXCLUDE_KEYS = new Set([
   "sources", "faqs", "official_links", "related_ranking_slugs", "related_slugs", "related_item_slugs",
   "item_role", "content_category", "image_research", "item_kind", "author", "metadata_version",
   "access", "business_hours", "closed_days", "highlight", "tagline", "genre", "genres",
-  "pros", "cons", "anime_profile", "viewing_guide",
+  "pros", "cons", "anime_profile", "viewing_guide", "nutrition",
 ]);
 
 /** section の入力フィールド定義（DB item_schema 優先・無ければコード fallback） */

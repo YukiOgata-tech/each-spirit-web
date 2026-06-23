@@ -185,6 +185,48 @@ export function RelatedLinksBlock({ item, title = "関連ページ" }: { item: G
   );
 }
 
+/** 栄養成分（食品商品・汎用）。GenericItem.nutrition を表・PFCバーで表示。 */
+export function NutritionBlock({ item }: { item: GenericItem }) {
+  const n = item.nutrition;
+  if (!n) return null;
+  const basisLabel = n.basis === "per_100g" ? "100gあたり" : n.serving_size ? `1食 ${n.serving_size}g あたり` : "1食あたり";
+  const cells = ([
+    ["タンパク質", n.protein, "g"], ["カロリー", n.calories, "kcal"],
+    ["炭水化物", n.carbs, "g"], ["脂質", n.fat, "g"],
+    ["糖質", n.sugar, "g"], ["食物繊維", n.fiber, "g"], ["食塩相当量", n.salt, "g"],
+  ] as [string, number | undefined, string][]).filter(([, v]) => v != null);
+  if (cells.length === 0) return null;
+  const p = n.protein ?? 0, f = n.fat ?? 0, c = n.carbs ?? 0;
+  const tot = p + f + c;
+  const seg = (v: number) => (tot > 0 ? (v / tot) * 100 : 0);
+  return (
+    <Panel title={`栄養成分（${basisLabel}）`}>
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-4">
+        {cells.map(([label, value, unit]) => (
+          <div key={label} className="rounded-xl border border-[var(--border)] bg-white p-3 text-center">
+            <div className="text-[11px] font-bold text-slate-500">{label}</div>
+            <div className="mt-1 text-lg font-black text-slate-900">{value}<span className="ml-0.5 text-xs font-normal text-slate-400">{unit}</span></div>
+          </div>
+        ))}
+      </div>
+      {tot > 0 && (
+        <div className="mt-4">
+          <div className="flex h-3 w-full overflow-hidden rounded-full border border-[var(--border)]">
+            <div style={{ width: `${seg(p)}%` }} className="bg-[var(--primary)]" />
+            <div style={{ width: `${seg(f)}%` }} className="bg-amber-400" />
+            <div style={{ width: `${seg(c)}%` }} className="bg-slate-300" />
+          </div>
+          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-slate-500">
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-[var(--primary)]" />タンパク質 {p}g</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-amber-400" />脂質 {f}g</span>
+            <span className="flex items-center gap-1"><span className="inline-block h-2 w-2 rounded-full bg-slate-300" />炭水化物 {c}g</span>
+          </div>
+        </div>
+      )}
+    </Panel>
+  );
+}
+
 /** 編集部コメント */
 export function EditorCommentBlock({ item, theme }: { item: GenericItem; theme: MajorTheme }) {
   if (!item.editorComment) return null;

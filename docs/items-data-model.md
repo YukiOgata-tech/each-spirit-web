@@ -53,11 +53,10 @@
 ## JSONB 列：何を入れるか
 
 ### `metadata` — 型固有フィールド（`content_sections.item_schema` が定義）
-section ごとに異なる項目を保持。** `faqs`/`sources`/`genre` はここに入れない**。
+section ごとに異なる項目を保持。**専用列へ移したキーはここに入れない**（列が正）：`sources` / `faqs` → 専用列、`genre`/`genres` → `genres` 列、`official_links` / `related_ranking_slugs` / `related_item_slugs` → `related_link` 列、`access` → `address_info`、栄養成分 → `nutrition`（下記）。
 - place 例: `business_hours`, `closed_days`, `parking`, `best_for`, `recommended_menu`, salon の `treatments`/`men_welcome`, hotel の `onsen`/`meals`, cafe の `wifi`/`power` 等
-- work 例: `media_types`, `content_category`, `tone`, `anime_profile`, `viewing_guide` 等
-- product 例: `brand`, `protein`, `calories`, `carbs`, `fat`, `serving_size`, `flavors`, `pros`, `cons` 等
-- ⚠️現状 `official_links` / `related_ranking_slugs` / `access` も metadata に残存（`access` は address_info にも複製済み。`official_links`→`related_link`、ランキング参照→`related_link` への整理は Phase 2 候補）
+- work(media) 例: `media_types`, `content_category`, `tone`, `anime_profile`, `viewing_guide` 等
+- product(食品商品・汎用) 例: `product_type`(種類/分類), `variants`(フレーバー等), `targets`, `package_weight`/`package_price`/`price_per_kg`, `allergens`, `storage`, `pros`, `cons`（栄養成分は構造化 `nutrition`）
 
 ### `image` — items個別ページのトップ画像
 ```jsonc
@@ -117,6 +116,18 @@ section ごとに異なる項目を保持。** `faqs`/`sources`/`genre` はこ�
 ```jsonc
 [ { "label": "○○のランキングを見る", "url": "/entertainment/anime/rankings/…" } ] // 他のWEBサイトも可
 ```
+※ 旧 `official_links`（公式は `official_url` 列・地図は `address_info.map_url`）／`related_ranking_slugs`／`related_item_slugs` はすべてこの列へ統合済み。
+
+### `nutrition` — 栄養成分（食品商品・汎用／engine の NutritionBlock で表示）
+```jsonc
+{
+  "basis": "per_serving",   // または "per_100g"（表示基準）
+  "serving_size": 35,        // 1食/単位量(g)
+  "calories": 142, "protein": 24.2, "fat": 2.9, "carbs": 4.7,
+  "sugar": null, "fiber": null, "salt": null   // 任意
+}
+```
+※ `item_class = product` の食品（プロテイン・冷凍食品・コンビニ商品・菓子・飲料等）共通。admin では栄養を数値フィールドで入力し、保存時に `saveItem` が `nutrition` へ自動集約。`product_type`/`variants` と合わせ、新しい食品 section を足すだけで同じ ProductLayout＋NutritionBlock に乗る。
 
 ---
 

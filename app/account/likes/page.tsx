@@ -32,10 +32,13 @@ const SECTION_LABEL: Record<string, string> = {
   ranking: "ランキング",
 };
 
-function itemLabel(item: { major_category?: string | null; section_slug?: string | null; item_kind?: string | null }) {
+function itemLabel(item: { major_category?: string | null; section_slug?: string | null; item_class?: string | null }) {
   if (item.major_category && item.section_slug) {
     const sectionLabel = SECTION_LABEL[`${item.major_category}:${item.section_slug}`];
-    if (sectionLabel) return item.item_kind === "app" ? "旅行アプリ" : sectionLabel;
+    if (sectionLabel) {
+      if (item.major_category === "travel" && item.section_slug === "services" && item.item_class === "product") return "旅行アプリ";
+      return sectionLabel;
+    }
   }
   return "店舗・商品";
 }
@@ -67,7 +70,7 @@ export default async function AccountLikesPage({ searchParams }: PageProps) {
 
   const es = supabase.schema("es");
   const [itemsRes, articlesRes, rankingsRes] = await Promise.all([
-    itemIds.length ? es.from("items").select("id, major_category, section_slug, item_kind, name, canonical_path").in("id", itemIds) : Promise.resolve({ data: [] }),
+    itemIds.length ? es.from("items").select("id, major_category, section_slug, item_class, name, canonical_path").in("id", itemIds) : Promise.resolve({ data: [] }),
     articleIds.length ? es.from("articles").select("id, title, canonical_path").in("id", articleIds) : Promise.resolve({ data: [] }),
     rankingIds.length ? es.from("rankings").select("id, title, canonical_path").in("id", rankingIds) : Promise.resolve({ data: [] }),
   ]);

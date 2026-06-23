@@ -23,7 +23,7 @@ export type ItemField = {
 };
 
 export type SectionItemSchema = {
-  key: string; // `${majorCategory}:${sectionSlug}` あるいは agency/app のように item_kind 区別が要る場合は `${major}:${section}:${kind}`
+  key: string; // `${majorCategory}:${sectionSlug}` あるいは agency/app のように同一 section で item_class 別スキーマが要る場合は `${major}:${section}:${variant}`
   majorCategory: string;
   sectionSlug: string;
   itemKind: string;
@@ -214,10 +214,11 @@ export function getSectionItemSchema(key: string): SectionItemSchema | undefined
   return SECTION_ITEM_SCHEMAS.find((s) => s.key === key);
 }
 
-/** travel/services は agency/app で別スキーマ。それ以外は major:section で一意。 */
-export function itemSchemaKey(majorCategory: string, sectionSlug: string, itemKind?: string): string {
+/** travel/services は agency(intangible_service)/app(product) で別スキーマ。判別は item_class で行う
+ *  （item_kind は任意のジャンル的項目に格下げ済みのため依存しない）。それ以外は major:section で一意。 */
+export function itemSchemaKey(majorCategory: string, sectionSlug: string, itemClass?: string): string {
   if (majorCategory === "travel" && sectionSlug === "services") {
-    return `travel:services:${itemKind === "app" ? "app" : "agency"}`;
+    return `travel:services:${itemClass === "product" ? "app" : "agency"}`;
   }
   return `${majorCategory}:${sectionSlug}`;
 }
