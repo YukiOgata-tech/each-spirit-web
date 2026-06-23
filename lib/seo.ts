@@ -155,13 +155,10 @@ export function itemSchema(
   };
   if (item.imageUrl) data.image = item.imageUrl;
 
-  // sameAs: 公式リンク（型不正な要素はスキップ）
-  const links: string[] = Array.isArray(m.official_links)
-    ? m.official_links.flatMap((l) =>
-        l && typeof l === "object" && typeof (l as Record<string, unknown>).url === "string"
-          ? [String((l as Record<string, unknown>).url)] : [])
-    : [];
+  // sameAs: 公式URL ＋ 関連リンクの外部URL（official_links は related_link に統合済み）
+  const links: string[] = [];
   if (item.officialUrl) links.push(item.officialUrl);
+  for (const l of item.relatedLink) if (/^https?:\/\//.test(l.url)) links.push(l.url);
   if (links.length) data.sameAs = Array.from(new Set(links));
 
   if (item.itemClass === "physical_service" || item.itemClass === "intangible_service") {
