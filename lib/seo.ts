@@ -139,7 +139,6 @@ export function itemSchema(
   opts?: { contentModel?: string; aggregateRating?: number },
 ) {
   const m = (item.metadata ?? {}) as Record<string, unknown>;
-  const strArr = (v: unknown) => (Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : undefined);
   const str = (v: unknown) => (typeof v === "string" && v.trim() !== "" ? v : undefined);
   const schemaType =
     SECTION_SCHEMA_TYPE[`${item.majorCategory}:${item.sectionSlug}`] ||
@@ -178,9 +177,8 @@ export function itemSchema(
     if (item.latitude != null && item.longitude != null) {
       data.geo = { "@type": "GeoCoordinates", latitude: item.latitude, longitude: item.longitude };
     }
-    if (schemaType === "Restaurant" || schemaType === "CafeOrCoffeeShop") {
-      const cuisine = str(m.genre);
-      if (cuisine) data.servesCuisine = cuisine;
+    if ((schemaType === "Restaurant" || schemaType === "CafeOrCoffeeShop") && item.genres.length) {
+      data.servesCuisine = item.genres;
     }
     const amenities = Object.entries(AMENITY_LABELS)
       .filter(([k]) => m[k] === true)
@@ -190,8 +188,7 @@ export function itemSchema(
     const brand = str(m.brand);
     if (brand) data.brand = { "@type": "Brand", name: brand };
   } else if (item.itemClass === "media") {
-    const genres = strArr(m.genres);
-    if (genres?.length) data.genre = genres;
+    if (item.genres.length) data.genre = item.genres;
   }
 
   if (opts?.aggregateRating !== undefined && Number.isFinite(opts.aggregateRating)) {
