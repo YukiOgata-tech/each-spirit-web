@@ -22,6 +22,7 @@ import type {
   HistoryEntry,
   Hotel,
   Item,
+  NutritionFacts,
   LeisureRanking,
   LeisureSpot,
   OfficialLink,
@@ -156,6 +157,7 @@ function mapGenericItem(row: any): GenericItem {
     history: jarr<HistoryEntry>(row.history),
     serviceModel: jarr<ServiceModelEntry>(row.service_model),
     relatedLink: jarr<ItemRelatedLink>(row.related_link),
+    nutrition: (m.nutrition && typeof m.nutrition === "object") ? (m.nutrition as NutritionFacts) : undefined,
   };
 }
 
@@ -505,17 +507,17 @@ function mapProteinProduct(row: any): ProteinProduct {
     brand: m.brand ?? "",
     name: row.name,
     description: row.description,
-    proteinType: m.protein_type ?? "whey-wpc",
+    proteinType: m.product_type ?? m.protein_type ?? "whey-wpc",
     targets: (m.targets ?? []) as ProteinTarget[],
-    servingSize: Number(m.serving_size ?? 0),
-    protein: Number(m.protein ?? 0),
-    calories: Number(m.calories ?? 0),
-    carbs: Number(m.carbs ?? 0),
-    fat: Number(m.fat ?? 0),
+    servingSize: Number(m.nutrition?.serving_size ?? 0),
+    protein: Number(m.nutrition?.protein ?? 0),
+    calories: Number(m.nutrition?.calories ?? 0),
+    carbs: Number(m.nutrition?.carbs ?? 0),
+    fat: Number(m.nutrition?.fat ?? 0),
     packageWeight: Number(m.package_weight ?? 0),
     packagePrice: Number(m.package_price ?? 0),
     pricePerKg: Number(m.price_per_kg ?? 0),
-    flavors: (m.flavors ?? []) as string[],
+    flavors: (m.variants ?? m.flavors ?? []) as string[],
     features: (row.tags ?? []) as string[],
     pros: (m.pros ?? []) as string[],
     cons: (m.cons ?? []) as string[],
@@ -523,8 +525,8 @@ function mapProteinProduct(row: any): ProteinProduct {
     imageUrl: jstr(row.image, "url") ?? "",
     editorNote: row.editor_comment ?? "",
     lastVerifiedAt: toDateStr(row.updated_at),
-    sources: (m.sources ?? []) as Source[],
-    faqs: (m.faqs ?? []) as FAQ[],
+    sources: (Array.isArray(row.sources) && row.sources.length ? row.sources : (m.sources ?? [])) as Source[],
+    faqs: (Array.isArray(row.faq) && row.faq.length ? row.faq : (m.faqs ?? [])) as FAQ[],
   };
 }
 

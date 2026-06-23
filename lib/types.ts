@@ -131,6 +131,18 @@ export type Item = {
   relatedRankingSlugs: string[];
 };
 
+/** 栄養成分表示（食品商品・汎用）。basis=表示基準、数値は g/kcal。 */
+export type NutritionFacts = {
+  basis?: "per_serving" | "per_100g";
+  serving_size?: number;
+  calories?: number;
+  protein?: number;
+  fat?: number;
+  carbs?: number;
+  sugar?: number;
+  fiber?: number;
+  salt?: number;
+};
 export type HistoryEntry = { date: string; description: string };
 export type ServiceModelEntry = { service: string; url?: string; note?: string };
 export type ItemRelatedLink = { label: string; url: string };
@@ -174,6 +186,7 @@ export type GenericItem = {
   history: HistoryEntry[];
   serviceModel: ServiceModelEntry[];
   relatedLink: ItemRelatedLink[];
+  nutrition?: NutritionFacts;
 };
 
 export type RankingItem = {
