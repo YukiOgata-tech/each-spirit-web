@@ -44,6 +44,11 @@ export function itemKeywords(
   ));
 }
 
+/** items の OG 画像URL（item_class 別背景＋name を動的生成する /api/og/item）。絶対URL。 */
+export function ogItemImageUrl(major: string, section: string, slug: string): string {
+  return absoluteUrl(`/api/og/item?major=${encodeURIComponent(major)}&section=${encodeURIComponent(section)}&slug=${encodeURIComponent(slug)}`);
+}
+
 export function pageMetadata({
   title,
   description,

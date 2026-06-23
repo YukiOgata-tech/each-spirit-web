@@ -7,9 +7,7 @@ import {
   getGenericItemBySection,
   getGenericItemsBySection,
 } from "@/lib/content";
-import { itemKeywords, pageMetadata } from "@/lib/seo";
-import { majorMetaImage } from "@/lib/category-media";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { itemKeywords, ogItemImageUrl, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
@@ -28,7 +26,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     title: item.seoTitle || item.name,
     description: item.seoDescription || item.description,
     path: item.canonicalPath ?? routes.entertainmentTitle(section, slug),
-    image: item.seoOgImage ?? (item.imageUrl && isAllowedImageSrc(item.imageUrl) ? item.imageUrl : undefined) ?? majorMetaImage("entertainment"),
+    image: item.seoOgImage ?? ogItemImageUrl("entertainment", section, slug),
     keywords: itemKeywords(item, item.sectionSlug === "anime" ? "アニメ" : item.sectionSlug === "drama" ? "ドラマ" : undefined, item.seoKeywords),
   });
 }

@@ -22,7 +22,7 @@ import {
   getRankingsBySection,
   rankingHref,
 } from "@/lib/content";
-import { breadcrumbSchema, itemKeywords, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
+import { breadcrumbSchema, itemKeywords, ogItemImageUrl, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
 import { safeImageSrc } from "@/lib/image-hosts";
@@ -142,7 +142,7 @@ export async function genericItemMetadata(majorCategory: string, sectionSlug: st
     title: item.seoTitle || item.name,
     description: item.seoDescription || item.description,
     path: itemHref(section, item),
-    image: item.seoOgImage ?? item.imageUrl ?? majorMetaImage(majorCategory),
+    image: item.seoOgImage ?? ogItemImageUrl(majorCategory, sectionSlug, slug),
     keywords: itemKeywords(item, section.label, item.seoKeywords),
   });
 }
