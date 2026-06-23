@@ -30,7 +30,7 @@
 
 ## 2. 📝 SEO（E-E-A-T）および AI検索（SGE/AI Overview）対策
 
-### ① ページ要約（Summary）の品質（AI対策）
+### ① ページ要約（Summary）の品質（AI向け）
 コンテンツ定義時に設定する `summary: string[]`（要点まとめ）や `whatYouLearn: string[]`（このページで分かること）は非常に重要です。
 - ChatGPT Search, Perplexity, Google SGE などのAI検索エンジンは、ファーストビューの構造化された「箇条書きの要約」を極めて優先的にクローリングして参照・引用します。
 - 記事やランキングを追加する際は、**「そのページが提供する核心的な結論・要点3〜5つ」**を `summary` 配列に明確かつ具体的に記述してください。

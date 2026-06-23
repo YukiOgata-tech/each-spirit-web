@@ -2,12 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { HeroBackgroundSlideshow } from "@/components/category/HeroBackgroundSlideshow";
 import { majorCategoryMedia } from "@/lib/category-media";
 
 type HeroAction = { label: string; href: string; primary?: boolean };
 type HeroStat = { label: string; value: string | number };
 
-type Variant = "collage" | "panel" | "overlap" | "fullbleed" | "scatter";
+type Variant = "collage" | "panel" | "overlap" | "fullbleed" | "scatter" | "slideshow";
 
 type MajorCategoryHeroProps = {
   major: keyof typeof majorCategoryMedia | string;
@@ -66,6 +67,40 @@ export function MajorCategoryHero({ major, variant, eyebrow, title, description,
   const media = majorCategoryMedia[major];
   const themeClass = media?.themeClass ?? "";
   const [h1, h2, h3] = media?.heroes ?? ["", "", ""];
+
+  // ── slideshow: 3枚の全面背景を一定間隔で切り替える（beauty）
+  if (variant === "slideshow") {
+    return (
+      <section className={`${themeClass} relative min-h-[560px] overflow-hidden border-b border-[var(--border)] sm:min-h-[600px] lg:min-h-[640px] ${surfaceClass}`}>
+        <HeroBackgroundSlideshow images={[h1, h2, h3].filter(Boolean)} />
+        <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(20,12,20,0.82)_0%,rgba(20,12,20,0.62)_48%,rgba(20,12,20,0.28)_100%)] max-sm:bg-[linear-gradient(180deg,rgba(20,12,20,0.72)_0%,rgba(20,12,20,0.58)_55%,rgba(20,12,20,0.76)_100%)]" />
+        <div className={`relative flex min-h-[560px] items-center py-12 sm:min-h-[600px] sm:py-16 lg:min-h-[640px] ${containerClass}`}>
+          <div className="w-full max-w-2xl">
+            <span className="inline-block rounded-full border border-white/35 bg-black/15 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-white backdrop-blur-sm">
+              {eyebrow}
+            </span>
+            <h1 className="mt-4 text-[2rem] font-black leading-[1.12] tracking-normal text-white drop-shadow-md sm:mt-5 sm:text-5xl lg:text-6xl">
+              {title}
+            </h1>
+            <p className="mt-5 max-w-xl text-sm leading-7 text-white/90 drop-shadow-sm sm:text-base sm:leading-8">
+              {description}
+            </p>
+            <Actions actions={actions} />
+            {stats?.length ? (
+              <div className="mt-8 grid max-w-lg grid-cols-3 gap-2 sm:gap-3">
+                {stats.map((stat) => (
+                  <div key={stat.label} className="border-t border-white/45 pt-3 text-left">
+                    <p className="text-2xl font-black text-white sm:text-3xl">{stat.value}</p>
+                    <p className="mt-0.5 text-[10px] font-bold text-white/75 sm:text-[11px]">{stat.label}</p>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   // ── fullbleed: hero-1 を全面背景、hero-2/3 を下部の覗きカードに（travel）
   if (variant === "fullbleed") {

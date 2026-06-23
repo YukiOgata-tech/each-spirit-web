@@ -9,8 +9,8 @@ import { routes } from "@/lib/routes";
 import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles, getContentSections } from "@/lib/content";
 
 export const metadata = pageMetadata({
-  title: "美容室・美容院おすすめ比較ガイド｜人気サロンランキングと失敗しない選び方",
-  description: "各県の美容室を年代・施術・エリアで比較。カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンをランキングと店舗カードで整理しています。",
+  title: "美容を自分らしく選ぶガイド｜商品・ケア方法・施術・サロン",
+  description: "スキンケアやヘアケア商品、美容メソッド、サロン施術まで、美容にまつわる選択肢を目的や悩みに合わせて整理する総合ガイドです。",
   path: routes.beauty,
   image: majorMetaImage("beauty"),
 });
@@ -32,12 +32,11 @@ export default async function BeautyIndexPage() {
     <div className="beauty-theme">
       <MajorCategoryHero
         major="beauty"
-        variant="overlap"
-        surfaceClass="bg-[linear-gradient(135deg,#fff1f7_0%,#ffffff_48%,#f1efff_100%)]"
+        variant="slideshow"
+        surfaceClass="bg-[#241522]"
         eyebrow="Beauty Guide"
-        title={<>美容室を、<span className="beauty-shimmer-text">地域・年代・施術</span>で選ぶ。</>}
-        description="カラー・髪質改善・ヘッドスパ・パーマを得意とするサロンを都道府県ごとに整理。年代に合った提案力とエリアの利便性で比較できます。"
-        actions={[{ label: "新潟のサロンを見る", href: routes.beautyRegion("niigata"), primary: true }, { label: "エリア一覧", href: "#regions" }]}
+        title={<>美容を、もっと<br />自分らしく選ぶ。</>}
+        description="スキンケアやヘアケア商品、毎日の美容メソッド、プロによる施術やサロン選びまで。目的や悩みに合う美容情報を、わかりやすく整理して届けます。"
         stats={[
           { label: "エリア", value: regionData.length },
           { label: "サロン", value: totalSalons },
@@ -48,7 +47,7 @@ export default async function BeautyIndexPage() {
       <section id="regions" className="section-shell mx-auto max-w-5xl">
         <MajorSectionDirectory
           title="美容カテゴリ"
-          description="美容室を中心に、美容内の公開中カテゴリを横断できます。"
+          description="商品・ケア方法・施術・サロンなど、美容に関する公開中カテゴリを横断できます。"
           sections={sections}
         />
 
