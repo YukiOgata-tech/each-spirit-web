@@ -15,10 +15,11 @@
 
 共通の仕組み:
 - ネイティブ `<form action={サーバーアクション}>`（`saveArticle` / `saveItem` / `saveRanking`）。
-- 保存時に **canonical_path / major_category / section_slug / item_kind** を自動導出。
+- 保存時に **canonical_path / major_category / section_slug / item_class** を自動導出（`item_kind` は任意のジャンル的ラベルに格下げ済みで、判別には使わない）。
 - slug 重複チェック → upsert → 関連ページ revalidate → リダイレクト（公開=詳細ページ / 下書き=マイページ）。
-- セクション定義: `lib/admin-item-schema.ts`（items）、`lib/admin-ranking-schema.ts`（rankings）。
+- セクション定義: `es.content_sections.item_schema`（優先）＋ `lib/admin-item-schema.ts`（コード fallback）。ランキングは `lib/admin-ranking-schema.ts`。
 - フォーム本体: `components/admin/ItemEditor.tsx` / `RankingEditor.tsx` / `ArticleEditor.tsx`。
+- 詳細ページは `item_class` ごとに専用レイアウト（`components/detail/` の共通エンジン）。データモデルは [items-data-model.md](./items-data-model.md) を参照。
 
 ---
 
@@ -30,29 +31,44 @@
 
 既存 major 配下の新規 section は、公開側では汎用 section ページと汎用 item 詳細ページで表示される。既存 section（ramen / protein / hair-salon など）のような専用デザイン、地域/target 導線、専用比較表が必要な場合は、後から section 固有ページとして実装する。
 
+### item_class（型）と所在地欄
+section の `item_class`（**physical_service / intangible_service / media / product / person / other**）で詳細ページのレイアウトと所在地欄の要否が決まる。**所在地系の欄（エリア/住所/電話/価格帯/地図URL/region）は physical_service・intangible_service のみ表示**（media/product/person 等では非表示・保存もしない）。
+
 ### 共通項目（全 section）
 - **slug**（必須・`^[a-z0-9]+(?:-[a-z0-9]+)*$`）、**名称**（必須）、説明
+- 画像URL（→ `image.url` 列）、公式URL
+- 所在地系（場所型のみ）: エリア / 住所 / 電話 / 価格帯 / 地図URL（→ `address_info` jsonb に集約。住所から都道府県を自動抽出）
 - **地域(region)**: section により表示/必須が変化。DB（`es.content_regions`）の候補からセレクト
-- エリア / 住所 / 電話 / 価格帯 / 画像URL / 公式URL / 地図URL / 最終確認日
-- タグ（カンマ・改行区切り）、編集部コメント
-- ステータス（公開 / 下書き）
+- タグ（カンマ・改行区切り）、編集部コメント、ステータス（公開 / 下書き）
+- ※「最終確認日」欄は廃止（`updated_at` を使用）
 
-### section 別の詳細項目（`metadata` jsonb に格納）
+### 拡張情報（任意・全 section 共通 / それぞれ**専用列**へ保存）
+metadata ではなく専用列に入る共通項目。
+- **ジャンル** `genres`（カンマ/改行）: 分類軸。全型共通（ramen=スープ系統 / anime=ジャンル＋原作 等）。→ `genres` 列
+- **画像 alt・出典クレジット**（名称/URL）→ `image`
+- **SEO 上書き**（すべて任意・空欄なら自動）: タイトル / 説明 / 追加キーワード → `seo`。キーワードは名称・カテゴリ・genres・tags・エリアから**自動生成**され、ここは追記分のみ。OG画像は seo.og_image > 画像 > カテゴリ既定の順
+- **出典 sources** / **FAQ** / **沿革 history** / **視聴・購入 service_model** / **関連リンク related_link**（各「1行1件・`|` 区切り」で入力 → 各専用列）
 
-| section | item_kind | region | 固有項目 |
+### section 別の詳細項目（型固有・`metadata` jsonb に格納）
+
+専用列へ移った共通項目（genres / sources / faq / history / service_model / related_link / 画像 / 所在地 / seo / 栄養）は上記「共通項目・拡張情報」で扱う。ここは **section ごとの型固有フィールド**（`es.content_sections.item_schema` または `lib/admin-item-schema.ts` が定義）。
+
+| section | item_class | region | 型固有項目 |
 |---|---|---|---|
-| グルメ/ラーメン (`food:ramen`) | shop | 任意 | ジャンル、おすすめメニュー、営業時間、定休日、駐車場(✓)、駐車場メモ |
-| グルメ/カフェ (`food:cafe`) | shop | 必須 | スタイル、看板メニュー、ハイライト、営業時間、定休日、予約(選択)、WiFi/電源/駐車場/ペット可(✓)、Instagram |
-| 健康/プロテイン (`health:protein`) | product | なし | ブランド(必須)、種類(選択)、対象target(list)、1食量/タンパク質/カロリー/炭水化物/脂質/内容量/価格/1kg単価(数値)、フレーバー/メリット/デメリット(list) |
-| 美容/美容室 (`beauty:hair-salon`) | salon | 必須 | キャッチ、アクセス、施術(list)、対象年代(list)、カット/カラー料金、営業時間、定休日、駐車場(✓)、子連れ可/メンズ可(✓)、Instagram |
-| 旅行/宿 (`travel:stays`) | hotel | 必須 | スタイル、ハイライト、チェックイン/アウト、食事、温泉(✓)、温泉メモ、駐車場(✓) |
-| 旅行/旅行会社 (`travel:services:agency`) | agency | 必須 | キャッチ、ハイライト、サービス(list)、向いている人(list)、相談スタイル、営業時間、定休日、登録番号 |
-| 旅行/旅行アプリ (`travel:services:app`) | app | なし | 提供元、対応プラットフォーム(list)、向いている人(list) |
-| レジャー/スポット (`leisure:spots`) | spot | 必須 | 種別(選択)、ジャンル、ハイライト、向いている人(list)、営業時間、定休日、駐車場(✓) |
+| グルメ/ラーメン (`food:ramen`) | physical_service | 任意 | おすすめメニュー、営業時間、定休日、駐車場(✓)、駐車場メモ |
+| グルメ/カフェ (`food:cafe`) | physical_service | 必須 | スタイル、看板メニュー、ハイライト、営業時間、定休日、予約(選択)、WiFi/電源/駐車場/ペット可(✓)、Instagram |
+| 健康/プロテイン (`health:protein`) | product | なし | ブランド(必須)、種類・分類(選択)、対象target(list)、栄養成分(基準＋1食量/タンパク質/カロリー/炭水化物/脂質/糖質/食塩=数値 → `nutrition` 構造へ集約)、内容量/価格/1kg単価(数値)、バリエーション/アレルゲン(list)、保存方法(選択)、メリット/デメリット(list) |
+| 美容/美容室 (`beauty:hair-salon`) | physical_service | 必須 | キャッチ、アクセス、施術(list)、対象年代(list)、カット/カラー料金、営業時間、定休日、駐車場(✓)、子連れ可/メンズ可(✓)、Instagram |
+| 旅行/宿 (`travel:stays`) | physical_service | 必須 | スタイル、ハイライト、チェックイン/アウト、食事、温泉(✓)、温泉メモ、駐車場(✓) |
+| 旅行/旅行会社 (`travel:services`) | intangible_service | 必須 | キャッチ、ハイライト、サービス(list)、向いている人(list)、相談スタイル、営業時間、定休日、登録番号 |
+| 旅行/旅行アプリ (`travel:services`) | product | なし | 提供元、対応プラットフォーム(list)、向いている人(list) |
+| レジャー/スポット (`leisure:spots`) | physical_service | 必須 | 種別(選択)、ハイライト、向いている人(list)、営業時間、定休日、駐車場(✓) |
+| エンタメ/アニメ・ドラマ (`entertainment:anime`/`drama`) | media | なし | メディア展開(list)、トーン、作品プロフィール 等 |
 
 入力タイプ: テキスト / 複数行(textarea) / 数値 / チェックボックス(✓) / 選択(select) / リスト(カンマ・改行 → 配列)。
 
-> 編集時は既存 `metadata` を**マージ**して、フォームに無いキー（official_links / sources / faqs 等）を保全する。
+> `travel:services` は同一 section に **旅行会社(intangible_service) と 旅行アプリ(product) が同居**。新規フォームのスキーマ選択・編集時の判別は **`item_class`** で行う（`item_kind` には依存しない）。
+> 編集時は既存 `metadata` の型固有キーを**マージ**して保全する（共通項目は専用列が正）。栄養は `nutrition` を保持し、フォームの数値欄から再集約する。
 
 ---
 
@@ -92,13 +108,14 @@
 ## 保存時の自動処理（共通）
 
 1. **canonical_path 生成**
-   - item: `/{major}/{section}/{item_path_segment}/{slug}`（travel_app のみ `/travel/services/apps`）
+   - item: `item_path_segment` があれば `/{major}/{section}/{item_path_segment}/{slug}`、無ければ `/{major}/{section}/{slug}`（作品カタログ型）
    - ranking: `/{major}/{section}/rankings/{slug}`
    - article: `/articles/{記事カテゴリ}/{slug}`（大カテゴリ配下・独立を問わず統一。アプリは category+slug から表示URLを導出する）
-2. **major_category / section_slug / item_kind** を section から導出して保存（記事の major/section は任意の紐づけ）。
-3. **slug 重複チェック**（items/rankings は `major_category+section_slug` スコープ・編集時は自分を除外、記事は全体一意）。
-4. **revalidate**（詳細・一覧・地域ページ・`/sitemap.xml`）で即時反映。
-5. 公開→詳細ページ / 下書き→マイページへリダイレクト。
+2. **major_category / section_slug / item_class** を section から導出して保存（`item_kind` はスキーマ既定の任意ラベル。記事の major/section は任意の紐づけ）。
+3. **専用列・JSONB への集約**（items）: 画像→`image`、所在地→`address_info`（都道府県を住所から抽出）、SEO→`seo`、栄養数値→`nutrition`、`genres`/`sources`/`faq`/`history`/`service_model`/`related_link` を各列へ。型固有項目のみ `metadata` に残す。
+4. **slug 重複チェック**（items/rankings は `major_category+section_slug` スコープ・編集時は自分を除外、記事は全体一意）。
+5. **revalidate**（詳細・一覧・地域ページ・`/sitemap.xml`）で即時反映。
+6. 公開→詳細ページ / 下書き→マイページへリダイレクト。
 
 ---
 
@@ -107,7 +124,7 @@
 UI は1件ずつの作成・編集経路。大量投入は同じ DB 構造へ CLI で行える（AI のリミットを使わない運用）:
 - 記事: `npm run db:import:articles <json>`（`scripts/import-articles-json.ts`）
 - 店舗・ランキング: `scripts/import-research-json.ts`
-- いずれも `lib/section-map.ts` のマッピングで canonical / major / section / item_kind / item_id を自動付与し、旧 `content_type` 系カラムは保存しない。
+- いずれも `lib/section-map.ts` のマッピングで canonical / major / section / item_class / item_id を自動付与。画像・所在地・genres・sources・faq 等は新 JSONB 列構造へ投入し、旧 `content_type`・flat 所在地カラム・`last_verified_at` は使わない。
 
 ## 補足: region / target の供給元
 

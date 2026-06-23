@@ -148,7 +148,7 @@ sourceUrl: 出典URL
 
 ## 4. 画像の最重要制約 — ホスト許可リスト
 
-> これを知らないと「URLを入れたのに画像が出ない／エラーになる」。**全画像URL に適用**（記事 `cover_image_url`・本文画像・`items.image_url`・`rankings.image_url`）。
+> これを知らないと「URLを入れたのに画像が出ない／エラーになる」。**全画像URL に適用**（記事 `cover_image_url`・本文画像・`items.image`(`.url`)・`rankings.image_url`）。
 
 - サイトは Next.js の画像最適化（`next/image`）を使うため、**許可されたホストの画像URLしか描画できない**。許可外のホストはエラーになり表示されない。
 - **最も安全な方法: Supabase ストレージの公開バケットにアップロードし、その公開URLを使う**（ストレージのホストは許可済み）。
@@ -158,17 +158,26 @@ sourceUrl: 出典URL
   `https://<SUPABASE>/storage/v1/object/public/each-spirit-images/articles/{slug}/{file}`。
   記事slug はグローバル一意なので、**実ファイルを上げる前に MD にこのURLを書いておける**。
 - **直接ストレージ操作できない外部サービス向けの運用**: MD には先に上記URLを書いておき、**実ファイルは後から管理UI（マイページ → 画像をアップロード, `/account/storage`）で同じパスにアップロードする**。管理UIは記事を選ぶと本文中の画像URLを検出し、「未アップロード」のスロットへそのまま上げられる。アップロード時に**パスの拡張子に合わせて再エンコード＋縮小**して容量を抑える（`.webp` 推奨）。拡張子を変えると MD のURLと食い違うので、MD に書いた拡張子と実ファイルの拡張子を一致させること。
-- もしくは **`next.config.ts` の `remotePatterns` に登録済みの外部ホスト**のみ使用可。現状の許可外部ホストは `images.unsplash.com` と一部の店舗・施設公式ドメイン（正は `next.config.ts`）。
-- **新しい外部ホストを使うには `next.config.ts` への追記（コード変更＋デプロイ）が必要**。任意ドメインの直リンクは不可。
+- もしくは **登録済みの外部ホスト**のみ使用可。許可ホストの正は **`lib/image-hosts.ts`**（`next.config.ts` がここから `remotePatterns` を生成）。現状は `images.unsplash.com` と一部の店舗・施設公式ドメイン等。
+- **新しい外部ホストを使うには `lib/image-hosts.ts` への追記（コード変更＋デプロイ）が必要**。任意ドメインの直リンクは不可（未登録ホストはランタイムガードで自動フォールバックされ表示されない）。
 - **動画は `next/image` では扱えない**（現状は画像URLのみ）。
 
 ---
 
-## 5. 店舗・商品（`es.items`）／ランキング（`es.rankings`）の画像
+## 5. 店舗・商品（`es.items`）の列構造 — DB直接投入で必ず知ること
 
-- `es.items.image_url`: カード画像・詳細ヒーロー・item の OG 画像。§4 の制約が適用。
-- `es.rankings.image_url`: ランキングカード／OG 画像。**未設定なら自動で「1位アイテムの画像」にフォールバック**する（カードが空にならない）。
-- ランキングは `es.ranking_items`（`rank`, `item_slug`, `item_id`）で `es.items` を参照。`item_id` は `items.id`(uuid) への FK。
+> 列の詳細・各 JSONB の中身は [items-data-model.md](./items-data-model.md) が正。ここでは「DB直接投入で間違えやすい点」だけ。
+
+- **画像は `image` jsonb**（`{ "url", "alt"?, "credit": {name,url}? }`）。旧 `image_url` 列は**廃止**。§4 のホスト制約は `image.url` に適用。
+- **所在地は `address_info` jsonb**（`{ address, prefecture, area, lat, lng, map_url, access }`）。旧 `address`/`area`/`map_url`/`address_region`/`latitude`/`longitude` 列は**廃止**。所在地を持つのは `item_class` が `physical_service`/`intangible_service` の型のみ。
+- **`item_class`**（`physical_service`/`intangible_service`/`media`/`product`/`person`/`other`）が詳細レイアウトと JSON-LD 型を決める。section に応じた正しい値を必ず入れる（`item_kind` は任意のジャンル的ラベルで、判別には使わない）。
+- **全型共通の構造化データは専用列**（`metadata` に入れない）：`genres`(text[])・`sources`(jsonb)・`faq`(jsonb)・`history`(jsonb)・`service_model`(jsonb)・`related_link`(jsonb)・`seo`(jsonb)・食品商品は `nutrition`(jsonb)。`metadata` には **section 固有フィールドのみ**。
+- リンク類は **`related_link` に統合**（公式サイトは `official_url` 列、地図は `address_info.map_url`）。`official_links`/`related_ranking_slugs`/`related_item_slugs` を metadata に入れない。
+- `last_verified_at` 列は**廃止**（`updated_at` を使用）。
+
+### ランキング（`es.rankings`）
+- `es.rankings.image_url`: ランキングカード／OG 画像（rankings 側は従来どおり列）。**未設定なら自動で「1位アイテムの画像」にフォールバック**する（カードが空にならない）。
+- `es.ranking_items`（`rank`, `item_slug`, `item_id`）で `es.items` を参照。`item_id` は `items.id`(uuid) への FK。
 
 ---
 

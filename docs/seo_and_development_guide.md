@@ -18,7 +18,7 @@
 
 [scripts/seed-supabase.ts](file:///C:/projects/each-spirit/scripts/seed-supabase.ts) は旧ローカル `content/**` から DB を upsert・洗い替えする復旧/初期投入用 script です。通常実行はブロックされ、`ALLOW_LEGACY_CONTENT_SEED=1` を明示した場合だけ動きます。
 
-外部 ChatGPT などへ調査を依頼する場合は、`major_category`、`section_slug`、`slug`、`canonical_path`、`sources`、`lastVerifiedAt` を持つ JSON と、記事本文 Markdown をセットで返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、metadata、sources の解釈コストが増えます。大カテゴリ/中カテゴリ/URL 方針は [docs/content-display-path-slug-spec.md](file:///C:/projects/each-spirit/docs/content-display-path-slug-spec.md) を正とします。
+外部 ChatGPT などへ調査を依頼する場合は、`major_category`、`section_slug`、`slug`、`item_class`、`genres`、`sources` を持つ JSON と、記事本文 Markdown をセットで返却させてください。Markdown の自由記述だけで受け取ると、`es.items` / `es.rankings` / `es.ranking_items` への変換時に slug、metadata、sources の解釈コストが増えます。`items` の列構造（`image`/`address_info`/`seo`/`nutrition`/`sources`/`faq`/`history`/`service_model`/`related_link` 等の JSONB と型固有 `metadata`）は [docs/items-data-model.md](file:///C:/projects/each-spirit/docs/items-data-model.md) を正、大カテゴリ/中カテゴリ/URL 方針は [docs/content-display-path-slug-spec.md](file:///C:/projects/each-spirit/docs/content-display-path-slug-spec.md) を正とします。`last_verified_at` は廃止済み（`updated_at` を使用）。
 
 記事URLは、大カテゴリ配下・独立を問わず `/articles/{category}/{slug}` です。例: `/articles/ramen/niigata-ramen-first-guide`、`/articles/protein/protein-beginner-guide`。`major_category` / `section_slug` / `region` は記事データの属性として扱い、記事URLの必須要素にはしません。
 
@@ -43,16 +43,22 @@
 ```
 [lib/seo.ts](file:///C:/projects/each-spirit/lib/seo.ts) で定義されている `SpeakableSpecification` のCSSセレクター（`data-speakable='title'` / `'description'`）と自動で連携し、音声検索や AI 検索エンジンに「コンテンツの主要要約箇所」を明示できます。
 
-### ③ 構造化データ（JSON-LD）での画像連携
-店舗詳細や宿の個別ページ用スキーマ（`restaurantSchema`, `lodgingBusinessSchema` など）では、Google 検索のリッチ結果要件を満たすために画像（`image` プロパティ）が必須または強く推奨されています。
-- 各スキーマの生成時には、データに含まれる `imageUrl` から `absoluteUrl(imageUrl)` を通して、画像プロパティをオブジェクトに確実に埋め込む実装を行ってください（[lib/seo.ts](file:///C:/projects/each-spirit/lib/seo.ts) で標準対応済み）。
+### ③ 構造化データ（JSON-LD）と型別スキーマ
+items 個別ページの構造化データは、共通ビルダー **`itemSchema(item, path, { contentModel, aggregateRating })`**（[lib/seo.ts](file:///C:/projects/each-spirit/lib/seo.ts)）が `item_class` / `content_model` から schema.org 型を出し分けて生成します（Restaurant / CafeOrCoffeeShop / HairSalon / Hotel / TouristAttraction / TravelAgency / Product / CreativeWork / Person …）。
+- 画像（`image` プロパティ）は `image.url`（GenericItem の `imageUrl`）から `absoluteUrl()` で埋め込み済み。住所/geo/営業時間/価格/`servesCuisine`(genres)/`citation`(sources)/`aggregateRating`（編集スコア）等も「在る項目だけ」自動出力。
+- 旧 `restaurantSchema` / `lodgingBusinessSchema` 等の型別ビルダーは items 詳細では使わず、`itemSchema` に統合済み。
 
 ### ④ 一次情報の担保（E-E-A-T対策）
-競合サイトとの信頼性の差別化として、各データが持つ **`sources`（参照元リスト）** や **`lastVerifiedAt`（最終確認日）** の記述を徹底してください。
-- 官公庁の発表、地域の公式サイト、独自の実地検証情報などを [SourceList](file:///C:/projects/each-spirit/components/cards/SourceList.tsx) などを介して明記することで、Googleの「情報の透明性と信頼性（E-E-A-T）」の品質基準で高い評価を獲得できます。
-- 記事投稿UIでは、記事単位の `metadata.sources`、`metadata.faqs`、`metadata.related_links` を入力できます。FAQは公開ページに表示され、`FAQPage` JSON-LDにも反映されます。
+競合サイトとの信頼性の差別化として、各データの **`sources`（参照元リスト）** の記述を徹底してください（更新日は `updated_at` を使用、`lastVerifiedAt` 列は廃止）。
+- 官公庁の発表、地域の公式サイト、独自の実地検証情報などを [SourceList](file:///C:/projects/each-spirit/components/cards/SourceList.tsx) で明記することで、Googleの「情報の透明性と信頼性（E-E-A-T）」基準で高い評価を獲得できます。
+- **items**：`sources` / `faq` は専用 JSONB 列（投稿UIの「拡張情報」で `1行1件・| 区切り` 入力）。公開ページに「参照情報」「FAQ」として表示され、JSON-LD の `citation` / `FAQPage` に反映。
+- **記事**：記事単位の `metadata.sources` / `metadata.faqs` / `metadata.related_links` を記事投稿UIで入力（articles 側は従来どおり）。
 
-### ⑤ サイト内検索
+### ⑤ SEO メタの自動生成と上書き（items）
+- `seo` 列（`title` / `description` / `keywords` / `og_image`）は**すべて任意の上書き**。空欄なら自動：title=名称、description=説明、OG=画像→カテゴリ既定。各キー独立（タイトルだけ／キーワードだけ等の部分上書き可）。
+- **keywords は自動生成**（名称・section・genres・tags・都道府県・エリア）。投稿UIの「追加キーワード」は補足分のみ。
+
+### ⑥ サイト内検索
 `/search` は記事、ランキング、店舗/商品、カテゴリを横断する検索ページです。`WebSite` schema の `SearchAction` は `/search?q={search_term_string}` を指します。ヘッダーとトップページの検索フォームもこのページに送信します。
 
 ---
