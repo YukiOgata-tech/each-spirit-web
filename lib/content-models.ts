@@ -16,15 +16,19 @@ export type ItemClassDef = {
   locationRelevant: boolean;
   /** schema.org のおおまかな型（SEO JSON-LD のベース） */
   schemaType: string;
+  /** history（日付つき時系列）を表示するときの既定見出し。history は全 item_class 共通で使える。 */
+  historyLabel: string;
+  /** history 最古日付を流し込む schema.org の日付プロパティ。無い型は注入しない。 */
+  dateSchemaProp?: string;
 };
 
 export const ITEM_CLASSES: Record<ItemClass, ItemClassDef> = {
-  physical_service:   { label: "店舗・施設（来店型）", locationRelevant: true,  schemaType: "LocalBusiness" },
-  intangible_service: { label: "サービス（非来店）",   locationRelevant: true,  schemaType: "Service" },
-  media:              { label: "作品・メディア",       locationRelevant: false, schemaType: "CreativeWork" },
-  person:             { label: "人物",                 locationRelevant: false, schemaType: "Person" },
-  product:            { label: "商品",                 locationRelevant: false, schemaType: "Product" },
-  other:              { label: "その他",               locationRelevant: false, schemaType: "Thing" },
+  physical_service:   { label: "店舗・施設（来店型）", locationRelevant: true,  schemaType: "LocalBusiness", historyLabel: "沿革",            dateSchemaProp: "foundingDate" },
+  intangible_service: { label: "サービス（非来店）",   locationRelevant: true,  schemaType: "Service",       historyLabel: "提供・アップデート", dateSchemaProp: "datePublished" },
+  media:              { label: "作品・メディア",       locationRelevant: false, schemaType: "CreativeWork",  historyLabel: "放送・展開",        dateSchemaProp: "datePublished" },
+  person:             { label: "人物",                 locationRelevant: false, schemaType: "Person",        historyLabel: "経歴" },
+  product:            { label: "商品",                 locationRelevant: false, schemaType: "Product",       historyLabel: "発売・改訂",        dateSchemaProp: "releaseDate" },
+  other:              { label: "その他",               locationRelevant: false, schemaType: "Thing",         historyLabel: "あゆみ" },
 };
 
 const ALL_CLASSES = Object.keys(ITEM_CLASSES) as ItemClass[];

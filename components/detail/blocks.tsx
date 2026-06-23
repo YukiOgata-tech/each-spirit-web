@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import type { MajorTheme } from "@/lib/major-theme";
 import type { ItemField } from "@/lib/admin-item-schema";
 import type { GenericItem } from "@/lib/types";
+import { itemClassDef } from "@/lib/content-models";
 import { attributeEntries, cardClass, metaList, metaStr, officialLinks, panelClass } from "./shared";
 
 function Panel({ title, children, className }: { title: string; children: React.ReactNode; className?: string }) {
@@ -78,17 +79,21 @@ export function GenresBlock({ item, title = "ジャンル" }: { item: GenericIte
   );
 }
 
-/** 沿革・経歴（縦タイムライン） */
-export function HistoryBlock({ item, title = "沿革・経歴" }: { item: GenericItem; title?: string }) {
+/** 日付つき時系列（沿革/経歴/発売・展開など）。全 item_class 共通。
+ *  見出し未指定なら item_class 別の既定（content-models）を使う。単一日付（説明なし）でも成立。 */
+export function HistoryBlock({ item, title }: { item: GenericItem; title?: string }) {
   if (item.history.length === 0) return null;
+  const heading = title ?? itemClassDef(item.itemClass).historyLabel;
   return (
-    <Panel title={title}>
+    <Panel title={heading}>
       <ol className="mt-4 space-y-4 border-l-2 border-[var(--border)] pl-5">
         {item.history.map((h, i) => (
           <li key={`${h.date}-${i}`} className="relative">
             <span className="absolute -left-[1.45rem] top-1 h-3 w-3 rounded-full border-2 border-white bg-[var(--primary)]" />
             <div className="flex items-center gap-1.5 text-xs font-bold text-[var(--primary)]"><CalendarDays className="h-3.5 w-3.5" />{h.date}</div>
-            <p className="mt-1 text-sm leading-7 text-slate-700">{h.description}</p>
+            {h.description.trim() !== "" && (
+              <p className="mt-1 text-sm leading-7 text-slate-700">{h.description}</p>
+            )}
           </li>
         ))}
       </ol>

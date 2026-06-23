@@ -140,6 +140,37 @@ const SECTION_SCHEMA_TYPE: Record<string, string> = {
   "food:cafe": "CafeOrCoffeeShop",
 };
 
+/** history の日付文字列を ISO 8601（YYYY / YYYY-MM / YYYY-MM-DD、桁が揃う範囲）に正規化。
+ *  「2020」「2020-04」「2020/4/1」「2020年4月1日」等から数字を抽出。先頭は4桁年のみ採用。 */
+function normalizeHistoryDate(raw: string): { key: number; iso: string } | undefined {
+  const nums = raw.match(/\d+/g);
+  if (!nums || nums[0]?.length !== 4) return undefined;
+  const year = Number(nums[0]);
+  let iso = nums[0];
+  let key = year * 10000;
+  if (nums[1]) {
+    const mo = Math.min(12, Math.max(1, Number(nums[1])));
+    iso += "-" + String(mo).padStart(2, "0");
+    key += mo * 100;
+    if (nums[2]) {
+      const da = Math.min(31, Math.max(1, Number(nums[2])));
+      iso += "-" + String(da).padStart(2, "0");
+      key += da;
+    }
+  }
+  return { key, iso };
+}
+
+/** history のうち最古の日付を ISO で返す（schema.org の foundingDate/datePublished/releaseDate 用）。 */
+function earliestHistoryDateISO(history: ReadonlyArray<{ date: string }>): string | undefined {
+  let best: { key: number; iso: string } | undefined;
+  for (const h of history) {
+    const n = normalizeHistoryDate(h.date);
+    if (n && (!best || n.key < best.key)) best = n;
+  }
+  return best?.iso;
+}
+
 /** 真偽 metadata → schema.org amenityFeature の表示名 */
 const AMENITY_LABELS: Record<string, string> = {
   parking: "駐車場", wifi: "WiFi", power: "電源", onsen: "温泉",
@@ -207,6 +238,13 @@ export function itemSchema(
     if (brand) data.brand = { "@type": "Brand", name: brand };
   } else if (item.itemClass === "media") {
     if (item.genres.length) data.genre = item.genres;
+  }
+
+  // history 最古日付 → item_class 別の日付プロパティ（foundingDate / datePublished / releaseDate）
+  const dateProp = itemClassDef(item.itemClass).dateSchemaProp;
+  if (dateProp && data[dateProp] === undefined) {
+    const earliest = earliestHistoryDateISO(item.history);
+    if (earliest) data[dateProp] = earliest;
   }
 
   if (opts?.aggregateRating !== undefined && Number.isFinite(opts.aggregateRating)) {

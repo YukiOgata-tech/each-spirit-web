@@ -72,6 +72,7 @@ export function IntangibleServiceLayout(c: LayoutCtx) {
           <ServiceModelBlock item={c.item} title="利用・申し込み" />
           <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="サービス内容" />
           <GenresBlock item={c.item} />
+          <HistoryBlock item={c.item} />
           <EditorCommentBlock item={c.item} theme={c.theme} />
           <RelatedLinksBlock item={c.item} />
           <Faq item={c.item} />
@@ -91,6 +92,7 @@ export function MediaLayout(c: LayoutCtx) {
         <ServiceModelBlock item={c.item} title="視聴できるサービス" />
         <GenresBlock item={c.item} />
         <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="作品情報" />
+        <HistoryBlock item={c.item} />
         <RelatedLinksBlock item={c.item} title="関連作品" />
         <EditorCommentBlock item={c.item} theme={c.theme} />
         <OfficialLinksBlock item={c.item} />
@@ -113,6 +115,7 @@ export function ProductLayout(c: LayoutCtx) {
           <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="スペック" />
           <GenresBlock item={c.item} />
           <ProsConsBlock item={c.item} />
+          <HistoryBlock item={c.item} />
           <EditorCommentBlock item={c.item} theme={c.theme} />
           <RelatedLinksBlock item={c.item} />
           <Faq item={c.item} />
@@ -129,7 +132,7 @@ export function PersonLayout(c: LayoutCtx) {
     <>
       <ProfileHero {...heroProps(c)} />
       <Stack>
-        <HistoryBlock item={c.item} title="経歴" />
+        <HistoryBlock item={c.item} />
         <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="プロフィール" />
         <GenresBlock item={c.item} title="分野・ジャンル" />
         <RelatedLinksBlock item={c.item} title="関連" />
@@ -149,6 +152,7 @@ export function OtherLayout(c: LayoutCtx) {
       <Stack>
         <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} />
         <GenresBlock item={c.item} />
+        <HistoryBlock item={c.item} />
         <ServiceModelBlock item={c.item} title="入手・利用" />
         <OfficialLinksBlock item={c.item} />
         <RelatedLinksBlock item={c.item} />
