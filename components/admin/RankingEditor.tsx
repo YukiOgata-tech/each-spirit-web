@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Plus, Send, Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import type { RankingSection, RankingItemRow } from "@/lib/admin-ranking-schema";
 
 type RegionOption = { key: string; regions: { slug: string; name: string }[] };
@@ -190,9 +190,9 @@ export function RankingEditor({ action, sections, regionOptions, itemsBySection,
       </div>
 
       <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:flex sm:justify-end sm:px-4 sm:py-4">
-        <Button type="submit" className="w-full gap-1.5 sm:w-auto">
+        <SubmitButton pendingLabel="保存中…" className="w-full gap-1.5 sm:w-auto">
           <Send className="h-4 w-4" /> {isEdit ? "更新する" : "作成する"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );

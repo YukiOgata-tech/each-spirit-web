@@ -4,6 +4,7 @@ import { useMemo, useRef, useState } from "react";
 import { ImagePlus, LinkIcon, List, Pilcrow, Plus, Quote, Send, Sparkles, Trash2, Type, Underline } from "lucide-react";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
+import { SubmitButton } from "@/components/admin/SubmitButton";
 import { decodeHeicIfNeeded, optimizeImage } from "@/lib/image-client";
 
 type ArticleEditorProps = {
@@ -628,19 +629,19 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
         <div className="sticky bottom-0 z-10 grid gap-2 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 sm:px-4 sm:py-4">
           {isEdit ? (
             <>
-              <Button type="submit" name="status" value="published" className="w-full sm:w-auto sm:order-2">
+              <SubmitButton name="status" value="published" pendingLabel="保存中…" className="w-full sm:w-auto sm:order-2">
                 <Send className="h-4 w-4" />
                 更新を保存
-              </Button>
-              <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto sm:order-1">下書きに戻す</Button>
+              </SubmitButton>
+              <SubmitButton name="status" value="draft" pendingLabel="保存中…" variant="outline" className="w-full sm:w-auto sm:order-1">下書きに戻す</SubmitButton>
             </>
           ) : (
             <>
-              <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto">下書き保存</Button>
-              <Button type="submit" name="status" value="published" className="w-full sm:w-auto">
+              <SubmitButton name="status" value="draft" pendingLabel="保存中…" variant="outline" className="w-full sm:w-auto">下書き保存</SubmitButton>
+              <SubmitButton name="status" value="published" pendingLabel="公開中…" className="w-full sm:w-auto">
                 <Send className="h-4 w-4" />
                 記事を公開
-              </Button>
+              </SubmitButton>
             </>
           )}
         </div>

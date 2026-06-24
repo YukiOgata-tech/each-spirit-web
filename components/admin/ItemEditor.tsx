@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { Send } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { SubmitButton } from "./SubmitButton";
 import { MarkdownBodyEditor } from "./MarkdownBodyEditor";
 import type { SectionItemSchema, ItemField } from "@/lib/admin-item-schema";
 import { isLocationRelevant } from "@/lib/content-models";
@@ -382,9 +382,9 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
       </div>
 
       <div className="sticky bottom-0 z-10 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:flex sm:justify-end sm:px-4 sm:py-4">
-        <Button type="submit" className="w-full gap-1.5 sm:w-auto">
+        <SubmitButton pendingLabel="保存中…" className="w-full gap-1.5 sm:w-auto">
           <Send className="h-4 w-4" /> {isEdit ? "更新する" : "作成する"}
-        </Button>
+        </SubmitButton>
       </div>
     </form>
   );
