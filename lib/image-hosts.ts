@@ -10,6 +10,10 @@ export const ALLOWED_IMAGE_HOSTS = [
   // Supabase Storage（each-spirit-images / article-assets バケットの公開URL）。
   // NEXT_PUBLIC_SUPABASE_URL からも自動付与されるが、env 非依存で確実に許可するため明示。
   "ctwpnaizwsrffrkkbuig.supabase.co",
+  // メディア作品のポスター取得元（安定CDN・帰属表示付きで利用）。
+  // anime → AniList、drama/映画 → TMDB。作品が増えてもこの2ホストのまま。
+  "s4.anilist.co",
+  "image.tmdb.org",
   "images.unsplash.com", "make-it-tech.com",
   "www.tomita-cocoro.jp",
   "sugitaya.com",

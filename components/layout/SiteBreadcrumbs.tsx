@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, House } from "lucide-react";
 
 /**
  * サイト全体で共通のパンくず。ヘッダー直下に常時表示し、URL（pathname）から自動生成する。
@@ -50,15 +50,18 @@ export function SiteBreadcrumbs() {
   }));
 
   return (
-    <nav aria-label="パンくずリスト" className="border-b border-slate-200/70 bg-white/80">
-      <div className="mx-auto flex w-[min(1360px,calc(100%-40px))] items-center gap-1 overflow-x-auto py-2.5 text-xs text-slate-500 max-sm:w-[min(1360px,calc(100%-24px))] sm:text-sm [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <Link href="/" className="shrink-0 whitespace-nowrap hover:text-slate-900">ホーム</Link>
+    <nav aria-label="パンくずリスト" className="border-t border-slate-200/70 bg-slate-50/72">
+      <div className="mx-auto flex h-9 w-[min(1360px,calc(100%-40px))] items-center gap-1 overflow-x-auto text-[11px] text-slate-500 max-sm:w-[min(1360px,calc(100%-24px))] sm:h-10 sm:text-xs [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        <Link href="/" className="flex shrink-0 items-center gap-1.5 whitespace-nowrap font-semibold transition-colors hover:text-slate-950">
+          <House className="h-3.5 w-3.5" />
+          <span>ホーム</span>
+        </Link>
         {crumbs.map((c) => (
           <span key={c.href} className="flex shrink-0 items-center gap-1 whitespace-nowrap">
-            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-300" />
+            <ChevronRight className="h-3 w-3 shrink-0 text-slate-300" />
             {c.last
-              ? <span className="font-semibold text-slate-800">{c.label}</span>
-              : <Link href={c.href} className="hover:text-slate-900">{c.label}</Link>}
+              ? <span className="max-w-64 truncate font-bold text-slate-800 max-sm:max-w-48">{c.label}</span>
+              : <Link href={c.href} className="transition-colors hover:text-slate-950">{c.label}</Link>}
           </span>
         ))}
       </div>

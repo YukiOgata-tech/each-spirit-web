@@ -23,8 +23,8 @@
 
   html {
     scroll-behavior: smooth;
-    /* sticky ヘッダー(h-16=4rem)分のオフセット。アンカー先が隠れないように。 */
-    scroll-padding-top: 5rem;
+    /* sticky ヘッダー本体 + パンくずバー分のオフセット。 */
+    scroll-padding-top: 7rem;
   }
 
   body {

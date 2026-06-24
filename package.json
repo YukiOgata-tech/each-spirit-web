@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "db:seed": "tsx --tsconfig scripts/tsconfig.json scripts/seed-supabase.ts",
-    "db:import:articles": "tsx --tsconfig scripts/tsconfig.json scripts/import-articles-json.ts"
+    "db:import:articles": "tsx --tsconfig scripts/tsconfig.json scripts/import-articles-json.ts",
+    "media:posters": "tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts"
   },
   "dependencies": {
     "@radix-ui/react-slot": "^1.2.4",
