@@ -129,8 +129,8 @@ export async function saveArticle(formData: FormData) {
   const slug = slugify(text(formData, "slug"));
   const title = text(formData, "title");
   const description = text(formData, "description");
-  const bodyMd = text(formData, "body_md");
-  const status = (text(formData, "status") === "published" ? "published" : "draft") as ArticleStatus;
+  // textarea 由来の CRLF を LF へ正規化（:::ブロックの解析・出典抽出が CRLF で崩れるため）
+  const bodyMd = text(formData, "body_md").replace(/\r\n?/g, "\n");
 
   if (!slug || !title || !description || !bodyMd) {
     throw new Error("slug, title, description, body_md are required");
@@ -149,17 +149,21 @@ export async function saveArticle(formData: FormData) {
   const path = articlePath(category, slug);
   const now = new Date().toISOString();
 
-  // 編集時は既存の公開日時を保全（再公開で published_at が現在時刻に巻き戻り
-  // 「最新記事」順が崩れるのを防ぐ）
-  let publishedAt: string | null = null;
-  if (status === "published") {
-    if (id) {
-      const { data: existing } = await service.from("articles").select("published_at").eq("id", id).maybeSingle();
-      publishedAt = existing?.published_at ?? now;
-    } else {
-      publishedAt = now;
-    }
-  }
+  // 編集時は既存レコード(status / published_at)を一度だけ取得し、保全に使う
+  const existing = id
+    ? (await service.from("articles").select("status, published_at").eq("id", id).maybeSingle()).data
+    : null;
+
+  // status: 明示ボタン（published / draft）を尊重する。未指定の編集（Enter送信等）では
+  // 既存statusを保全し、うっかり下書き化されるのを防ぐ。新規で未指定なら draft。
+  const submittedStatus = text(formData, "status");
+  const status: ArticleStatus =
+    submittedStatus === "published" ? "published"
+      : submittedStatus === "draft" ? "draft"
+        : existing?.status === "published" ? "published" : "draft";
+
+  // 公開時は published_at を保全（再公開で現在時刻に巻き戻り「最新記事」順が崩れるのを防ぐ）
+  const publishedAt: string | null = status === "published" ? (existing?.published_at ?? now) : null;
   const summary = list(formData, "summary");
   const whatYouLearn = list(formData, "what_you_learn");
   const tags = list(formData, "tags");

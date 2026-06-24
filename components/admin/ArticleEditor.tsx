@@ -623,12 +623,26 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
           </div>
         </section>
 
+        {/* 編集時は「更新を保存(=公開維持)」を先頭に置き、Enter による暗黙送信でも
+            下書き化されないようにする。下書き化したい時だけ「下書きに戻す」を押す。 */}
         <div className="sticky bottom-0 z-10 grid gap-2 border-t border-slate-200 bg-white/95 px-3 py-3 backdrop-blur sm:flex sm:flex-wrap sm:items-center sm:justify-end sm:gap-3 sm:px-4 sm:py-4">
-          <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto">下書き保存</Button>
-          <Button type="submit" name="status" value="published" className="w-full sm:w-auto">
-            <Send className="h-4 w-4" />
-            {isEdit ? "更新を公開" : "記事を公開"}
-          </Button>
+          {isEdit ? (
+            <>
+              <Button type="submit" name="status" value="published" className="w-full sm:w-auto sm:order-2">
+                <Send className="h-4 w-4" />
+                更新を保存
+              </Button>
+              <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto sm:order-1">下書きに戻す</Button>
+            </>
+          ) : (
+            <>
+              <Button type="submit" name="status" value="draft" variant="outline" className="w-full sm:w-auto">下書き保存</Button>
+              <Button type="submit" name="status" value="published" className="w-full sm:w-auto">
+                <Send className="h-4 w-4" />
+                記事を公開
+              </Button>
+            </>
+          )}
         </div>
       </div>
 

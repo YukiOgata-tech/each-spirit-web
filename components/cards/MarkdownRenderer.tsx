@@ -5,7 +5,9 @@ import { ArrowUpRight, ExternalLink, ImageIcon, Sparkles } from "lucide-react";
 
 function stripFrontmatter(markdown: string) {
   return markdown
-    .replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n?/, "")
+    // CRLF/CR を LF に正規化（管理UI保存等で混入すると :::ブロックの区切り解析が崩れるため）
+    .replace(/\r\n?/g, "\n")
+    .replace(/^---\n[\s\S]*?\n---\n?/, "")
     .replace(/<!--[\s\S]*?-->/g, "")
     .trim();
 }

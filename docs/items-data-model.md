@@ -137,4 +137,3 @@ section ごとに異なる項目を保持。**専用列へ移したキーはこ�
 
 
 ## 関連
-- パス/slug 規則: [content-display-path-slug-spec.md](./content-display-path-slug-spec.md)
