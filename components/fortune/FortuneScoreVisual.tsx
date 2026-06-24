@@ -17,7 +17,7 @@ export function FortuneScoreVisual({
   compact?: boolean;
 }) {
   const progress = Math.max(0, Math.min(100, (score / 5) * 100));
-  const zodiac = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
+  const zodiac = ["♈︎", "♉︎", "♊︎", "♋︎", "♌︎", "♍︎", "♎︎", "♏︎", "♐︎", "♑︎", "♒︎", "♓︎"];
 
   return (
     <div className={`relative mx-auto grid aspect-square w-full place-items-center ${compact ? "my-1 max-w-[270px] sm:max-w-[300px]" : "my-8 max-w-[560px] sm:my-10 xl:my-auto"}`}>
@@ -54,7 +54,7 @@ export function FortuneScoreVisual({
         animate={{ rotate: -360 }}
         transition={{ duration: 68, repeat: Infinity, ease: "linear" }}
       />
-      <svg aria-hidden viewBox="0 0 100 100" className="absolute inset-[12%] h-auto w-auto text-white/60">
+      <svg aria-hidden viewBox="0 0 100 100" className="absolute left-[12%] top-[12%] h-[76%] w-[76%] text-white/60">
         <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="0.25" />
         <circle cx="50" cy="50" r="31" fill="none" stroke="currentColor" strokeWidth="0.2" />
         <path d="M50 6 L61 39 L94 50 L61 61 L50 94 L39 61 L6 50 L39 39 Z" fill="none" stroke="currentColor" strokeWidth="0.24" />
@@ -67,15 +67,19 @@ export function FortuneScoreVisual({
       </svg>
       {zodiac.map((sign, index) => {
         const degree = index * 30 - 90;
+        const radius = compact ? 43 : 45;
+        const x = 50 + Math.cos((degree * Math.PI) / 180) * radius;
+        const y = 50 + Math.sin((degree * Math.PI) / 180) * radius;
         return (
           <span
             key={sign}
             aria-hidden
-            className="absolute left-1/2 top-1/2 text-[clamp(0.78rem,1.2vw,1.05rem)] font-bold text-violet-100/60"
+            className="absolute text-[clamp(0.72rem,1.2vw,1.05rem)] font-bold leading-none text-violet-100/60"
             style={{
-              transform: compact
-                ? `rotate(${degree}deg) translateY(-122px) rotate(${-degree}deg) translate(-50%, -50%)`
-                : `rotate(${degree}deg) translateY(calc(-1 * min(45vw, 250px))) rotate(${-degree}deg) translate(-50%, -50%)`,
+              left: `${x}%`,
+              top: `${y}%`,
+              transform: "translate(-50%, -50%)",
+              fontFamily: '"Apple Symbols", "Arial Unicode MS", "Times New Roman", serif',
             }}
           >
             {sign}
