@@ -20,7 +20,7 @@ export function FortuneScoreVisual({
   const zodiac = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
 
   return (
-    <div className={`relative mx-auto grid aspect-square w-full place-items-center ${compact ? "my-5 max-w-[270px] sm:max-w-[300px]" : "my-8 max-w-[560px] sm:my-10 xl:my-auto"}`}>
+    <div className={`relative mx-auto grid aspect-square w-full place-items-center ${compact ? "my-1 max-w-[270px] sm:max-w-[300px]" : "my-8 max-w-[560px] sm:my-10 xl:my-auto"}`}>
       <motion.div
         aria-hidden
         className="absolute inset-[2%] rounded-full opacity-85"
@@ -84,11 +84,11 @@ export function FortuneScoreVisual({
       })}
       <div className="absolute inset-[27%] rounded-full border border-white/15 bg-slate-950/62 shadow-[inset_0_0_56px_rgba(255,255,255,0.08)] backdrop-blur-md" />
       <div className="relative z-10 flex flex-col items-center text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/45">Overall Score</p>
-        <p className={`${compact ? "mt-1 text-5xl" : "mt-2 text-6xl sm:text-7xl"} font-black leading-none tabular-nums`} style={{ color }}>
+        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/85">Overall Score</p>
+        <p className={`${compact ? "mt-1 text-5xl" : "mt-2 text-6xl sm:text-7xl"} font-bold leading-none tabular-nums`} style={{ color }}>
           {score.toFixed(1)}
         </p>
-        <p className="mt-1 text-sm font-black text-white/40">/ 5.0</p>
+        <p className="mt-1 text-sm font-semibold text-white/40">/ 5.0</p>
         <p className="mt-3 rounded-full border px-4 py-1.5 text-sm font-black" style={{ color, borderColor: `${color}66`, backgroundColor: `${color}1f` }}>
           {label}
         </p>

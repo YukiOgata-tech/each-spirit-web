@@ -536,7 +536,7 @@ function ResultView({
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-4 flex items-center justify-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/15 py-2 text-sm font-bold text-amber-200"
+          className="mb-2 sm:mb-4 flex items-center justify-center gap-2 rounded-full border border-amber-300/30 bg-amber-400/15 py-2 text-sm font-bold text-amber-200"
         >
           <Coins className="h-4 w-4" /> 今日の占いボーナス +{awardedPoints}pt 獲得！
         </motion.div>
@@ -561,14 +561,14 @@ function ResultView({
       </div>
 
       {/* シェア */}
-      <div className="mt-5 rounded-2xl border border-white/15 bg-slate-950/34 p-4 text-center backdrop-blur">
-        <p className="text-xs font-semibold text-white/70">結果をシェア</p>
+      <div className="mt-5 rounded-2xl border border-white/15 bg-slate-950/34 px-2 py-2 sm:p-4 text-center backdrop-blur">
+        <p className="text-xs font-semibold text-white/70">- 結果をシェア -</p>
         <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
           <button
             onClick={saveImage}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
-          >
+            className="inline-flex items-center gap-1.5 rounded-full bg-linear-to-r from-violet-500 to-indigo-500 px-4 py-2 text-sm font-bold text-white transition hover:opacity-90 disabled:opacity-60"
+           >
             <Download className="h-4 w-4" /> {saving ? "生成中…" : "画像を保存"}
           </button>
           <a href={xUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-white/90">
