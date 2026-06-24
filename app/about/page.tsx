@@ -6,7 +6,7 @@ import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
   title: "運営者情報・編集方針｜比較と取材のポリシー",
-  description: "Each Spirit 編集部の運営方針、情報収集方針、掲載基準、更新方針をまとめています。",
+  description: "Each Spirit（イーチスピリット）編集部の運営方針、情報収集方針、掲載基準、更新方針をまとめています。",
   path: routes.about,
 });
 
@@ -16,12 +16,12 @@ export default function AboutPage() {
       <section className="border-b border-slate-200 bg-[linear-gradient(135deg,#f8fafc_0%,#eef7ff_52%,#fff7ed_100%)]">
         <div className="mx-auto grid w-[min(1360px,calc(100%-32px))] gap-6 py-9 sm:py-12 lg:grid-cols-[0.9fr_1.1fr] lg:items-end">
           <div>
-            <Badge className="bg-white">Each Spirit 編集部</Badge>
+            <Badge className="bg-white">Each Spirit（イーチスピリット）編集部</Badge>
             <h1 className="mt-4 max-w-3xl text-[2rem] font-bold leading-[1.14] tracking-normal text-slate-950 sm:text-5xl">
               運営者情報
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base sm:leading-8">
-              Each Spiritは、読者が選択前に比較しやすい情報を届ける編集部運営の情報メディアです。
+              Each Spirit（イーチスピリット）は、読者が選択前に比較しやすい情報を届ける、編集部運営の情報メディアです。
             </p>
           </div>
           <div>

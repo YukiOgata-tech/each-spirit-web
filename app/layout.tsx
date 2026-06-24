@@ -23,7 +23,7 @@ export const metadata: Metadata = {
     template: "%s | " + site.titleSuffix,
   },
   description: site.description,
-  applicationName: site.name,
+  applicationName: site.displayName,
   keywords: site.keywords,
   authors: [{ name: site.editor, url: site.url + "/about" }],
   creator: site.editor,

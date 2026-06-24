@@ -15,10 +15,10 @@ export function SiteFooter() {
         <div>
           <div className="mb-3 flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-slate-950">ES</span>
-            <span className="text-lg font-bold">Each Spirit</span>
+            <span className="text-lg font-bold">Each Spirit <span className="text-sm font-semibold text-slate-400">イーチスピリット</span></span>
           </div>
           <p className="max-w-xl text-sm leading-7 text-slate-300">
-            複数ジャンルのおすすめ情報、ランキング、比較、地域情報を、編集部の評価軸と参照ソースを明示して整理する情報メディアです。
+            Each Spirit（イーチスピリット）は、複数ジャンルのおすすめ情報、ランキング、比較、地域情報を整理する情報メディアです。
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 text-sm">

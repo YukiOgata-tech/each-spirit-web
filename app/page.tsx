@@ -14,7 +14,7 @@ import { site } from "@/content/site";
 
 export const metadata = pageMetadata({
   title: site.title,
-  description: "Each Spiritは、グルメ・旅行・ガジェット・暮らし・業務ツールを横断し、比較、ランキング、検索軸、参照元つきの情報で選ぶ前の判断を助けるメディアです。",
+  description: "Each Spirit（イーチスピリット）は、グルメ・旅行・エンタメ・暮らし・商品を横断し、比較、ランキング、検索で選ぶ前の判断を助ける情報メディアです。",
   path: routes.home,
 });
 
@@ -38,7 +38,7 @@ export default async function HomePage() {
       <section className="hero-surface border-b border-slate-200">
         <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-5 py-6 max-sm:w-[min(1360px,calc(100%-20px))] sm:gap-8 sm:py-12 lg:grid-cols-[0.95fr_1.05fr] lg:py-20">
           <div className="animate-rise flex flex-col justify-center max-sm:items-center max-sm:text-center">
-            <Badge className="w-fit border-slate-300 bg-white text-slate-700">Each Spirit 情報部</Badge>
+            <Badge className="w-fit border-slate-300 bg-white text-slate-700">Each Spirit（イーチスピリット）情報部</Badge>
             <h1 className="mt-4 max-w-3xl text-[2rem] font-bold leading-[1.1] tracking-normal text-slate-950 sm:text-5xl sm:leading-[1.05] lg:text-6xl">
               必要<span className="text-xl sm:text-3xl lg:text-4xl">な</span>情報
               <span className="text-xl sm:text-3xl lg:text-4xl">を、<br/>
@@ -47,7 +47,7 @@ export default async function HomePage() {
               選<span className="text-xl sm:text-3xl lg:text-4xl">べる</span><br className="block sm:hidden"/>情報メディア
             </h1>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-600 max-sm:px-1 sm:text-lg sm:leading-8">
-              グルメから、旅行、暮らし、AIツールなどなど。記事とランキングによる情報提供で、読者の判断材料を提供します。
+              Each Spirit（イーチスピリット）は、グルメ、旅行、暮らし、AIツールなどを横断し、記事とランキングで選ぶための判断材料を届けます。
             </p>
             <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3">
               <Button asChild size="lg" className="max-sm:h-11 max-sm:px-3 max-sm:text-sm">
