@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, FileText, MapPin, Search, SlidersHorizontal, Trophy } from "lucide-react";
 import type { Category, SearchResult } from "@/lib/types";
+import { isAllowedImageSrc } from "@/lib/image-hosts";
 import { Button } from "@/components/ui/button";
 
 const typeLabels: Record<SearchResult["type"], string> = {
@@ -17,13 +18,14 @@ const typeLabels: Record<SearchResult["type"], string> = {
 
 export function DiscoverySearch({
   categories,
-  results,
+  initialResults = [],
   initialQuery = "",
   maxResults = 8,
   expanded = false,
 }: {
   categories: Category[];
-  results: SearchResult[];
+  /** SSR で初期クエリ結果を渡す場合のみ（/search ページ）。無ければ空でクライアント取得。 */
+  initialResults?: SearchResult[];
   initialQuery?: string;
   maxResults?: number;
   expanded?: boolean;
@@ -31,28 +33,56 @@ export function DiscoverySearch({
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<SearchResult["type"] | "all">("all");
+  const [results, setResults] = useState<SearchResult[]>(initialResults);
+  const [loading, setLoading] = useState(false);
   const liveCategories = useMemo(() => categories.filter((item) => item.status === "live"), [categories]);
   const [randomCategories, setRandomCategories] = useState<Category[]>(() => liveCategories.slice(0, 6));
-  const isDefaultView = query.trim() === "" && category === "all" && type === "all";
+  const isDefaultView = query.trim() === "";
 
   useEffect(() => {
     setRandomCategories([...liveCategories].sort(() => Math.random() - 0.5).slice(0, 6));
   }, [liveCategories]);
 
-  const matched = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    return results
-      .filter((result) => category === "all" || result.category === category)
-      .filter((result) => type === "all" || result.type === type)
-      .filter((result) => {
-        if (!normalized) return true;
-        return [result.title, result.description, result.category, ...result.tags]
-          .join(" ")
-          .toLowerCase()
-          .includes(normalized);
-      });
-  }, [category, query, results, type]);
-  const filtered = useMemo(() => matched.slice(0, maxResults), [matched, maxResults]);
+  // 検索本体: デバウンスして /api/search を叩く。空クエリは即クリア（DBを叩かない）。
+  // 種別フィルタはサーバ側に委譲。初回は SSR の initialResults を尊重して二重取得しない。
+  const skipFirstFetch = useRef(initialQuery.trim() !== "" && initialResults.length > 0);
+  useEffect(() => {
+    const q = query.trim();
+    if (q === "") {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+    if (skipFirstFetch.current) {
+      skipFirstFetch.current = false;
+      return;
+    }
+    setLoading(true);
+    const controller = new AbortController();
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q, limit: String(maxResults) });
+        if (type !== "all") params.set("type", type);
+        const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
+        const json = (await res.json()) as { results?: SearchResult[] };
+        setResults(json.results ?? []);
+      } catch {
+        if (!controller.signal.aborted) setResults([]);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    }, 250);
+    return () => {
+      clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query, type, maxResults]);
+
+  // カテゴリ絞り込みのみ返却済み集合にクライアント適用（種別はサーバ側で適用済み）。
+  const filtered = useMemo(
+    () => (category === "all" ? results : results.filter((result) => result.category === category)),
+    [results, category],
+  );
 
   // カテゴリ名 → テーマ色。検索結果では画像を安易にカテゴリ代用しない。
   const catVisual = useMemo(() => {
@@ -119,7 +149,7 @@ export function DiscoverySearch({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 sm:gap-3 sm:text-sm">
           <span className="inline-flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {isDefaultView ? "おすすめカテゴリを6件表示" : `${matched.length}件中 ${filtered.length}件を表示`}
+            {isDefaultView ? "おすすめカテゴリを6件表示" : loading ? "検索中…" : `${filtered.length}件を表示`}
           </span>
           <span>{expanded ? "検索ページで詳細に絞り込み" : "公開カテゴリから探せます"}</span>
         </div>
@@ -158,6 +188,8 @@ export function DiscoverySearch({
             {filtered.map((result, index) => {
             const v = visualFor(result.category);
             const Icon = iconFor(result.type);
+            // 未許可ホスト（next.config 未登録の外部画像）はクラッシュさせずプレースホルダへ
+            const imageUrl = isAllowedImageSrc(result.imageUrl) ? result.imageUrl : undefined;
             return (
               <motion.div
                 key={result.id}
@@ -171,9 +203,9 @@ export function DiscoverySearch({
                   className="group grid min-h-[156px] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg sm:grid-cols-[168px_minmax(0,1fr)]"
                 >
                   <div className="relative min-h-[118px] overflow-hidden bg-slate-100 sm:min-h-full">
-                    {result.imageUrl ? (
+                    {imageUrl ? (
                       <Image
-                        src={result.imageUrl}
+                        src={imageUrl}
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 168px, 100vw"
@@ -214,7 +246,7 @@ export function DiscoverySearch({
             })}
           </div>
         )}
-        {!isDefaultView && filtered.length === 0 ? (
+        {!isDefaultView && !loading && filtered.length === 0 ? (
           <div className="rounded-md border border-dashed border-slate-300 bg-slate-50 p-5 text-sm text-slate-600">
             条件に合う項目がありません。カテゴリや種別を広げて検索してください。
           </div>

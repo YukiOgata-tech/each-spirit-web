@@ -1021,180 +1021,48 @@ export async function getPopularRankings(limit?: number): Promise<Ranking[]> {
 
 // ── Search ───────────────────────────────────────────────────────────────────
 
-export async function getSearchResults(): Promise<SearchResult[]> {
-  const travelServiceRegions = (await getTravelServiceRegions()).filter((r) => r.status === "live");
-  const sections = await getContentSections();
-  const sectionLabelByKey = new Map(sections.map((section) => [`${section.majorCategory}:${section.sectionSlug}`, section.label]));
-  const categoryLabelBySlug = new Map(categories.map((category) => [category.slug, category.name]));
-  const rankingCategoryLabel = (ranking: Ranking) => {
-    if (ranking.majorCategory && ranking.sectionSlug) {
-      return sectionLabelByKey.get(`${ranking.majorCategory}:${ranking.sectionSlug}`) ?? "ランキング";
-    }
-    return categoryLabelBySlug.get(ranking.majorCategory ?? "") ?? "ランキング";
-  };
-  const [articles, rankings, items, leisureSpots, travelServicePairs, travelApps] = await Promise.all([
-    getLatestArticles(),
-    getPopularRankings(),
-    getRamenItems(),
-    getLeisureSpots("niigata"),
-    Promise.all(
-      travelServiceRegions.map(async (region) => ({
-        region: region.slug,
-        agencies: await getTravelAgencies(region.slug),
-      }))
-    ),
-    getTravelApps(),
-  ]);
+type SearchRow = {
+  type: SearchResult["type"];
+  ref_id: string;
+  title: string;
+  description: string | null;
+  href: string;
+  category: string | null;
+  tags: string[] | null;
+  image_url: string | null;
+  updated_at: string | null;
+  score: number;
+};
 
-  const categoryResults: SearchResult[] = sections.map((section) => ({
-    id: "section-" + section.majorCategory + "-" + section.sectionSlug,
-    type: "category",
-    title: section.label,
-    description: section.description,
-    category: categoryLabelBySlug.get(section.majorCategory) ?? section.majorCategory,
-    href: section.href,
-    tags: [section.majorCategory, section.sectionSlug, section.contentModel, "公開中"],
+/**
+ * 横断検索。pgroonga 全文検索 RPC（es.search_content）を1回呼ぶだけ（内部は種別ごとの索引スキャン）。
+ * items / articles / rankings / カテゴリ(section) を関連度（pgroonga_score）降順で返す（published のみ）。
+ * section が増えても自動的に対象になる。空クエリは何もせず空配列（呼び出し側でDBを叩かない）。
+ */
+export async function searchContent(
+  query: string,
+  opts?: { type?: SearchResult["type"]; limit?: number },
+): Promise<SearchResult[]> {
+  const q = query.trim();
+  if (q === "") return [];
+  const sb = createServerClient();
+  const { data, error } = await sb.rpc("search_content", {
+    q,
+    p_type: opts?.type ?? null,
+    p_limit: opts?.limit ?? 48,
+  });
+  if (error || !data) return [];
+  return (data as SearchRow[]).map((r) => ({
+    id: `${r.type}-${r.ref_id}`,
+    type: r.type,
+    title: r.title,
+    description: r.description ?? "",
+    category: r.category ?? "",
+    href: r.href,
+    tags: r.tags ?? [],
+    updatedAt: r.updated_at ?? undefined,
+    imageUrl: r.image_url ?? undefined,
   }));
-
-  const articleResults: SearchResult[] = articles.map((article) => ({
-    id: "article-" + article.category + "-" + article.slug,
-    type: "article",
-    title: article.title,
-    description: article.description,
-    category: categoryLabelBySlug.get(article.category) ?? article.category,
-    href: articleHref(article),
-    tags: article.tags,
-    updatedAt: article.updatedAt,
-    imageUrl: article.coverImageUrl,
-  }));
-
-  const rankingResults: SearchResult[] = rankings.map((ranking) => ({
-    id: "ranking-" + ranking.slug,
-    type: "ranking",
-    title: ranking.title,
-    description: ranking.description,
-    category: rankingCategoryLabel(ranking),
-    href: rankingHref(ranking),
-    tags: ranking.criteria,
-    updatedAt: ranking.lastUpdatedAt,
-  }));
-
-  const itemResults: SearchResult[] = items.map((item) => ({
-    id: "item-" + item.slug,
-    type: "item",
-    title: item.name,
-    description: item.description,
-    category: "ラーメン",
-    href: routes.sectionItem("food", "ramen", "shops", item.slug),
-    tags: [item.area, item.genre, ...item.tags, item.parking ? "駐車場あり" : "駐車場要確認"],
-    updatedAt: item.lastVerifiedAt,
-    imageUrl: item.imageUrl,
-  }));
-
-  const leisureSpotResults: SearchResult[] = leisureSpots.map((spot) => ({
-    id: "leisure-spot-niigata-" + spot.slug,
-    type: "item",
-    title: spot.name,
-    description: spot.description,
-    category: "レジャー",
-    href: routes.leisureSpot("niigata", spot.slug),
-    tags: [spot.area, spot.genre, ...spot.tags, spot.parking ? "駐車場あり" : "駐車場要確認"],
-    updatedAt: spot.lastVerifiedAt,
-    imageUrl: spot.imageUrl,
-  }));
-
-  const travelAgencyResults: SearchResult[] = travelServicePairs.flatMap(({ region, agencies }) => agencies.map((agency) => ({
-    id: "travel-agency-" + region + "-" + agency.slug,
-    type: "item",
-    title: agency.name,
-    description: agency.description,
-    category: "旅行アプリ・旅行会社",
-    href: routes.travelAgency(region, agency.slug),
-    tags: [agency.area, ...agency.services, ...agency.tags],
-    updatedAt: agency.lastVerifiedAt,
-    imageUrl: agency.imageUrl,
-  })));
-
-  const travelAppResults: SearchResult[] = travelApps.map((app) => ({
-    id: "travel-app-" + app.slug,
-    type: "item",
-    title: app.name,
-    description: app.description,
-    category: "旅行アプリ・旅行会社",
-    href: routes.travelApps,
-    tags: [app.useCase, ...app.platforms, ...app.features],
-    updatedAt: app.lastVerifiedAt,
-    imageUrl: app.imageUrl,
-  }));
-
-  // cafe店舗 / 美容サロン / ホテルも検索対象に含める（旧実装では欠落していた）
-  const [cafeRegionsLive, beautyRegionsLive] = await Promise.all([getCafeRegions(), getBeautyRegions()]);
-  const [cafePairs, beautyPairs, allHotels] = await Promise.all([
-    Promise.all(
-      cafeRegionsLive
-        .filter((r) => r.status === "live")
-        .map(async (r) => ({ region: r.slug, items: await getCafeItemsByRegion(r.slug) })),
-    ),
-    Promise.all(
-      beautyRegionsLive
-        .filter((r) => r.status === "live")
-        .map(async (r) => ({ region: r.slug, salons: await getBeautySalons(r.slug) })),
-    ),
-    getTravelAllHotels(),
-  ]);
-
-  const cafeResults: SearchResult[] = cafePairs.flatMap(({ region, items }) =>
-    items.map((cafe) => ({
-      id: "cafe-" + region + "-" + cafe.slug,
-      type: "item" as const,
-      title: cafe.name,
-      description: cafe.description,
-      category: "カフェ",
-      href: routes.cafeItem(region, cafe.slug),
-      tags: [cafe.area, cafe.style, ...cafe.tags],
-      updatedAt: cafe.lastVerifiedAt,
-      imageUrl: cafe.imageUrl,
-    })),
-  );
-
-  const salonResults: SearchResult[] = beautyPairs.flatMap(({ region, salons }) =>
-    salons.map((salon) => ({
-      id: "salon-" + region + "-" + salon.slug,
-      type: "item" as const,
-      title: salon.name,
-      description: salon.description,
-      category: "美容室",
-      href: routes.beautySalon(region, salon.slug),
-      tags: [salon.area],
-      updatedAt: salon.lastVerifiedAt,
-      imageUrl: salon.imageUrl,
-    })),
-  );
-
-  const hotelResults: SearchResult[] = allHotels.map((hotel) => ({
-    id: "hotel-" + hotel.slug,
-    type: "item" as const,
-    title: hotel.name,
-    description: hotel.description,
-    category: "旅行",
-    href: routes.travelHotel("", hotel.slug),
-    tags: [hotel.area, hotel.style, ...hotel.tags],
-    updatedAt: hotel.lastVerifiedAt,
-    imageUrl: hotel.imageUrl,
-  }));
-
-  return [
-    ...categoryResults,
-    ...articleResults,
-    ...rankingResults,
-    ...itemResults,
-    ...cafeResults,
-    ...salonResults,
-    ...hotelResults,
-    ...leisureSpotResults,
-    ...travelAgencyResults,
-    ...travelAppResults,
-  ];
 }
 
 // ── Leisure ──────────────────────────────────────────────────────────────────

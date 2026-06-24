@@ -1,7 +1,7 @@
 import { DiscoverySearch } from "@/components/search/DiscoverySearch";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Badge } from "@/components/ui/badge";
-import { getCategories, getSearchResults } from "@/lib/content";
+import { getCategories, searchContent } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import { pageMetadata } from "@/lib/seo";
 
@@ -19,7 +19,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const { q } = await searchParams;
   const initialQuery = typeof q === "string" ? q : "";
   const categories = getCategories();
-  const results = await getSearchResults();
+  const results = await searchContent(initialQuery, { limit: 48 });
 
   return (
     <main className="min-h-screen bg-slate-50">
@@ -39,7 +39,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
       </section>
 
       <section className="section-shell">
-        <DiscoverySearch categories={categories} results={results} initialQuery={initialQuery} maxResults={48} expanded />
+        <DiscoverySearch categories={categories} initialResults={results} initialQuery={initialQuery} maxResults={48} expanded />
       </section>
     </main>
   );

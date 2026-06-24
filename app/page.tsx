@@ -7,7 +7,7 @@ import { DiscoverySearch } from "@/components/search/DiscoverySearch";
 import { SearchForm } from "@/components/search/SearchForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { articleHref, getCategories, getLatestArticles, getPopularRankings, getSearchResults, rankingHref } from "@/lib/content";
+import { articleHref, getCategories, getLatestArticles, getPopularRankings, rankingHref } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { site } from "@/content/site";
@@ -27,10 +27,9 @@ const editorialPillars = [
 
 export default async function HomePage() {
   const categories = getCategories();
-  const [articles, rankings, searchResults] = await Promise.all([
+  const [articles, rankings] = await Promise.all([
     getLatestArticles(4),
     getPopularRankings(4),
-    getSearchResults(),
   ]);
   const liveCategories = categories.filter((category) => category.status === "live");
 
@@ -77,7 +76,7 @@ export default async function HomePage() {
                 カテゴリから毎回6件をランダムに表示しています。キーワード、カテゴリ、コンテンツ種別で絞り込み、記事・ランキング・店舗カードを横断できます。
               </p>
             </div>
-            <DiscoverySearch categories={liveCategories} results={searchResults} />
+            <DiscoverySearch categories={liveCategories} />
           </div>
         </div>
       </section>

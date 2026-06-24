@@ -7,7 +7,10 @@
  * フォールバック画像へ落とせる。
  */
 export const ALLOWED_IMAGE_HOSTS = [
-  "images.unsplash.com",
+  // Supabase Storage（each-spirit-images / article-assets バケットの公開URL）。
+  // NEXT_PUBLIC_SUPABASE_URL からも自動付与されるが、env 非依存で確実に許可するため明示。
+  "ctwpnaizwsrffrkkbuig.supabase.co",
+  "images.unsplash.com", "make-it-tech.com",
   "www.tomita-cocoro.jp",
   "sugitaya.com",
   "static.wixstatic.com",
