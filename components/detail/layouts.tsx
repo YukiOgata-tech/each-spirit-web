@@ -5,7 +5,7 @@ import type { ItemField } from "@/lib/admin-item-schema";
 import type { ContentSection, GenericItem } from "@/lib/types";
 import { PlainHero, PosterHero, ProductHero, ProfileHero, SplitHero } from "./hero";
 import {
-  AttributesBlock, EditorCommentBlock, GenresBlock, HistoryBlock, KeyInfoCard,
+  ArticleBodyBlock, AttributesBlock, EditorCommentBlock, GenresBlock, HistoryBlock, KeyInfoCard,
   NutritionBlock, OfficialLinksBlock, ProsConsBlock, RelatedLinksBlock, ServiceModelBlock,
 } from "./blocks";
 
@@ -51,7 +51,8 @@ export function PhysicalServiceLayout(c: LayoutCtx) {
           <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} />
           <GenresBlock item={c.item} />
           <HistoryBlock item={c.item} />
-          <EditorCommentBlock item={c.item} theme={c.theme} />
+          <ArticleBodyBlock item={c.item} />
+        <EditorCommentBlock item={c.item} theme={c.theme} />
           <RelatedLinksBlock item={c.item} />
           <Faq item={c.item} />
           <Sources item={c.item} />
@@ -73,7 +74,8 @@ export function IntangibleServiceLayout(c: LayoutCtx) {
           <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="サービス内容" />
           <GenresBlock item={c.item} />
           <HistoryBlock item={c.item} />
-          <EditorCommentBlock item={c.item} theme={c.theme} />
+          <ArticleBodyBlock item={c.item} />
+        <EditorCommentBlock item={c.item} theme={c.theme} />
           <RelatedLinksBlock item={c.item} />
           <Faq item={c.item} />
           <Sources item={c.item} />
@@ -93,11 +95,12 @@ export function MediaLayout(c: LayoutCtx) {
         <GenresBlock item={c.item} />
         <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="作品情報" />
         <HistoryBlock item={c.item} />
-        <RelatedLinksBlock item={c.item} title="関連作品" />
+        <ArticleBodyBlock item={c.item} />
         <EditorCommentBlock item={c.item} theme={c.theme} />
         <OfficialLinksBlock item={c.item} />
         <Faq item={c.item} />
         <Sources item={c.item} />
+        <RelatedLinksBlock item={c.item} title="関連作品" />
       </Stack>
     </>
   );
@@ -116,7 +119,8 @@ export function ProductLayout(c: LayoutCtx) {
           <GenresBlock item={c.item} />
           <ProsConsBlock item={c.item} />
           <HistoryBlock item={c.item} />
-          <EditorCommentBlock item={c.item} theme={c.theme} />
+          <ArticleBodyBlock item={c.item} />
+        <EditorCommentBlock item={c.item} theme={c.theme} />
           <RelatedLinksBlock item={c.item} />
           <Faq item={c.item} />
           <Sources item={c.item} />
@@ -136,6 +140,7 @@ export function PersonLayout(c: LayoutCtx) {
         <AttributesBlock item={c.item} fields={c.fields} theme={c.theme} title="プロフィール" />
         <GenresBlock item={c.item} title="分野・ジャンル" />
         <RelatedLinksBlock item={c.item} title="関連" />
+        <ArticleBodyBlock item={c.item} />
         <EditorCommentBlock item={c.item} theme={c.theme} />
         <OfficialLinksBlock item={c.item} />
         <Sources item={c.item} />
@@ -156,6 +161,7 @@ export function OtherLayout(c: LayoutCtx) {
         <ServiceModelBlock item={c.item} title="入手・利用" />
         <OfficialLinksBlock item={c.item} />
         <RelatedLinksBlock item={c.item} />
+        <ArticleBodyBlock item={c.item} />
         <EditorCommentBlock item={c.item} theme={c.theme} />
         <Faq item={c.item} />
         <Sources item={c.item} />

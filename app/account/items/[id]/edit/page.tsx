@@ -37,6 +37,7 @@ export default async function EditItemPage({ params }: PageProps) {
     common: {
       name: str(row.name),
       description: str(row.description),
+      body_md: str(row.body_md),
       region: str(row.region),
       area: str((row.address_info as Record<string, unknown> | null)?.area),
       address: str((row.address_info as Record<string, unknown> | null)?.address),

@@ -27,7 +27,8 @@
 | `id` | uuid | PK |
 | `slug` | text | URL slug（kebab-case） |
 | `name` | text | 名称 |
-| `description` | text | 説明 |
+| `description` | text | 短い説明（リード文。一覧カード・メタ説明にも使う） |
+| `body_md` | text | **詳細記事本文（Markdown・任意）**。`description` が短いリード文なのに対し、item ごとの事実ベースの長文解説。`MarkdownRenderer` 記法（`##`/`**`/`:::note`/`:::official-image`/`:::link-cards` 等）。既定 `''`、表示はスペックの後・編集部コメントの前 |
 | `region` | text | 地域（place の地域分割用）ページpath管理にも使われている |
 | `phone` | text | 電話（place） |
 | `price_range` | text | 価格帯（place/product） |

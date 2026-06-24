@@ -125,6 +125,7 @@ function mapGenericItem(row: any): GenericItem {
     slug: row.slug,
     name: row.name,
     description: row.description ?? "",
+    bodyMd: row.body_md ?? "",
     majorCategory: row.major_category,
     sectionSlug: row.section_slug,
     itemKind: row.item_kind ?? "item",

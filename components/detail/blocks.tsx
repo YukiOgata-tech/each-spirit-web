@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, CalendarDays, CheckCircle2, ExternalLink, MapPin, ShoppingCart, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import type { MajorTheme } from "@/lib/major-theme";
 import type { ItemField } from "@/lib/admin-item-schema";
 import type { GenericItem } from "@/lib/types";
@@ -229,6 +230,16 @@ export function NutritionBlock({ item }: { item: GenericItem }) {
         </div>
       )}
     </Panel>
+  );
+}
+
+/** 詳細記事本文（Markdown）。description が短いリード文なのに対し、事実ベースの長文解説を表示。 */
+export function ArticleBodyBlock({ item }: { item: GenericItem }) {
+  if (!item.bodyMd || item.bodyMd.trim() === "") return null;
+  return (
+    <section className={panelClass}>
+      <MarkdownRenderer markdown={item.bodyMd} />
+    </section>
   );
 }
 

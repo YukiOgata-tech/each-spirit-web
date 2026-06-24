@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { MarkdownBodyEditor } from "./MarkdownBodyEditor";
 import type { SectionItemSchema, ItemField } from "@/lib/admin-item-schema";
 import { isLocationRelevant } from "@/lib/content-models";
 
@@ -95,6 +96,7 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
 
   const md = initial?.metadata ?? {};
   const common = initial?.common ?? {};
+  const [body, setBody] = useState(common.body_md ?? "");
 
   function FieldInput({ field }: { field: ItemField }) {
     const def = md[field.name];
@@ -305,6 +307,17 @@ export function ItemEditor({ action, schemas, regionOptions, initial }: ItemEdit
             <textarea name="editor_comment" defaultValue={common.editor_comment ?? ""} rows={2} className={inputClass} />
           </div>
         </div>
+      </div>
+
+      <div className={sectionClass}>
+        <h2 className="mb-1 text-sm font-black text-slate-800">詳細記事（本文・任意）</h2>
+        <p className="mb-3 text-[11px] text-slate-400">短い「説明」とは別に、事実ベースの詳細を Markdown で。見出し・画像・関連カード等が使えます。空欄可。</p>
+        <MarkdownBodyEditor
+          name="body_md"
+          value={body}
+          onChange={setBody}
+          uploadPathPrefix={`items/${initial?.slug || "draft"}`}
+        />
       </div>
 
       <div className={sectionClass}>

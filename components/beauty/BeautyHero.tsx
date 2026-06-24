@@ -58,7 +58,7 @@ export function BeautyHero({ salonCount, rankingCount, region, firstRankingSlug 
         </motion.div>
       ))}
 
-      <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-10 py-12 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-10 py-6 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-16 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
 
         {/* ── left: text ── */}
         <motion.div variants={container} initial="hidden" animate="visible">

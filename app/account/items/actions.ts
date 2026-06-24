@@ -144,6 +144,8 @@ export async function saveItem(formData: FormData) {
   const slug = slugify(text(formData, "slug"));
   const name = text(formData, "name");
   const description = text(formData, "description");
+  // 詳細記事本文（任意）。textarea 由来の CRLF を LF へ正規化（MarkdownRenderer の :::ブロック解析を安定化）
+  const bodyMd = text(formData, "body_md").replace(/\r\n?/g, "\n");
   const status = text(formData, "status") === "draft" ? "draft" : "published";
   const region = schema.regionMode === "none" ? null : slugify(text(formData, "region")) || null;
 
@@ -254,6 +256,7 @@ export async function saveItem(formData: FormData) {
     tags: list(formData, "tags"),
     status,
     editor_comment: text(formData, "editor_comment"),
+    body_md: bodyMd,
     metadata,
     nutrition,
     sources: parseLines(formData, "sources", ["url", "title", "sourceType", "collectedAt", "note"]),

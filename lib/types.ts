@@ -153,6 +153,8 @@ export type GenericItem = {
   slug: string;
   name: string;
   description: string;
+  /** 詳細記事本文（Markdown）。description が短いリード文なのに対し、事実ベースの長文解説 */
+  bodyMd: string;
   majorCategory: string;
   sectionSlug: string;
   itemKind: string;
