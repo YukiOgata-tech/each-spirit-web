@@ -390,10 +390,15 @@ async function migrateItems() {
     metadata: {
       brand: p.brand, package_price: p.packagePrice,
       protein_type: p.proteinType, targets: p.targets,
-      serving_size: p.servingSize, protein: p.protein, calories: p.calories,
-      carbs: p.carbs, fat: p.fat, package_weight: p.packageWeight,
+      package_weight: p.packageWeight,
       price_per_kg: p.pricePerKg, flavors: p.flavors,
       pros: p.pros, cons: p.cons, sources: p.sources, faqs: p.faqs,
+    },
+    // 栄養成分は専用 nutrition カラムへ（docs/items-data-model.md が正）
+    nutrition: {
+      basis: "per_serving" as const,
+      serving_size: p.servingSize, protein: p.protein, calories: p.calories,
+      carbs: p.carbs, fat: p.fat,
     },
   }))
   const { error: e6, count: c6 } = await es.from("items")

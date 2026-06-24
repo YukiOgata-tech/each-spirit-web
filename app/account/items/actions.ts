@@ -169,7 +169,8 @@ export async function saveItem(formData: FormData) {
   }
   const metadata = { ...baseMetadata, ...managed };
 
-  // 栄養成分フィールド(フラット入力) → 構造化 nutrition オブジェクトへ集約（食品商品・汎用）
+  // 栄養成分フィールド(フラット入力) → 構造化 nutrition オブジェクトへ集約（食品商品・汎用）。
+  // 格納先は専用 nutrition カラム（NOT NULL・既定 {}）。docs/items-data-model.md が正。
   const NUTRITION_KEYS = ["serving_size", "calories", "protein", "fat", "carbs", "sugar", "fiber", "salt"];
   const nut: Record<string, unknown> = {};
   for (const k of NUTRITION_KEYS) {
@@ -179,9 +180,10 @@ export async function saveItem(formData: FormData) {
   }
   const nutritionBasis = metadata["nutrition_basis"];
   delete metadata["nutrition_basis"];
-  if (Object.keys(nut).length > 0) {
-    metadata.nutrition = { basis: nutritionBasis === "per_100g" ? "per_100g" : "per_serving", ...nut };
-  }
+  delete metadata["nutrition"]; // 旧 metadata 格納分を残さない（カラムへ一本化）
+  const nutrition: Record<string, unknown> = Object.keys(nut).length > 0
+    ? { basis: nutritionBasis === "per_100g" ? "per_100g" : "per_serving", ...nut }
+    : {};
 
   // slug 重複チェック（同一 major+section 内、編集時は自分を除外）
   const dupQuery = service
@@ -253,6 +255,7 @@ export async function saveItem(formData: FormData) {
     status,
     editor_comment: text(formData, "editor_comment"),
     metadata,
+    nutrition,
     sources: parseLines(formData, "sources", ["url", "title", "sourceType", "collectedAt", "note"]),
     faq: parseLines(formData, "faq", ["question", "answer"]),
     history: parseLines(formData, "history", ["date", "description"]),

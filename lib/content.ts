@@ -157,7 +157,7 @@ function mapGenericItem(row: any): GenericItem {
     history: jarr<HistoryEntry>(row.history),
     serviceModel: jarr<ServiceModelEntry>(row.service_model),
     relatedLink: jarr<ItemRelatedLink>(row.related_link),
-    nutrition: (m.nutrition && typeof m.nutrition === "object") ? (m.nutrition as NutritionFacts) : undefined,
+    nutrition: (row.nutrition && typeof row.nutrition === "object" && Object.keys(row.nutrition).length > 0) ? (row.nutrition as NutritionFacts) : undefined,
   };
 }
 
@@ -502,6 +502,7 @@ function mapArticle(row: any): Article {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProteinProduct(row: any): ProteinProduct {
   const m = row.metadata ?? {};
+  const n = (row.nutrition && typeof row.nutrition === "object") ? row.nutrition : {};
   return {
     slug: row.slug,
     brand: m.brand ?? "",
@@ -509,11 +510,11 @@ function mapProteinProduct(row: any): ProteinProduct {
     description: row.description,
     proteinType: m.product_type ?? m.protein_type ?? "whey-wpc",
     targets: (m.targets ?? []) as ProteinTarget[],
-    servingSize: Number(m.nutrition?.serving_size ?? 0),
-    protein: Number(m.nutrition?.protein ?? 0),
-    calories: Number(m.nutrition?.calories ?? 0),
-    carbs: Number(m.nutrition?.carbs ?? 0),
-    fat: Number(m.nutrition?.fat ?? 0),
+    servingSize: Number(n.serving_size ?? 0),
+    protein: Number(n.protein ?? 0),
+    calories: Number(n.calories ?? 0),
+    carbs: Number(n.carbs ?? 0),
+    fat: Number(n.fat ?? 0),
     packageWeight: Number(m.package_weight ?? 0),
     packagePrice: Number(m.package_price ?? 0),
     pricePerKg: Number(m.price_per_kg ?? 0),
