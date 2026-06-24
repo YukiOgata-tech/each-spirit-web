@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { toPng } from "html-to-image";
-import { Sparkles, Star, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
+import { Sparkles, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
   FORTUNE_GENDERS,
@@ -15,6 +15,8 @@ import {
   type FortuneGender,
 } from "@/lib/fortune";
 import { requestFortune } from "@/app/fortune/actions";
+import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
+import { MobileFortuneResult } from "@/components/fortune/MobileFortuneResult";
 
 const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
   male: Mars,
@@ -34,7 +36,6 @@ const LEVEL: Record<number, { label: string; color: string }> = {
 
 type Phase = "input" | "idle" | "loading" | "result";
 type RenderMode = "2d" | "3d";
-type MobilePanel = "overview" | "signals" | "lucky";
 
 // 星の位置を決定論生成（SSR/CSRで一致させハイドレーション差異を防ぐ）
 const STARS = (() => {
@@ -436,7 +437,6 @@ function ResultView({
 }) {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [mobilePanel, setMobilePanel] = useState<MobilePanel>("overview");
   const cardRef = useRef<HTMLDivElement>(null);
   const ov = LEVEL[result.overall.band];
   const sortedCategories = [...result.categories].sort((a, b) => b.score - a.score);
@@ -542,11 +542,9 @@ function ResultView({
         </motion.div>
       ) : null}
 
-      <MobileResultView
-        activePanel={mobilePanel}
-        setActivePanel={setMobilePanel}
+      <MobileFortuneResult
         result={result}
-        ov={ov}
+        overallLevel={ov}
         strongest={strongest}
         focus={focus}
         fullStars={fullStars}
@@ -617,7 +615,7 @@ function DesktopResultDashboard({
 }) {
   return (
     <div className="grid w-full gap-5 xl:grid-cols-[minmax(410px,0.9fr)_minmax(0,1.55fr)] 2xl:grid-cols-[minmax(460px,0.85fr)_minmax(0,1.65fr)]">
-      <section className="relative min-h-[720px] overflow-hidden rounded-3xl border border-white/15 bg-slate-950/38 p-6 shadow-2xl shadow-violet-950/35 backdrop-blur-xl">
+      <section className="relative min-h-180 overflow-hidden rounded-3xl border border-white/15 bg-slate-950/38 p-6 shadow-2xl shadow-violet-950/35 backdrop-blur-xl">
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_16%,rgba(216,180,254,0.24),transparent_42%),radial-gradient(circle_at_16%_80%,rgba(96,165,250,0.18),transparent_36%)]" />
         <div className="relative flex h-full flex-col">
           <div className="flex items-center justify-between gap-3">
@@ -628,7 +626,7 @@ function DesktopResultDashboard({
             <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1.5 text-xs font-bold text-white/70">{result.date}</div>
           </div>
 
-          <ArcaneScore score={result.overall.score} label={ov.label} color={ov.color} fullStars={fullStars} />
+          <FortuneScoreVisual score={result.overall.score} label={ov.label} color={ov.color} fullStars={fullStars} />
 
           <div className="mt-auto rounded-3xl border border-white/10 bg-white/10 p-4">
             <div className="flex items-center gap-2 text-violet-200">
@@ -703,170 +701,6 @@ function DesktopResultDashboard({
   );
 }
 
-function MobileResultView({
-  activePanel,
-  setActivePanel,
-  result,
-  ov,
-  strongest,
-  focus,
-  fullStars,
-}: {
-  activePanel: MobilePanel;
-  setActivePanel: (panel: MobilePanel) => void;
-  result: FortuneResult;
-  ov: { label: string; color: string };
-  strongest?: FortuneScore;
-  focus?: FortuneScore;
-  fullStars: number;
-}) {
-  const tabs: Array<{ key: MobilePanel; label: string }> = [
-    { key: "overview", label: "Score" },
-    { key: "signals", label: "Signals" },
-    { key: "lucky", label: "Lucky" },
-  ];
-
-  return (
-    <div className="xl:hidden">
-      <div className="sticky top-2 z-20 mb-4 rounded-full border border-white/15 bg-slate-950/58 p-1 shadow-2xl shadow-violet-950/30 backdrop-blur-xl">
-        <div className="grid grid-cols-3 gap-1">
-          {tabs.map((tab) => {
-            const active = activePanel === tab.key;
-            return (
-              <button
-                key={tab.key}
-                type="button"
-                onClick={() => setActivePanel(tab.key)}
-                className={`rounded-full px-3 py-2 text-xs font-black transition ${
-                  active
-                    ? "bg-white text-slate-950 shadow-lg shadow-white/10"
-                    : "text-white/58 hover:bg-white/10 hover:text-white"
-                }`}
-              >
-                {tab.label}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
-      <AnimatePresence mode="wait">
-        {activePanel === "overview" && (
-          <motion.section
-            key="mobile-overview"
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -18 }}
-            transition={{ duration: 0.22 }}
-            className="relative overflow-hidden rounded-3xl border border-white/15 bg-slate-950/40 p-4 shadow-2xl shadow-violet-950/35 backdrop-blur-xl"
-          >
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_50%_10%,rgba(216,180,254,0.22),transparent_46%)]" />
-            <div className="relative">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.28em] text-violet-200">Fortune Analytics</p>
-                  <h1 className="mt-1 text-xl font-black text-white">今日の運勢レポート</h1>
-                </div>
-                <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-bold text-white/65">
-                  {result.date}
-                </span>
-              </div>
-              <ArcaneScore score={result.overall.score} label={ov.label} color={ov.color} fullStars={fullStars} compact />
-              <div className="rounded-3xl border border-white/10 bg-white/10 p-4">
-                <div className="flex items-center gap-2 text-violet-200">
-                  <Gauge className="h-4 w-4" />
-                  <p className="text-xs font-black uppercase tracking-[0.18em]">Reading</p>
-                </div>
-                <p className="mt-3 text-sm leading-7 text-white/80">{result.overall.text}</p>
-              </div>
-            </div>
-          </motion.section>
-        )}
-
-        {activePanel === "signals" && (
-          <motion.section
-            key="mobile-signals"
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -18 }}
-            transition={{ duration: 0.22 }}
-            className="rounded-3xl border border-white/15 bg-slate-950/40 p-4 shadow-xl shadow-violet-950/25 backdrop-blur-xl"
-          >
-            <div className="mb-4 flex items-center justify-between gap-3">
-              <div>
-                <p className="text-[10px] font-black uppercase tracking-[0.24em] text-violet-200">6 Signals</p>
-                <h2 className="text-lg font-black text-white">運勢シグナル分析</h2>
-              </div>
-              <BarChart3 className="h-5 w-5 text-white/45" />
-            </div>
-            <div className="mb-4 grid grid-cols-2 gap-3">
-              {strongest && (
-                <AnalysisTile
-                  icon={<TrendingUp className="h-4 w-4" />}
-                  label="強み"
-                  title={strongest.label}
-                  value={strongest.score.toFixed(1)}
-                  color={LEVEL[strongest.band].color}
-                />
-              )}
-              {focus && (
-                <AnalysisTile
-                  icon={<BarChart3 className="h-4 w-4" />}
-                  label="調整"
-                  title={focus.label}
-                  value={focus.score.toFixed(1)}
-                  color={LEVEL[focus.band].color}
-                />
-              )}
-            </div>
-            <div className="flex snap-x gap-3 overflow-x-auto pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-              {result.categories.map((c, i) => (
-                <div key={c.key} className="min-w-[82%] snap-center sm:min-w-[46%]">
-                  <ScoreMeter c={c} delay={0.04 * i} />
-                </div>
-              ))}
-            </div>
-          </motion.section>
-        )}
-
-        {activePanel === "lucky" && (
-          <motion.section
-            key="mobile-lucky"
-            initial={{ opacity: 0, x: 18 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -18 }}
-            transition={{ duration: 0.22 }}
-            className="rounded-3xl border border-white/15 bg-slate-950/40 p-4 shadow-xl shadow-violet-950/25 backdrop-blur-xl"
-          >
-            <p className="text-[10px] font-black uppercase tracking-[0.24em] text-violet-200">Lucky Keys</p>
-            <div className="mt-4 grid grid-cols-[1fr_auto] gap-3">
-              <LuckyPanel label="ラッキーカラー">
-                <span className="mx-auto mt-3 block h-14 w-14 rounded-full border-2 border-white/30" style={{ backgroundColor: result.lucky.color.hex }} />
-                <p className="mt-3 text-sm font-semibold">{result.lucky.color.name}</p>
-              </LuckyPanel>
-              <LuckyPanel label="No.">
-                <p className="mt-4 min-w-20 text-5xl font-black leading-none text-violet-200">{result.lucky.number}</p>
-              </LuckyPanel>
-            </div>
-            <div className="mt-3">
-              <LuckyPanel label="ラッキースポット">
-                {result.lucky.item ? (
-                  <Link href={result.lucky.item.href} className="mt-3 inline-flex items-center justify-center gap-1 text-sm font-bold text-violet-200 hover:underline">
-                    <MapPin className="h-4 w-4" />
-                    {result.lucky.item.name}
-                  </Link>
-                ) : (
-                  <p className="mt-3 text-sm text-white/40">—</p>
-                )}
-              </LuckyPanel>
-            </div>
-          </motion.section>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 function AnalysisTile({
   icon,
   label,
@@ -895,103 +729,6 @@ function AnalysisTile({
       <div className="relative mt-3 flex items-end justify-between gap-3">
         <p className={expanded ? "text-lg font-black text-white sm:text-xl" : "text-sm font-black text-white"}>{title}</p>
         <p className={expanded ? "text-4xl font-black tabular-nums" : "text-2xl font-black tabular-nums"} style={{ color }}>{value}</p>
-      </div>
-    </div>
-  );
-}
-
-function ArcaneScore({
-  score,
-  label,
-  color,
-  fullStars,
-  compact = false,
-}: {
-  score: number;
-  label: string;
-  color: string;
-  fullStars: number;
-  compact?: boolean;
-}) {
-  const progress = Math.max(0, Math.min(100, (score / 5) * 100));
-  const zodiac = ["♈", "♉", "♊", "♋", "♌", "♍", "♎", "♏", "♐", "♑", "♒", "♓"];
-
-  return (
-    <div className={`relative mx-auto grid aspect-square w-full place-items-center ${compact ? "my-5 max-w-[330px]" : "my-8 max-w-[560px] sm:my-10 xl:my-auto"}`}>
-      <motion.div
-        aria-hidden
-        className="absolute inset-[2%] rounded-full opacity-85"
-        style={{
-          background: `conic-gradient(from -42deg, ${color} ${progress}%, rgba(255,255,255,0.09) 0)`,
-          filter: `drop-shadow(0 0 26px ${color}66)`,
-        }}
-        initial={{ rotate: -8, opacity: 0 }}
-        animate={{ rotate: 0, opacity: 0.85 }}
-        transition={{ duration: 0.8, ease: "easeOut" }}
-      />
-      <motion.div
-        aria-hidden
-        className="absolute inset-[8%] rounded-full border border-white/28"
-        style={{
-          background:
-            "repeating-conic-gradient(from 0deg, rgba(255,255,255,0.28) 0deg 1deg, transparent 1deg 15deg)," +
-            "radial-gradient(circle, transparent 57%, rgba(255,255,255,0.16) 58%, transparent 60%)",
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 52, repeat: Infinity, ease: "linear" }}
-      />
-      <motion.div
-        aria-hidden
-        className="absolute inset-[17%] rounded-full border border-violet-200/25"
-        style={{
-          background:
-            "repeating-conic-gradient(from 10deg, rgba(216,180,254,0.24) 0deg 2deg, transparent 2deg 30deg)," +
-            "radial-gradient(circle, rgba(255,255,255,0.06), transparent 58%)",
-        }}
-        animate={{ rotate: -360 }}
-        transition={{ duration: 68, repeat: Infinity, ease: "linear" }}
-      />
-      <svg aria-hidden viewBox="0 0 100 100" className="absolute inset-[12%] h-auto w-auto text-white/60">
-        <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="0.25" />
-        <circle cx="50" cy="50" r="31" fill="none" stroke="currentColor" strokeWidth="0.2" />
-        <path d="M50 6 L61 39 L94 50 L61 61 L50 94 L39 61 L6 50 L39 39 Z" fill="none" stroke="currentColor" strokeWidth="0.24" />
-        <path d="M22 28 L39 18 L55 30 L70 20 L82 38" fill="none" stroke="currentColor" strokeWidth="0.45" />
-        <path d="M21 70 L36 58 L50 66 L65 54 L80 72" fill="none" stroke="currentColor" strokeWidth="0.45" />
-        {[22, 39, 55, 70, 82, 21, 36, 50, 65, 80].map((x, index) => {
-          const y = index < 5 ? [28, 18, 30, 20, 38][index] : [70, 58, 66, 54, 72][index - 5];
-          return <circle key={`${x}-${y}`} cx={x} cy={y} r="1.2" fill="currentColor" />;
-        })}
-      </svg>
-      {zodiac.map((sign, i) => {
-        const deg = i * 30 - 90;
-        return (
-          <span
-            key={sign}
-            aria-hidden
-            className="absolute left-1/2 top-1/2 text-[clamp(0.78rem,1.2vw,1.05rem)] font-bold text-violet-100/60"
-            style={{
-              transform: `rotate(${deg}deg) translateY(calc(-1 * min(45vw, 250px))) rotate(${-deg}deg) translate(-50%, -50%)`,
-            }}
-          >
-            {sign}
-          </span>
-        );
-      })}
-      <div className="absolute inset-[27%] rounded-full border border-white/15 bg-slate-950/62 shadow-[inset_0_0_56px_rgba(255,255,255,0.08)] backdrop-blur-md" />
-      <div className="relative z-10 flex flex-col items-center text-center">
-        <p className="text-[10px] font-black uppercase tracking-[0.28em] text-white/45">Overall Score</p>
-        <p className={`${compact ? "mt-1 text-5xl" : "mt-2 text-6xl sm:text-7xl"} font-black leading-none tabular-nums`} style={{ color }}>
-          {score.toFixed(1)}
-        </p>
-        <p className="mt-1 text-sm font-black text-white/40">/ 5.0</p>
-        <p className="mt-3 rounded-full border px-4 py-1.5 text-sm font-black" style={{ color, borderColor: `${color}66`, backgroundColor: `${color}1f` }}>
-          {label}
-        </p>
-        <div className={`${compact ? "mt-3" : "mt-4"} flex items-center justify-center gap-1`}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Star key={i} className={compact ? "h-4 w-4" : "h-5 w-5"} style={{ color, fill: i < fullStars ? color : "transparent", opacity: i < fullStars ? 1 : 0.28 }} />
-          ))}
-        </div>
       </div>
     </div>
   );
