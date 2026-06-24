@@ -1,9 +1,8 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { toPng } from "html-to-image";
 import { Sparkles, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
@@ -17,6 +16,7 @@ import {
 import { requestFortune } from "@/app/fortune/actions";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
 import { MobileFortuneResult } from "@/components/fortune/MobileFortuneResult";
+import { createFortuneExportPng } from "@/components/fortune/fortune-export-canvas";
 
 const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
   male: Mars,
@@ -437,7 +437,6 @@ function ResultView({
 }) {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
-  const cardRef = useRef<HTMLDivElement>(null);
   const ov = LEVEL[result.overall.band];
   const sortedCategories = [...result.categories].sort((a, b) => b.score - a.score);
   const strongest = sortedCategories[0];
@@ -460,38 +459,10 @@ function ResultView({
   }
 
   async function saveImage() {
-    if (!cardRef.current || saving) return;
+    if (saving) return;
     setSaving(true);
-    let captureNode: HTMLElement | null = null;
     try {
-      captureNode = cardRef.current.cloneNode(true) as HTMLElement;
-      captureNode.style.position = "fixed";
-      captureNode.style.left = "0";
-      captureNode.style.top = "0";
-      captureNode.style.zIndex = "-1";
-      captureNode.style.transform = "none";
-      captureNode.style.opacity = "1";
-      captureNode.style.pointerEvents = "none";
-      captureNode.style.width = "1480px";
-      captureNode.style.height = "auto";
-      document.body.appendChild(captureNode);
-      await document.fonts.ready;
-      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
-      const width = Math.ceil(captureNode.getBoundingClientRect().width);
-      const height = Math.ceil(captureNode.getBoundingClientRect().height);
-
-      const dataUrl = await toPng(captureNode, {
-        pixelRatio: 2,
-        cacheBust: true,
-        backgroundColor: "#17122f",
-        width,
-        height,
-        style: {
-          transform: "none",
-          width: `${width}px`,
-          height: `${height}px`,
-        },
-      });
+      const dataUrl = await createFortuneExportPng(result, strongest, focus);
       const a = document.createElement("a");
       a.href = dataUrl;
       a.download = `each-spirit-fortune-${result.date}.png`;
@@ -499,7 +470,6 @@ function ResultView({
     } catch {
       /* noop */
     } finally {
-      captureNode?.remove();
       setSaving(false);
     }
   }
@@ -510,27 +480,6 @@ function ResultView({
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-      {/* 画像化用: PC表示と同一レイアウトを固定幅でレンダリングして撮影する */}
-      <div
-        ref={cardRef}
-        className="fixed left-[-99999px] top-0 box-border w-[1480px] p-6 text-white"
-        style={{
-          background:
-            "radial-gradient(1100px 600px at 72% -8%, #3b1d6e 0%, transparent 58%)," +
-            "radial-gradient(900px 520px at 8% 18%, rgba(30,58,138,0.45) 0%, transparent 55%)," +
-            "linear-gradient(180deg, rgba(12,10,30,0.92) 0%, rgba(18,16,48,0.86) 42%, rgba(6,10,30,0.96) 100%)," +
-            "url('/images/fortune/bg.png') center / cover no-repeat",
-        }}
-      >
-        <DesktopResultDashboard
-          result={result}
-          ov={ov}
-          strongest={strongest}
-          focus={focus}
-          fullStars={fullStars}
-        />
-      </div>
-
       {/* ポイント獲得 */}
       {awardedPoints ? (
         <motion.div
@@ -582,7 +531,7 @@ function ResultView({
             {copied ? "コピー済み" : "テキスト"}
           </button>
         </div>
-        <p className="mt-2 text-[11px] text-white/40">「画像を保存」でQRコード付きの結果カードをダウンロードできます</p>
+        <p className="mt-2 text-[11px] text-white/40">「画像を保存」でSNS向けの結果カードをダウンロードできます</p>
       </div>
 
       {/* フッター操作 */}
