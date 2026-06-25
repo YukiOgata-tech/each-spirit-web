@@ -54,7 +54,7 @@ export function FortuneScoreVisual({
         animate={{ rotate: -360 }}
         transition={{ duration: 68, repeat: Infinity, ease: "linear" }}
       />
-      <svg aria-hidden viewBox="0 0 100 100" className="absolute left-[12%] top-[12%] h-[76%] w-[76%] text-white/60">
+      <svg aria-hidden viewBox="0 0 100 100" className="absolute left-[12%] top-[12%] h-[76%] w-[76%] text-white/75">
         <circle cx="50" cy="50" r="44" fill="none" stroke="currentColor" strokeWidth="0.25" />
         <circle cx="50" cy="50" r="31" fill="none" stroke="currentColor" strokeWidth="0.2" />
         <path d="M50 6 L61 39 L94 50 L61 61 L50 94 L39 61 L6 50 L39 39 Z" fill="none" stroke="currentColor" strokeWidth="0.24" />
@@ -74,7 +74,7 @@ export function FortuneScoreVisual({
           <span
             key={sign}
             aria-hidden
-            className="absolute text-[clamp(0.72rem,1.2vw,1.05rem)] font-bold leading-none text-violet-100/60"
+            className="absolute text-[clamp(0.72rem,1.2vw,1.05rem)] font-bold leading-none text-violet-100/80"
             style={{
               left: `${x}%`,
               top: `${y}%`,
@@ -88,12 +88,12 @@ export function FortuneScoreVisual({
       })}
       <div className="absolute inset-[27%] rounded-full border border-white/15 bg-slate-950/62 shadow-[inset_0_0_56px_rgba(255,255,255,0.08)] backdrop-blur-md" />
       <div className="relative z-10 flex flex-col items-center text-center">
-        <p className="text-[10px] font-bold uppercase tracking-[0.28em] text-white/85">Overall Score</p>
+        <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-white">Overall Score</p>
         <p className={`${compact ? "mt-1 text-5xl" : "mt-2 text-6xl sm:text-7xl"} font-bold leading-none tabular-nums`} style={{ color }}>
           {score.toFixed(1)}
         </p>
-        <p className="mt-1 text-sm font-semibold text-white/40">/ 5.0</p>
-        <p className="mt-3 rounded-full border px-4 py-1.5 text-sm font-black" style={{ color, borderColor: `${color}66`, backgroundColor: `${color}1f` }}>
+        <p className="mt-0.5 sm:mt-1 text-sm font-semibold text-white/70">/ 5.0</p>
+        <p className="mt-1 sm:mt-3 rounded-full border px-2 sm:px-4 py-0.5 sm:py-1.5 text-sm font-bold" style={{ color, borderColor: `${color}66`, backgroundColor: `${color}1f` }}>
           {label}
         </p>
         <div className={`${compact ? "mt-3" : "mt-4"} flex items-center justify-center gap-1`}>

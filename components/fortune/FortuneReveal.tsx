@@ -3,11 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
+import { MoonStar, Orbit, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
   FORTUNE_GENDERS,
   FORTUNE_GENDER_LABEL,
+  LEVEL,
   type FortuneResult,
   type FortuneScore,
   type FortuneInput,
@@ -16,6 +17,7 @@ import {
 import { requestFortune } from "@/app/fortune/actions";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
 import { MobileFortuneResult } from "@/components/fortune/MobileFortuneResult";
+import { FortuneCategoryDetails } from "@/components/fortune/FortuneCategoryDetails";
 import { createFortuneExportPng } from "@/components/fortune/fortune-export-canvas";
 
 const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
@@ -25,14 +27,6 @@ const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
 };
 
 const GUEST_STORAGE_KEY = "es_fortune_guest_v1";
-
-const LEVEL: Record<number, { label: string; color: string }> = {
-  1: { label: "絶不調", color: "#f87171" },
-  2: { label: "低調", color: "#fbbf24" },
-  3: { label: "平穏", color: "#94a3b8" },
-  4: { label: "好調", color: "#60a5fa" },
-  5: { label: "絶好調", color: "#4ade80" },
-};
 
 type Phase = "input" | "idle" | "loading" | "result";
 type RenderMode = "2d" | "3d";
@@ -247,7 +241,7 @@ function InputGate({
         transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
         className="grid h-20 w-20 place-items-center rounded-full border border-white/20 bg-white/5"
       >
-        <Sparkles className="h-9 w-9 text-violet-300" />
+        <Orbit className="h-9 w-9 text-violet-300" />
       </motion.div>
       <p className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
       <h1 className="mt-2 text-3xl font-black sm:text-4xl">今日の運勢</h1>
@@ -307,7 +301,7 @@ function InputGate({
           disabled={!canSubmit}
           className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
         >
-          <Sparkles className="h-5 w-5" /> {submitting ? "占っています…" : "この内容で占う"}
+          <MoonStar className="h-5 w-5" /> {submitting ? "占っています…" : "この内容で占う"}
         </button>
       </form>
 
@@ -334,7 +328,7 @@ function IdleView({ onStart, date, mode }: { onStart: () => void; date: string; 
         transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
         className="grid h-24 w-24 place-items-center rounded-full border border-white/20 bg-white/5"
       >
-        <Sparkles className="h-10 w-10 text-violet-300" />
+        <Orbit className="h-10 w-10 text-violet-300" />
       </motion.div>
       <p className="mt-6 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
       <h1 className="mt-2 text-3xl font-black sm:text-4xl">今日の運勢</h1>
@@ -347,7 +341,7 @@ function IdleView({ onStart, date, mode }: { onStart: () => void; date: string; 
         onClick={onStart}
         className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
       >
-        <Sparkles className="h-5 w-5" /> 今日の運勢を占う
+        <MoonStar className="h-5 w-5" /> 今日の運勢を占う
       </button>
     </motion.div>
   );
@@ -372,7 +366,7 @@ function Loading2D() {
           animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
           transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
         >
-          <Sparkles className="h-12 w-12 text-violet-200" />
+          <Orbit className="h-12 w-12 text-violet-200" />
         </motion.div>
       </div>
       <LoadingCaption />
@@ -403,7 +397,7 @@ function Loading3D() {
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
         >
           <div className="h-16 w-16 rounded-full bg-violet-400/30 blur-md" />
-          <Sparkles className="absolute h-12 w-12 text-violet-100" />
+          <MoonStar className="absolute h-12 w-12 text-violet-100" />
         </motion.div>
       </div>
       <LoadingCaption />
@@ -533,6 +527,8 @@ function ResultView({
         </div>
         <p className="mt-2 text-[11px] text-white/40">「画像を保存」でSNS向けの結果カードをダウンロードできます</p>
       </div>
+
+      <FortuneCategoryDetails categories={result.categories} />
 
       {/* フッター操作 */}
       <div className="mt-6 flex flex-col items-center gap-3">

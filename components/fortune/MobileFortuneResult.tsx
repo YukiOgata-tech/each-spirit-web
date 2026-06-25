@@ -4,25 +4,13 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  Activity, MoonStar,
-  BriefcaseBusiness,
-  Compass,
-  Heart,
+  ChevronDown,
   MapPin,
-  Sparkles,
-  Users,
-  WalletCards,
+  MoonStar,
 } from "lucide-react";
+import { categoryIcon } from "@/components/fortune/FortuneCategoryDetails";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
-import type { FortuneCategoryKey, FortuneResult, FortuneScore } from "@/lib/fortune";
-
-const LEVEL: Record<number, { label: string; color: string }> = {
-  1: { label: "絶不調", color: "#f87171" },
-  2: { label: "低調", color: "#fbbf24" },
-  3: { label: "平穏", color: "#94a3b8" },
-  4: { label: "好調", color: "#60a5fa" },
-  5: { label: "絶好調", color: "#4ade80" },
-};
+import { LEVEL, type FortuneCategoryKey, type FortuneResult, type FortuneScore } from "@/lib/fortune";
 
 const CATEGORY_ACCENT: Partial<Record<FortuneCategoryKey, string>> = {
   love: "#fb7185",
@@ -58,7 +46,7 @@ export function MobileFortuneResult({
         <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:28px_28px]" />
         <div className="relative">
           <header className="text-center">
-            <p className="text-[11px] font-semibold text-white/50">{result.date}</p>
+            <p className="text-[11px] font-semibold text-white/70">{result.date}</p>
             <h1 className="mt-1 sm:mt-3 text-2xl font-bold tracking-normal text-white flex items-center justify-center gap-3">
               <MoonStar className="h-3.5 w-3.5 text-amber-300" />
               今日の運勢レポート
@@ -69,7 +57,7 @@ export function MobileFortuneResult({
             </p>
           </header>
 
-          <p className="mx-auto max-w-md text-center text-sm leading-6 text-white/72">
+          <p className="mx-auto max-w-md text-center text-sm leading-6 text-white/90">
             {result.overall.text}
           </p>
 
@@ -95,11 +83,11 @@ export function MobileFortuneResult({
 
           <section className="mt-5 rounded-3xl border border-white/10 bg-white/6 px-3 sm:px-5 py-3 sm:py-6 text-center backdrop-blur">
             <SectionTitle>今日のメッセージ</SectionTitle>
-            <p className="mt-2 sm:mt-4 text-sm leading-5 sm:leading-7 text-white/76">
+            <p className="mt-2 text-sm leading-5 text-white/90 sm:mt-4">
               {strongest ? `${strongest.label}が今日の追い風です。${strongest.text}` : result.overall.text}
             </p>
             {focus ? (
-              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-5 sm:leading-6 text-white/48">
+              <p className="mt-3 border-t border-white/10 pt-3 text-xs leading-5 text-white/70">
                 {focus.label}は無理をせず、ひと呼吸おいて整えることを意識しましょう。
               </p>
             ) : null}
@@ -123,7 +111,7 @@ function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-3">
       <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-300" />
-      <h2 className="text-sm font-black tracking-[0.14em] text-violet-200">{children}</h2>
+      <h2 className="text-sm font-bold tracking-[0.14em] text-violet-200">{children}</h2>
       <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300" />
     </div>
   );
@@ -135,8 +123,10 @@ function CategoryCard({ category }: { category: FortuneScore }) {
   const accent = CATEGORY_ACCENT[category.key] ?? "#a78bfa";
 
   return (
-    <div
-      className="relative min-w-0 overflow-hidden rounded-2xl border px-3 py-1.5 sm:py-3 shadow-lg shadow-black/20"
+    <a
+      href={`#fortune-detail-${category.key}`}
+      aria-label={`${category.label}の詳しい説明を見る`}
+      className="group relative min-w-0 overflow-hidden rounded-2xl border px-3 py-1.5 shadow-lg shadow-black/20 transition active:scale-[0.98] sm:py-3"
       style={{
         borderColor: `${accent}38`,
         background: `radial-gradient(circle at 100% 0%, ${accent}24, transparent 48%), rgba(255,255,255,0.055)`,
@@ -151,29 +141,17 @@ function CategoryCard({ category }: { category: FortuneScore }) {
           <span className="relative" style={{ color: accent }}>{categoryIcon(category.key)}</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-black text-white/68">{category.label}</p>
+          <p className="truncate text-[11px] font-bold text-white/85">{category.label}</p>
           <div className="mt-1 flex items-end gap-1">
-            <p className="text-2xl font-black leading-none tabular-nums text-white">{score}</p>
-            <span className="mb-0.5 text-[9px] font-bold text-white/30">/100</span>
+            <p className="text-2xl font-bold leading-none tabular-nums text-white">{score}</p>
+            <span className="mb-0.5 text-[9px] font-bold text-white/55">/100</span>
           </div>
-          <p className="mt-1 text-[10px] font-black" style={{ color: level.color }}>{level.label}</p>
+          <p className="mt-1 text-[10px] font-bold" style={{ color: level.color }}>{level.label}</p>
         </div>
+        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-white/55 transition-transform group-hover:translate-y-0.5" />
       </div>
-    </div>
+    </a>
   );
-}
-
-function categoryIcon(key: FortuneCategoryKey) {
-  const className = "h-4 w-4";
-  switch (key) {
-    case "love": return <Heart className={className} />;
-    case "money": return <WalletCards className={className} />;
-    case "work": return <BriefcaseBusiness className={className} />;
-    case "health": return <Activity className={className} />;
-    case "social": return <Users className={className} />;
-    case "outing": return <Compass className={className} />;
-    default: return <Sparkles className={className} />;
-  }
 }
 
 function LuckyColor({ result }: { result: FortuneResult }) {
@@ -183,8 +161,8 @@ function LuckyColor({ result }: { result: FortuneResult }) {
         className="mx-auto grid h-14 w-14 place-items-center rounded-full border-4 border-white/80 shadow-lg shadow-black/30"
         style={{ backgroundColor: result.lucky.color.hex }}
       />
-      <p className="mt-2 text-[10px] font-bold text-white/40">カラー</p>
-      <p className="mt-1 text-xs font-black text-white/80">{result.lucky.color.name}</p>
+      <p className="mt-2 text-[10px] font-bold text-white/65">カラー</p>
+      <p className="mt-1 text-xs font-bold text-white/90">{result.lucky.color.name}</p>
     </div>
   );
 }
@@ -192,11 +170,11 @@ function LuckyColor({ result }: { result: FortuneResult }) {
 function LuckyNumber({ number }: { number: number }) {
   return (
     <div className="text-center">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-violet-300/30 bg-violet-400/12 text-2xl font-black text-violet-200 shadow-lg shadow-black/30">
+      <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-violet-300/30 bg-violet-400/12 text-2xl font-bold text-violet-200 shadow-lg shadow-black/30">
         {number}
       </span>
-      <p className="mt-2 text-[10px] font-bold text-white/40">ナンバー</p>
-      <p className="mt-1 text-xs font-black text-white/80">{number}</p>
+      <p className="mt-2 text-[10px] font-bold text-white/65">ナンバー</p>
+      <p className="mt-1 text-xs font-bold text-white/90">{number}</p>
     </div>
   );
 }
@@ -207,13 +185,13 @@ function LuckySpot({ item }: { item: FortuneResult["lucky"]["item"] }) {
       <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-200 shadow-lg shadow-black/30">
         <MapPin className="h-6 w-6" />
       </span>
-      <p className="mt-2 text-[10px] font-bold text-white/40">スポット</p>
+      <p className="mt-2 text-[10px] font-bold text-white/65">スポット</p>
       {item ? (
-        <Link href={item.href} className="mt-1 block truncate text-xs font-black text-sky-200 underline-offset-2 hover:underline">
+        <Link href={item.href} className="mt-1 block truncate text-xs font-bold text-sky-200 underline-offset-2 hover:underline">
           {item.name}
         </Link>
       ) : (
-        <p className="mt-1 text-xs font-black text-white/40">未設定</p>
+        <p className="mt-1 text-xs font-bold text-white/65">未設定</p>
       )}
     </div>
   );

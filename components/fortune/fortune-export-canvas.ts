@@ -1,16 +1,8 @@
-import type { FortuneResult, FortuneScore } from "@/lib/fortune";
+import { LEVEL, type FortuneResult, type FortuneScore } from "@/lib/fortune";
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
 const FONT = '"Yu Gothic", "Hiragino Sans", Meiryo, sans-serif';
-
-const LEVEL: Record<number, { label: string; color: string }> = {
-  1: { label: "絶不調", color: "#fb7185" },
-  2: { label: "低調", color: "#fbbf24" },
-  3: { label: "平穏", color: "#94a3b8" },
-  4: { label: "好調", color: "#60a5fa" },
-  5: { label: "絶好調", color: "#4ade80" },
-};
 
 const CATEGORY_ACCENT: Record<string, string> = {
   love: "#fb7185",
