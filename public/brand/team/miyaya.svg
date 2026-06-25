@@ -1,9 +1,0 @@
-<svg width="320" height="320" viewBox="0 0 320 320" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <rect width="320" height="320" rx="48" fill="#E0F2FE"/>
-  <circle cx="160" cy="128" r="58" fill="#176B87"/>
-  <path d="M78 274c12-62 52-92 82-92s70 30 82 92H78Z" fill="#0F172A"/>
-  <circle cx="138" cy="126" r="7" fill="white"/>
-  <circle cx="182" cy="126" r="7" fill="white"/>
-  <path d="M139 156c14 12 28 12 42 0" stroke="white" stroke-width="10" stroke-linecap="round"/>
-  <text x="160" y="294" text-anchor="middle" font-family="Arial, sans-serif" font-size="28" font-weight="700" fill="#0F172A">ミヤヤ</text>
-</svg>

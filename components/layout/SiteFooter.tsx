@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { routes } from "@/lib/routes";
 
@@ -14,7 +15,15 @@ export function SiteFooter() {
       <div className="mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] md:grid-cols-[1.4fr_1fr]">
         <div>
           <div className="mb-3 flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-md bg-white text-sm font-bold text-slate-950">ES</span>
+            <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-md bg-white">
+              <Image
+                src="/brand/each-spirit-mark.png"
+                alt=""
+                width={36}
+                height={36}
+                className="h-8 w-8 object-contain"
+              />
+            </span>
             <span className="text-lg font-bold">Each Spirit <span className="text-sm font-semibold text-slate-400">イーチスピリット</span></span>
           </div>
           <p className="max-w-xl text-sm leading-7 text-slate-300">

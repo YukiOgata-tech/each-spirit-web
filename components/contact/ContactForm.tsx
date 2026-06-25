@@ -29,7 +29,7 @@ export function ContactForm({ initialState }: { initialState: ContactFormState }
 
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="お名前・ペンネーム" error={state.fieldErrors.name}>
-          <input name="name" className="form-input" placeholder="ミヤヤ" maxLength={80} required />
+          <input name="name" className="form-input" placeholder="お名前" maxLength={80} required />
         </Field>
         <Field label="メールアドレス" error={state.fieldErrors.email}>
           <input name="email" type="email" className="form-input" placeholder="mail@example.com" maxLength={254} required />

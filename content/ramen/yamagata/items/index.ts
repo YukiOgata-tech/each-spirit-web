@@ -396,7 +396,7 @@ export const yamagataRamenItems: Item[] = [
       { label: "推しメン山形", url: "https://www.oshimen-yamagata.jp/", type: "website" },
       { label: "地図", url: map("麺屋葵 南陽市"), type: "map" },
     ],
-    editorComment: "Gagaヤのお気に入り。南陽市で龍上海とは異なる個性を持つ個店。",
+    editorComment: "編集部注目の一店。南陽市で龍上海とは異なる個性を持つ個店。",
     lastVerifiedAt: collectedAt,
     sources: [
       source("推しメン山形 ラーメンDB", "https://www.oshimen-yamagata.jp/", "editorial", "南陽市エリアのラーメン店情報確認。"),
