@@ -1,20 +1,22 @@
 /**
- * entertainment（anime / drama）の item ポスター画像を、許諾の明確な無料メタデータAPIから取得して
+ * entertainment（anime / drama）の item ポスター画像を、無料で利用できるメタデータ提供元から取得して
  * es.items.image（{ url, alt, credit }）に投入するワンショットツール。
  *
- *   anime → AniList（APIキー不要・無料） … CDN: s4.anilist.co
- *   drama → TMDB（無料・APIキー必須）     … CDN: image.tmdb.org
+ *   anime → AniList（APIキー不要・無料）             … CDN: s4.anilist.co
+ *   drama → theTVDB（無料枠・APIキー必須）            … CDN: artworks.thetvdb.com
+ *           取れなければ Wikidata/Wikimedia Commons   … CDN: commons.wikimedia.org
  *
  * いずれも帰属表示つきで利用（credit に出典名・URLを格納）。公式サイトの直リンクはしない。
  *
  * 準備（.env.local）:
  *   NEXT_PUBLIC_SUPABASE_URL=...
  *   SUPABASE_SERVICE_ROLE_KEY=...
- *   TMDB_API_KEY=...            # drama を対象にする場合のみ必須（https://www.themoviedb.org/ で無料取得）
+ *   THETVDB_API_KEY=...         # drama を対象にする場合に必要（https://thetvdb.com/dashboard/account/apikey で無料取得）
+ *   THETVDB_PIN=...             # user-supported（無料サブスク）キーの場合のみ。プロジェクトキーなら不要
  *
  * 実行:
  *   npx tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts            # dry-run（全 anime/drama、既定）
- *   npx tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts --section anime
+ *   npx tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts --section drama
  *   npx tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts --apply    # DB へ書き込み
  *   ... --all      # 既に画像がある item も対象（既定は image 未設定のみ）
  *
@@ -40,7 +42,11 @@ if (!url || !key) {
   console.error("❌ NEXT_PUBLIC_SUPABASE_URL と SUPABASE_SERVICE_ROLE_KEY を .env.local に設定してください。");
   process.exit(1);
 }
-const tmdbKey = process.env.TMDB_API_KEY;
+const tvdbKey = process.env.THETVDB_API_KEY;
+const tvdbPin = process.env.THETVDB_PIN;
+
+// Wikidata はリクエストに説明的な User-Agent を求める。
+const UA = "each-spirit-poster-fetch/1.0 (https://each-spirit.com)";
 
 const es = createClient(url, key, {
   auth: { persistSession: false },
@@ -113,22 +119,51 @@ async function fetchAniList(name: string, slug: string): Promise<Poster | null> 
   return null;
 }
 
-// ── TMDB（drama）───────────────────────────────────────────────────
-async function fetchTmdb(name: string, slug: string): Promise<Poster | null> {
-  if (!tmdbKey) return null;
-  for (const [i, q] of queryVariants(name, slug).entries()) {
+// ── theTVDB（drama）────────────────────────────────────────────────
+// v4 API。apikey（＋ user-supported キーなら pin）でログインしてトークンを得る。
+let tvdbToken: string | null = null;
+let tvdbLoginFailed = false;
+async function tvdbLogin(): Promise<string | null> {
+  if (tvdbToken) return tvdbToken;
+  if (tvdbLoginFailed || !tvdbKey) return null;
+  try {
+    const res = await fetch("https://api4.thetvdb.com/v4/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(tvdbPin ? { apikey: tvdbKey, pin: tvdbPin } : { apikey: tvdbKey }),
+    });
+    const json = await res.json();
+    tvdbToken = json?.data?.token ?? null;
+    if (!tvdbToken) {
+      tvdbLoginFailed = true;
+      console.warn(`⚠ theTVDB ログイン失敗（${res.status}）: ${json?.message ?? "token なし"}`);
+    }
+    return tvdbToken;
+  } catch (e) {
+    tvdbLoginFailed = true;
+    console.warn("⚠ theTVDB ログイン例外:", e instanceof Error ? e.message : e);
+    return null;
+  }
+}
+
+async function fetchTheTvdb(name: string, slug: string): Promise<Poster | null> {
+  const token = await tvdbLogin();
+  if (!token) return null;
+  for (const q of queryVariants(name, slug)) {
     try {
-      const lang = i === 0 ? "ja-JP" : "en-US";
-      const u = `https://api.themoviedb.org/3/search/tv?api_key=${tmdbKey}&language=${lang}&include_adult=false&query=${encodeURIComponent(q)}`;
-      const res = await fetch(u);
+      const u = `https://api4.thetvdb.com/v4/search?query=${encodeURIComponent(q)}&type=series&limit=5`;
+      const res = await fetch(u, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
       const json = await res.json();
-      const r = json?.results?.[0];
-      if (r?.poster_path) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const results: any[] = Array.isArray(json?.data) ? json.data : [];
+      const hit = results.find((r) => typeof r?.image_url === "string" && r.image_url);
+      if (hit) {
+        const matchedTitle = hit.translations?.jpn || hit.name || hit.extended_title || "";
         return {
-          url: `https://image.tmdb.org/t/p/w500${r.poster_path}`,
-          matchedTitle: r.name || r.original_name || "",
-          year: r.first_air_date ? Number(String(r.first_air_date).slice(0, 4)) : undefined,
-          credit: { name: "TMDB", url: `https://www.themoviedb.org/tv/${r.id}` },
+          url: hit.image_url,
+          matchedTitle,
+          year: hit.year ? Number(hit.year) : undefined,
+          credit: { name: "TheTVDB", url: hit.slug ? `https://thetvdb.com/series/${hit.slug}` : "https://thetvdb.com" },
         };
       }
     } catch { /* 次の候補へ */ }
@@ -137,10 +172,90 @@ async function fetchTmdb(name: string, slug: string): Promise<Poster | null> {
   return null;
 }
 
+// ── Wikidata / Wikimedia Commons（drama フォールバック）──────────────
+// P31（分類）が TV シリーズ系、または P449（放送局）を持つ entity の P18（画像）だけを採用し、
+// 自由ライセンスの Commons ファイルのみを使う。ポスターは著作物のため Commons には少なく、取りこぼし前提。
+const TV_SERIES_QIDS = new Set([
+  "Q5398426", // television series
+  "Q1259759", // miniseries
+  "Q63952888", // anime television series
+  "Q506240", // television film
+  "Q21191270", // television series season（保険）
+  "Q1366112", // Japanese television drama
+]);
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function wikidataEntity(id: string): Promise<any | null> {
+  try {
+    const u = `https://www.wikidata.org/w/api.php?action=wbgetentities&ids=${id}&props=claims&format=json`;
+    const res = await fetch(u, { headers: { "User-Agent": UA, Accept: "application/json" } });
+    const json = await res.json();
+    return json?.entities?.[id]?.claims ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function isTvSeries(claims: any): boolean {
+  if (claims?.P449?.length) return true; // 放送局（original broadcaster）を持つ＝TV作品の強い指標
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const p31: any[] = claims?.P31 ?? [];
+  return p31.some((c) => TV_SERIES_QIDS.has(c?.mainsnak?.datavalue?.value?.id));
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function p18Filename(claims: any): string | null {
+  const v = claims?.P18?.[0]?.mainsnak?.datavalue?.value;
+  return typeof v === "string" && v ? v : null;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function wikidataYear(claims: any): number | undefined {
+  // P577 publication date → P580 start time の順で拾う。
+  const t = claims?.P577?.[0]?.mainsnak?.datavalue?.value?.time
+    ?? claims?.P580?.[0]?.mainsnak?.datavalue?.value?.time;
+  if (typeof t === "string") {
+    const y = Number(t.slice(1, 5));
+    if (Number.isFinite(y) && y > 0) return y;
+  }
+  return undefined;
+}
+
+async function fetchWikidata(name: string, slug: string): Promise<Poster | null> {
+  for (const q of queryVariants(name, slug)) {
+    try {
+      const su = `https://www.wikidata.org/w/api.php?action=wbsearchentities&search=${encodeURIComponent(q)}&language=ja&uselang=ja&type=item&limit=5&format=json`;
+      const sres = await fetch(su, { headers: { "User-Agent": UA, Accept: "application/json" } });
+      const sjson = await sres.json();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const candidates: any[] = Array.isArray(sjson?.search) ? sjson.search : [];
+      for (const c of candidates) {
+        const claims = await wikidataEntity(c.id);
+        if (!claims || !isTvSeries(claims)) continue;
+        const file = p18Filename(claims);
+        if (!file) continue;
+        return {
+          url: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(file)}?width=600`,
+          matchedTitle: c.label || name,
+          year: wikidataYear(claims),
+          credit: { name: "Wikimedia Commons", url: `https://www.wikidata.org/wiki/${c.id}` },
+        };
+      }
+    } catch { /* 次の候補へ */ }
+    await sleep(200);
+  }
+  return null;
+}
+
+async function fetchDrama(name: string, slug: string): Promise<Poster | null> {
+  return (await fetchTheTvdb(name, slug)) ?? (await fetchWikidata(name, slug));
+}
+
 async function main() {
   console.log(`mode: ${APPLY ? "APPLY (DBへ書き込み)" : "DRY-RUN（提案のみ）"} / sections: ${SECTIONS.join(",")} / 対象: ${INCLUDE_WITH_IMAGE ? "全件" : "画像未設定のみ"}`);
-  if (SECTIONS.includes("drama") && !tmdbKey) {
-    console.warn("⚠ TMDB_API_KEY 未設定のため drama はスキップします（anime は処理します）。");
+  if (SECTIONS.includes("drama") && !tvdbKey) {
+    console.warn("⚠ THETVDB_API_KEY 未設定のため drama は Wikidata/Commons のみで処理します（取りこぼしが増えます）。");
   }
 
   const { data, error } = await es
@@ -158,7 +273,7 @@ async function main() {
     const poster = it.section_slug === "anime"
       ? await fetchAniList(it.name, it.slug)
       : it.section_slug === "drama"
-        ? await fetchTmdb(it.name, it.slug)
+        ? await fetchDrama(it.name, it.slug)
         : null;
 
     if (!poster) {

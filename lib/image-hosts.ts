@@ -11,9 +11,11 @@ export const ALLOWED_IMAGE_HOSTS = [
   // NEXT_PUBLIC_SUPABASE_URL からも自動付与されるが、env 非依存で確実に許可するため明示。
   "ctwpnaizwsrffrkkbuig.supabase.co",
   // メディア作品のポスター取得元（安定CDN・帰属表示付きで利用）。
-  // anime → AniList、drama/映画 → TMDB。作品が増えてもこの2ホストのまま。
+  // anime → AniList、drama → theTVDB（無料枠）/ Wikimedia Commons。作品が増えてもこのホスト群のまま。
   "s4.anilist.co",
-  "image.tmdb.org",
+  "artworks.thetvdb.com",
+  "commons.wikimedia.org",
+  "upload.wikimedia.org",
   "images.unsplash.com", "make-it-tech.com",
   "www.tomita-cocoro.jp",
   "sugitaya.com",
