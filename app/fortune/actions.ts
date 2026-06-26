@@ -4,7 +4,6 @@ import { createClient } from "@/lib/supabase/server";
 import {
   jstToday,
   generateDailyFortune,
-  fortuneSeed,
   FORTUNE_GENDERS,
   type FortuneInput,
   type FortuneResult,
@@ -52,6 +51,6 @@ export async function requestFortune(
     if (res) return res;
   }
 
-  const result = generateDailyFortune({ seed: fortuneSeed(`guest|${date}`, input), date, items });
+  const result = generateDailyFortune({ input, date, items });
   return { result, awardedPoints: null };
 }

@@ -56,13 +56,33 @@ const es = createClient(url, key, {
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type ItemRow = { id: string; slug: string; name: string; section_slug: string; image: Record<string, unknown> };
-type Poster = { url: string; matchedTitle: string; year?: number; credit: { name: string; url: string } };
+type Poster = { url: string; matchedTitle: string; year?: number; country?: string; credit: { name: string; url: string } };
 
 /** 検索クエリ候補（日本語名 → 括弧等を除去、slug をスペース区切りにした保険）。 */
 function queryVariants(name: string, slug: string): string[] {
   const cleaned = name.replace(/[【】「」『』（）()[\]]/g, " ").replace(/\s+/g, " ").trim();
   const fromSlug = slug.replace(/-/g, " ").trim();
   return Array.from(new Set([cleaned, name, fromSlug].filter(Boolean)));
+}
+
+/** タイトル比較用の正規化（全半角・記号・空白差を吸収）。 */
+function norm(s: string): string {
+  return (s || "").normalize("NFKC").replace(/[\s　【】「」『』（）()[\]〜~・,.、。!！?？:：;\-—―/]/g, "").toLowerCase();
+}
+
+/** 末尾の (YYYY) / （YYYY） から制作年を取り出す（一覧名に付与されている前提）。 */
+function yearFromName(name: string): number | undefined {
+  const m = name.match(/[(（]\s*(\d{4})\s*[)）]\s*$/);
+  return m ? Number(m[1]) : undefined;
+}
+
+/** drama 検索クエリ候補。年号を除き、長い副題は先頭部も試す。 */
+function dramaQueries(name: string, slug: string): string[] {
+  const noYear = name.replace(/[(（]\s*\d{4}\s*[)）]\s*$/, "").trim();
+  const cleaned = noYear.replace(/[【】「」『』（）()[\]]/g, " ").replace(/\s+/g, " ").trim();
+  const head = cleaned.split(/[〜~―—]/)[0].trim();
+  const fromSlug = slug.replace(/-/g, " ").trim();
+  return Array.from(new Set([cleaned, head, fromSlug].filter((x) => x && x.length >= 2)));
 }
 
 // ── AniList（anime）────────────────────────────────────────────────
@@ -146,30 +166,57 @@ async function tvdbLogin(): Promise<string | null> {
   }
 }
 
+// 日本のドラマ一覧に対して theTVDB を検索し、誤マッチ（同名の海外作品・プレースホルダー画像）を排除して
+// 最も確からしい1件を選ぶ。採用条件は「日本作品（country=jpn か lang=jpn）かつタイトル一致」。
+// 制作年は採否ではなくスコア加点に使う（年だけ一致の別作品を拾わないため）。
 async function fetchTheTvdb(name: string, slug: string): Promise<Poster | null> {
   const token = await tvdbLogin();
   if (!token) return null;
-  for (const q of queryVariants(name, slug)) {
+  const wantYear = yearFromName(name);
+  const target = norm(name.replace(/[(（]\s*\d{4}\s*[)）]\s*$/, ""));
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const seen = new Set<string>();
+  const candidates: { r: any; score: number }[] = [];
+  for (const q of dramaQueries(name, slug)) {
     try {
-      const u = `https://api4.thetvdb.com/v4/search?query=${encodeURIComponent(q)}&type=series&limit=5`;
+      const u = `https://api4.thetvdb.com/v4/search?query=${encodeURIComponent(q)}&type=series&limit=8`;
       const res = await fetch(u, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
       const json = await res.json();
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const results: any[] = Array.isArray(json?.data) ? json.data : [];
-      const hit = results.find((r) => typeof r?.image_url === "string" && r.image_url);
-      if (hit) {
-        const matchedTitle = hit.translations?.jpn || hit.name || hit.extended_title || "";
-        return {
-          url: hit.image_url,
-          matchedTitle,
-          year: hit.year ? Number(hit.year) : undefined,
-          credit: { name: "TheTVDB", url: hit.slug ? `https://thetvdb.com/series/${hit.slug}` : "https://thetvdb.com" },
-        };
-      }
+      results.forEach((r, idx) => {
+        const id = String(r?.tvdb_id ?? r?.id ?? "");
+        if (id && seen.has(id)) return;
+        if (id) seen.add(id);
+        const img = typeof r?.image_url === "string" ? r.image_url : "";
+        if (!img || img.includes("missing/series")) return;
+        const isJp = r?.country === "jpn" || r?.primary_language === "jpn";
+        if (!isJp) return;
+        const titles = [r?.translations?.jpn, r?.name].filter(Boolean).map((t: string) => norm(t));
+        const titleExact = titles.some((t: string) => t === target && t.length >= 2);
+        const titleIncl = titles.some((t: string) => t.length >= 3 && target.length >= 3 && (t.includes(target) || target.includes(t)));
+        if (!titleExact && !titleIncl) return; // タイトル根拠なしは不採用（誤マッチ防止）
+        const yr = r?.year ? Number(r.year) : undefined;
+        const yearOk = !!(wantYear && yr && Math.abs(yr - wantYear) <= 1);
+        let score = titleExact ? 5 : 3;
+        if (yearOk) score += 3;
+        score += Math.max(0, 2 - idx * 0.25); // 検索上位を優先
+        candidates.push({ r, score });
+      });
     } catch { /* 次の候補へ */ }
     await sleep(250);
   }
-  return null;
+  if (!candidates.length) return null;
+  candidates.sort((a, b) => b.score - a.score);
+  const r = candidates[0].r;
+  return {
+    url: r.image_url,
+    matchedTitle: r.translations?.jpn || r.name || r.extended_title || "",
+    year: r.year ? Number(r.year) : undefined,
+    country: r.country,
+    credit: { name: "TheTVDB", url: r.slug ? `https://thetvdb.com/series/${r.slug}` : "https://thetvdb.com" },
+  };
 }
 
 // ── Wikidata / Wikimedia Commons（drama フォールバック）──────────────
@@ -283,7 +330,8 @@ async function main() {
     }
     matched++;
     const yr = poster.year ? `(${poster.year})` : "";
-    console.log(`  ✓ [${it.section_slug}] ${it.name}  → ${poster.matchedTitle}${yr} [${poster.credit.name}]\n      ${poster.url}`);
+    const ctry = poster.country ? `/${poster.country}` : "";
+    console.log(`  ✓ [${it.section_slug}] ${it.name}  → ${poster.matchedTitle}${yr} [${poster.credit.name}${ctry}]\n      ${poster.url}`);
 
     if (APPLY) {
       const image = { url: poster.url, alt: `${it.name} ポスター`, credit: poster.credit };

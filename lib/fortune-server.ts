@@ -4,7 +4,6 @@ import { getRamenItems } from "@/lib/content";
 import { routes } from "@/lib/routes";
 import {
   generateDailyFortune,
-  fortuneSeed,
   type FortuneInput,
   type FortuneResult,
   type LuckyItem,
@@ -50,7 +49,7 @@ export async function ensureUserDailyFortune(
   if (existing?.result) {
     result = existing.result as FortuneResult;
   } else if (input) {
-    result = generateDailyFortune({ seed: fortuneSeed(`${userId}|${date}`, input), date, items });
+    result = generateDailyFortune({ input, date, items });
     await supabase.schema("es").from("daily_fortunes").insert({
       user_id: userId,
       fortune_date: date,

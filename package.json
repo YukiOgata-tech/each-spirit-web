@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
+    "verify:fortune": "tsx --tsconfig scripts/tsconfig.json scripts/verify-fortune.ts",
     "db:seed": "tsx --tsconfig scripts/tsconfig.json scripts/seed-supabase.ts",
     "db:import:articles": "tsx --tsconfig scripts/tsconfig.json scripts/import-articles-json.ts",
     "media:posters": "tsx --tsconfig scripts/tsconfig.json scripts/fetch-media-posters.ts"
