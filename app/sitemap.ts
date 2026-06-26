@@ -71,6 +71,28 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     getProteinRankings(),
   ]);
 
+  // region は任意。専用 section の region 無し item は region pair で拾えないため別途列挙する。
+  const regionlessSections: { major: string; section: string; segment: string; itemClass?: string }[] = [
+    { major: "food", section: "cafe", segment: "shops" },
+    { major: "beauty", section: "hair-salon", segment: "salons" },
+    { major: "travel", section: "stays", segment: "hotels" },
+    { major: "travel", section: "services", segment: "agencies", itemClass: "intangible_service" },
+    { major: "leisure", section: "spots", segment: "spots" },
+  ];
+  const regionlessItems = (
+    await Promise.all(
+      regionlessSections.map(async (s) => {
+        const items = (await getGenericItemsBySection(s.major, s.section)).filter(
+          (it) => !it.region && (!s.itemClass || it.itemClass === s.itemClass)
+        );
+        return items.map((it) => ({
+          url: absoluteUrl(it.canonicalPath ?? routes.sectionItem(s.major, s.section, s.segment, it.slug)),
+          lastModified: new Date(it.lastVerifiedAt || "2026-06-01"),
+        }));
+      })
+    )
+  ).flat();
+
   // エンターテインメント（作品カタログ型・section 汎用）
   const entertainmentSections = sections.filter((s) => s.majorCategory === "entertainment");
   const entertainmentPairs = await Promise.all(
@@ -112,5 +134,6 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...proteinRankings.map((r) => ({ url: absoluteUrl(routes.proteinRanking(r.target, r.slug)), lastModified: new Date(r.lastUpdatedAt) })),
     ...entertainmentPairs.map(({ section }) => ({ url: absoluteUrl(routes.entertainmentSection(section)), lastModified: new Date("2026-06-22") })),
     ...entertainmentPairs.flatMap(({ section, items }) => items.map((it) => ({ url: absoluteUrl(it.canonicalPath ?? routes.entertainmentTitle(section, it.slug)), lastModified: new Date(it.lastVerifiedAt || "2026-06-22") }))),
+    ...regionlessItems,
   ];
 }

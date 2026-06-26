@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getTravelRegions } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -29,6 +30,8 @@ export default async function TravelStaysPage() {
           </Link>
         ))}
       </div>
+
+      <RegionlessItems majorCategory="travel" sectionSlug="stays" itemPathSegment="hotels" className="mt-12" heading="エリアを問わず掲載の宿" />
     </main>
   );
 }

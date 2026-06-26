@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getBeautyRegions } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -29,6 +30,8 @@ export default async function HairSalonPage() {
           </Link>
         ))}
       </div>
+
+      <RegionlessItems majorCategory="beauty" sectionSlug="hair-salon" itemPathSegment="salons" className="mt-12" heading="エリアを問わず掲載の美容室" />
     </main>
   );
 }

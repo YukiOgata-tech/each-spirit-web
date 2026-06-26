@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { GenericItemDetailPage, genericItemMetadata } from "@/components/generic/GenericSectionPages";
 import { ItemDetail } from "@/components/detail/ItemDetail";
 import {
-  getCafeItemsByRegion, getCafeRegions, getRamenItems,
+  getGenericItemsBySection, getRamenItems,
   getContentSection, getGenericItemBySection, getItemEditorialScore,
 } from "@/lib/content";
 import { routes } from "@/lib/routes";
@@ -16,13 +16,14 @@ export async function generateMetadata({ params }: PageProps) {
 }
 
 export async function generateStaticParams() {
-  const [ramenItems, cafePairs] = await Promise.all([
+  // region 有無に関わらず全件を事前生成する（region は任意のため region 列挙に依存しない）。
+  const [ramenItems, cafeItems] = await Promise.all([
     getRamenItems(),
-    getCafeRegions().then((regions) => Promise.all(regions.map(async (region) => ({ region: region.slug, items: await getCafeItemsByRegion(region.slug) })))),
+    getGenericItemsBySection("food", "cafe"),
   ]);
   return [
     ...ramenItems.map((item) => ({ section: "ramen", slug: item.slug })),
-    ...cafePairs.flatMap(({ items }) => items.map((item) => ({ section: "cafe", slug: item.slug }))),
+    ...cafeItems.map((item) => ({ section: "cafe", slug: item.slug })),
   ];
 }
 

@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
 import { ItemDetail } from "@/components/detail/ItemDetail";
 import { genericItemMetadata } from "@/components/generic/GenericSectionPages";
-import { getContentSection, getGenericItemBySection, getItemEditorialScore, getTravelHotels, getTravelRegions } from "@/lib/content";
+import { getContentSection, getGenericItemBySection, getGenericItemsBySection, getItemEditorialScore } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
 export async function generateStaticParams() {
-  const pairs = await Promise.all((await getTravelRegions()).map(async (region) => ({ hotels: await getTravelHotels(region.slug) })));
-  return pairs.flatMap(({ hotels }) => hotels.map((hotel) => ({ section: "stays", slug: hotel.slug })));
+  // region 有無に関わらず全件（region は任意）。
+  const hotels = await getGenericItemsBySection("travel", "stays");
+  return hotels.map((hotel) => ({ section: "stays", slug: hotel.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {

@@ -58,7 +58,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "food:cafe",
     majorCategory: "food", sectionSlug: "cafe", itemKind: "shop",
-    itemPathSegment: "shops", label: "カフェ", itemClass: "physical_service", regionMode: "required",
+    itemPathSegment: "shops", label: "カフェ", itemClass: "physical_service", regionMode: "optional",
     fields: [
       { name: "style", label: "スタイル", type: "text", placeholder: "スペシャルティコーヒー / 古民家 など" },
       { name: "signature_menu", label: "看板メニュー", type: "text" },
@@ -101,7 +101,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "beauty:hair-salon",
     majorCategory: "beauty", sectionSlug: "hair-salon", itemKind: "salon",
-    itemPathSegment: "salons", label: "美容室", itemClass: "physical_service", regionMode: "required",
+    itemPathSegment: "salons", label: "美容室", itemClass: "physical_service", regionMode: "optional",
     fields: [
       { name: "tagline", label: "キャッチコピー", type: "text" },
       { name: "access", label: "アクセス", type: "text" },
@@ -120,7 +120,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "travel:stays",
     majorCategory: "travel", sectionSlug: "stays", itemKind: "hotel",
-    itemPathSegment: "hotels", label: "宿・ホテル", itemClass: "physical_service", regionMode: "required",
+    itemPathSegment: "hotels", label: "宿・ホテル", itemClass: "physical_service", regionMode: "optional",
     fields: [
       { name: "style", label: "スタイル", type: "text", placeholder: "温泉旅館 / 古民家宿 など" },
       { name: "highlight", label: "ハイライト", type: "textarea" },
@@ -136,7 +136,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "travel:services:agency",
     majorCategory: "travel", sectionSlug: "services", itemKind: "agency",
-    itemPathSegment: "agencies", label: "旅行会社", itemClass: "intangible_service", regionMode: "required",
+    itemPathSegment: "agencies", label: "旅行会社", itemClass: "intangible_service", regionMode: "optional",
     fields: [
       { name: "tagline", label: "キャッチコピー", type: "text" },
       { name: "highlight", label: "ハイライト", type: "textarea" },
@@ -161,7 +161,7 @@ export const SECTION_ITEM_SCHEMAS: SectionItemSchema[] = [
   {
     key: "leisure:spots",
     majorCategory: "leisure", sectionSlug: "spots", itemKind: "spot",
-    itemPathSegment: "spots", label: "レジャースポット", itemClass: "physical_service", regionMode: "required",
+    itemPathSegment: "spots", label: "レジャースポット", itemClass: "physical_service", regionMode: "optional",
     fields: [
       { name: "kind", label: "種別", type: "select", options: [
         { value: "outdoor", label: "アウトドア" }, { value: "indoor", label: "インドア" },

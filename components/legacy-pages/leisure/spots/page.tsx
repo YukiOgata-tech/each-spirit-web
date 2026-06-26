@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getLeisureRegions } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -28,6 +29,8 @@ export default async function LeisureSpotsPage() {
           </Link>
         ))}
       </div>
+
+      <RegionlessItems majorCategory="leisure" sectionSlug="spots" itemPathSegment="spots" className="mt-12" heading="エリアを問わず掲載のスポット" />
     </main>
   );
 }

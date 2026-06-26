@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { getTravelAgencies, getTravelApps, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { routes } from "@/lib/routes";
 
 export const metadata = pageMetadata({
@@ -106,6 +107,8 @@ export default async function TravelServicesIndexPage() {
           ))}
         </div>
       </section>
+
+      <RegionlessItems majorCategory="travel" sectionSlug="services" itemPathSegment="agencies" itemClass="intangible_service" heading="エリアを問わず掲載の旅行会社" />
     </div>
   );
 }

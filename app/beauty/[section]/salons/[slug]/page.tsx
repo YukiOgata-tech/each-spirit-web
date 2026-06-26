@@ -1,14 +1,15 @@
 import { notFound } from "next/navigation";
 import { ItemDetail } from "@/components/detail/ItemDetail";
 import { genericItemMetadata } from "@/components/generic/GenericSectionPages";
-import { getBeautyRegions, getBeautySalons, getContentSection, getGenericItemBySection, getItemEditorialScore } from "@/lib/content";
+import { getGenericItemsBySection, getContentSection, getGenericItemBySection, getItemEditorialScore } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
 export async function generateStaticParams() {
-  const pairs = await Promise.all((await getBeautyRegions()).map(async (region) => ({ salons: await getBeautySalons(region.slug) })));
-  return pairs.flatMap(({ salons }) => salons.map((salon) => ({ section: "hair-salon", slug: salon.slug })));
+  // region 有無に関わらず全件（region は任意）。
+  const salons = await getGenericItemsBySection("beauty", "hair-salon");
+  return salons.map((salon) => ({ section: "hair-salon", slug: salon.slug }));
 }
 
 export async function generateMetadata({ params }: PageProps) {

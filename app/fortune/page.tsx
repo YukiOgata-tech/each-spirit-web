@@ -28,7 +28,6 @@ export default async function FortunePage() {
 
   let result: FortuneResult | null = null;
   let needsInput = true;
-  let renderMode: "2d" | "3d" = "2d";
   let awardedPoints: number | null = null;
 
   if (user) {
@@ -49,23 +48,12 @@ export default async function FortunePage() {
       awardedPoints = res.awardedPoints;
       needsInput = false;
     }
-
-    // 占い演出設定（2D / 3D）— user_prefs.metadata.fortune_anim
-    const { data: prefs } = await supabase
-      .schema("es")
-      .from("user_prefs")
-      .select("metadata")
-      .eq("user_id", user.id)
-      .maybeSingle();
-    const anim = (prefs?.metadata as { fortune_anim?: string } | null)?.fortune_anim;
-    renderMode = anim === "3d" ? "3d" : "2d";
   }
 
   return (
     <FortuneReveal
       result={result}
       isGuest={isGuest}
-      renderMode={renderMode}
       awardedPoints={awardedPoints}
       needsInput={needsInput}
       date={date}

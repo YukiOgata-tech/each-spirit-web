@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import Lottie, { type LottieRefCurrentProps } from "lottie-react";
 import { MoonStar, Orbit, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
@@ -27,9 +28,10 @@ const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
 };
 
 const GUEST_STORAGE_KEY = "es_fortune_guest_v1";
+const FORTUNE_LOADING_LOTTIE = "/lottie/es-loading02.json";
+const FORTUNE_LOADING_DURATION_MS = 3400;
 
 type Phase = "input" | "idle" | "loading" | "result";
-type RenderMode = "2d" | "3d";
 
 // 星の位置を決定論生成（SSR/CSRで一致させハイドレーション差異を防ぐ）
 const STARS = (() => {
@@ -90,14 +92,12 @@ function FortuneBackdrop() {
 export function FortuneReveal({
   result,
   isGuest,
-  renderMode = "2d",
   awardedPoints = null,
   needsInput = false,
   date,
 }: {
   result: FortuneResult | null;
   isGuest: boolean;
-  renderMode?: RenderMode;
   awardedPoints?: number | null;
   needsInput?: boolean;
   date: string;
@@ -107,8 +107,22 @@ export function FortuneReveal({
   const [liveAwarded, setLiveAwarded] = useState<number | null>(awardedPoints);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loadingAnimationData, setLoadingAnimationData] = useState<object | null>(null);
   // 入力が必要なゲストは localStorage 確認まで描画を保留（フォームのちらつき防止）
   const [ready, setReady] = useState(!needsInput);
+
+  useEffect(() => {
+    let alive = true;
+    fetch(FORTUNE_LOADING_LOTTIE)
+      .then((res) => res.json())
+      .then((data) => {
+        if (alive) setLoadingAnimationData(data);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   // ゲストは当日分の選択・結果を localStorage に保持し、再訪・再実行で固定する
   useEffect(() => {
@@ -133,7 +147,7 @@ export function FortuneReveal({
 
   function start() {
     setPhase("loading");
-    window.setTimeout(() => setPhase("result"), 2200);
+    window.setTimeout(() => setPhase("result"), FORTUNE_LOADING_DURATION_MS);
   }
 
   async function handleSubmit(input: FortuneInput) {
@@ -152,7 +166,7 @@ export function FortuneReveal({
         }
       }
       setPhase("loading");
-      window.setTimeout(() => setPhase("result"), 2200);
+      window.setTimeout(() => setPhase("result"), FORTUNE_LOADING_DURATION_MS);
     } catch {
       setError("運勢の生成に失敗しました。入力内容を確認して、もう一度お試しください。");
     } finally {
@@ -181,7 +195,7 @@ export function FortuneReveal({
         }
       >
         <AnimatePresence mode="wait">
-          {!ready && <Loading2D key="hydrate" />}
+          {!ready && <FortuneLoading key="hydrate" animationData={loadingAnimationData} />}
           {ready && phase === "input" && (
             <InputGate
               key="input"
@@ -193,9 +207,9 @@ export function FortuneReveal({
             />
           )}
           {ready && phase === "idle" && (
-            <IdleView key="idle" onStart={start} date={date} mode={renderMode} />
+            <IdleView key="idle" onStart={start} date={date} />
           )}
-          {ready && phase === "loading" && (renderMode === "3d" ? <Loading3D key="l3" /> : <Loading2D key="l2" />)}
+          {ready && phase === "loading" && <FortuneLoading key="loading" animationData={loadingAnimationData} />}
           {ready && phase === "result" && liveResult && (
             <ResultView key="result" result={liveResult} isGuest={isGuest} awardedPoints={liveAwarded} onReplay={start} />
           )}
@@ -315,7 +329,7 @@ function InputGate({
 }
 
 // ── 占う前 ────────────────────────────────────────────────────────────────────
-function IdleView({ onStart, date, mode }: { onStart: () => void; date: string; mode: RenderMode }) {
+function IdleView({ onStart, date }: { onStart: () => void; date: string }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -336,7 +350,7 @@ function IdleView({ onStart, date, mode }: { onStart: () => void; date: string; 
         総合運・恋愛運・金運・仕事運・健康運・対人運・おでかけ運。<br />
         今日のあなたの運勢を 7 つの軸で占います。
       </p>
-      <p className="mt-2 text-xs text-white/40">{date} ・ 演出 {mode.toUpperCase()}</p>
+      <p className="mt-2 text-xs text-white/40">{date}</p>
       <button
         onClick={onStart}
         className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
@@ -347,58 +361,28 @@ function IdleView({ onStart, date, mode }: { onStart: () => void; date: string; 
   );
 }
 
-// ── 占い中: 2D ────────────────────────────────────────────────────────────────
-function Loading2D() {
-  return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center pt-20 text-center">
-      <div className="relative h-40 w-40">
-        {[0, 1, 2].map((i) => (
-          <motion.div
-            key={i}
-            className="absolute inset-0 rounded-full border border-violet-300/40"
-            style={{ margin: i * 14 }}
-            animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-            transition={{ duration: 6 - i, repeat: Infinity, ease: "linear" }}
-          />
-        ))}
-        <motion.div
-          className="absolute inset-0 grid place-items-center"
-          animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
-          transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Orbit className="h-12 w-12 text-violet-200" />
-        </motion.div>
-      </div>
-      <LoadingCaption />
-    </motion.div>
-  );
-}
+// ── 占い中 ────────────────────────────────────────────────────────────────────
+function FortuneLoading({ animationData }: { animationData: object | null }) {
+  const lottieRef = useRef<LottieRefCurrentProps>(null);
 
-// ── 占い中: 3D（CSS 3D / perspective） ────────────────────────────────────────
-function Loading3D() {
+  useEffect(() => {
+    lottieRef.current?.play();
+  }, [animationData]);
+
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center pt-16 text-center">
-      <div style={{ perspective: 700 }} className="relative h-48 w-48">
-        <motion.div
-          className="absolute inset-0"
-          style={{ transformStyle: "preserve-3d" }}
-          animate={{ rotateX: 360, rotateY: 360 }}
-          transition={{ duration: 7, repeat: Infinity, ease: "linear" }}
-        >
-          {/* 3D 空間で交差する3リング */}
-          <span className="absolute inset-0 rounded-full border-2 border-violet-300/60" style={{ transform: "rotateY(0deg)" }} />
-          <span className="absolute inset-0 rounded-full border-2 border-indigo-300/50" style={{ transform: "rotateY(60deg)" }} />
-          <span className="absolute inset-0 rounded-full border-2 border-fuchsia-300/50" style={{ transform: "rotateX(60deg)" }} />
-        </motion.div>
-        {/* 中央のコア */}
-        <motion.div
-          className="absolute inset-0 grid place-items-center"
-          animate={{ scale: [0.9, 1.2, 0.9], opacity: [0.6, 1, 0.6] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <div className="h-16 w-16 rounded-full bg-violet-400/30 blur-md" />
-          <MoonStar className="absolute h-12 w-12 text-violet-100" />
-        </motion.div>
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center pt-0 -mt-10 text-center sm:pt-20 -mx-4">
+      <div className="relative grid aspect-square w-full max-w-[30rem] place-items-center max-sm:max-w-none bg-violet-400/20">
+        <div className="absolute inset-[7%] rounded-full bg-white/10 shadow-2xl shadow-white/10 backdrop-blur-[2px]" />
+        <div className="absolute inset-4 rounded-full bg-violet-400/20 blur-3xl" />
+        {animationData ? (
+          <Lottie
+            lottieRef={lottieRef}
+            animationData={animationData}
+            loop
+            autoplay
+            style={{ width: "100%", height: "100%" }}
+          />
+        ) : null}
       </div>
       <LoadingCaption />
     </motion.div>

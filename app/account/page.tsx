@@ -6,7 +6,6 @@ import {
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
-import { FortuneAnimToggle } from "@/components/account/FortuneAnimToggle";
 import { ProfilePersonalInfo } from "@/components/account/ProfilePersonalInfo";
 import type { FortuneGender } from "@/lib/fortune";
 import { routes } from "@/lib/routes";
@@ -342,7 +341,6 @@ export default async function AccountPage() {
               >
                 今日の運勢を占う <ArrowRight className="h-4 w-4" />
               </Link>
-              <FortuneAnimToggle />
             </div>
           </DashboardCard>
 

@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 
 export const metadata = pageMetadata({
   title: "カフェおすすめ比較ガイド｜人気カフェランキングと電源・WiFi・雰囲気の選び方",
@@ -111,6 +112,8 @@ export default async function CafeIndexPage() {
           </div>
         </div>
       </section>
+
+      <RegionlessItems majorCategory="food" sectionSlug="cafe" itemPathSegment="shops" />
     </div>
   );
 }

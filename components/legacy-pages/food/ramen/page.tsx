@@ -5,6 +5,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getRamenRegions, getRamenItemsByRegion, getRamenRankingsByRegion, getRamenArticles } from "@/lib/content";
+import { RegionlessItems } from "@/components/generic/RegionlessItems";
 
 export const metadata = pageMetadata({
   title: "ラーメンおすすめ比較ガイド｜人気の名店ランキングと選び方・地域別まとめ",
@@ -108,6 +109,8 @@ export default async function RamenIndexPage() {
           </div>
         </div>
       </section>
+
+      <RegionlessItems majorCategory="food" sectionSlug="ramen" itemPathSegment="shops" />
     </div>
   );
 }

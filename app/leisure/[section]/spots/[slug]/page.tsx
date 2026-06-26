@@ -1,15 +1,14 @@
 import { notFound } from "next/navigation";
 import { ItemDetail } from "@/components/detail/ItemDetail";
 import { genericItemMetadata } from "@/components/generic/GenericSectionPages";
-import { getContentSection, getGenericItemBySection, getItemEditorialScore, getLeisureSpots } from "@/lib/content";
+import { getContentSection, getGenericItemBySection, getGenericItemsBySection, getItemEditorialScore } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
-const region = "niigata";
-
 export async function generateStaticParams() {
-  const spots = await getLeisureSpots(region);
+  // region 有無に関わらず全件（region は任意）。
+  const spots = await getGenericItemsBySection("leisure", "spots");
   return spots.map((spot) => ({ section: "spots", slug: spot.slug }));
 }
 
