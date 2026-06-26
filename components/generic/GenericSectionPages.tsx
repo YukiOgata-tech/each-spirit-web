@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRight, MapPin, Sparkles, Trophy } from "lucide-react";
+import { ArrowRight, ImageOff, MapPin, Trophy } from "lucide-react";
 import { ArticleCard } from "@/components/cards/ArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { TagList } from "@/components/cards/TagList";
@@ -174,7 +174,7 @@ function GenericItemCard({ section, item, theme }: { section: ContentSection; it
           />
         ) : (
           <div className={`flex h-full w-full items-center justify-center ${theme.imageFallback}`}>
-            <Sparkles className="h-8 w-8 text-[var(--primary)]/55" />
+            <ImageOff className="h-8 w-8 text-[var(--primary)]/55" />
           </div>
         )}
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_40%,rgba(15,23,42,0.64)_100%)]" />
@@ -421,7 +421,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
                 {item?.imageUrl ? (
                   <Image src={item.imageUrl} alt={name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center"><Sparkles className="h-7 w-7 text-[var(--primary)]/40" /></div>
+                  <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}
                 <span className={`absolute left-2 top-2 flex h-8 w-8 items-center justify-center rounded-full text-sm font-black shadow ${top ? "bg-[var(--primary)] text-white" : "bg-white/92 text-slate-700"}`}>{entry.rank}</span>
                 {entry.isPr && <span className="absolute right-2 top-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-amber-950">PR</span>}

@@ -176,7 +176,7 @@ export function FortuneReveal({
 
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)] overflow-hidden text-white"
+      className="relative min-h-[calc(100vh-4rem)] overflow-x-hidden text-white"
       style={{
         background:
           "radial-gradient(1100px 600px at 72% -8%, #3b1d6e 0%, transparent 58%)," +
@@ -191,7 +191,7 @@ export function FortuneReveal({
         className={
           phase === "result"
             ? "relative mx-auto w-[min(1480px,calc(100%-28px))] py-6 sm:w-[min(1480px,calc(100%-40px))] sm:py-8"
-            : "relative mx-auto w-[min(720px,calc(100%-32px))] py-10 sm:py-14"
+            : "relative mx-auto w-[min(720px,calc(100%-28px))] py-7 sm:w-[min(720px,calc(100%-32px))] sm:py-14"
         }
       >
         <AnimatePresence mode="wait">
@@ -248,26 +248,26 @@ function InputGate({
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.97 }}
-      className="flex flex-col items-center pt-6 text-center sm:pt-10"
+      className="flex flex-col items-center pt-2 text-center sm:pt-10"
     >
       <motion.div
         animate={{ rotate: 360 }}
         transition={{ duration: 24, repeat: Infinity, ease: "linear" }}
-        className="grid h-20 w-20 place-items-center rounded-full border border-white/20 bg-white/5"
+        className="grid h-16 w-16 place-items-center rounded-full border border-white/25 bg-white/10 sm:h-20 sm:w-20"
       >
-        <Orbit className="h-9 w-9 text-violet-300" />
+        <Orbit className="h-8 w-8 text-violet-200 sm:h-9 sm:w-9" />
       </motion.div>
-      <p className="mt-5 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
-      <h1 className="mt-2 text-3xl font-black sm:text-4xl">今日の運勢</h1>
-      <p className="mt-3 max-w-sm text-sm leading-7 text-white/70">
+      <p className="mt-4 text-xs font-bold uppercase tracking-[0.3em] text-violet-200 sm:mt-5">Daily Fortune</p>
+      <h1 className="mt-2 text-3xl font-bold sm:text-4xl">今日の運勢</h1>
+      <p className="mt-3 max-w-sm text-sm leading-7 text-white/85">
         あなただけの運勢を占うために、<br />
         誕生日と性別を選んでください。
       </p>
 
-      <form onSubmit={submit} className="mt-7 w-full max-w-sm space-y-5 text-left">
+      <form onSubmit={submit} className="mt-6 w-full max-w-sm space-y-4 text-left sm:mt-7 sm:space-y-5">
         <div>
-          <label htmlFor="fortune-birthday" className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/70">
-            <Cake className="h-4 w-4 text-violet-300" /> 誕生日
+          <label htmlFor="fortune-birthday" className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/90">
+            <Cake className="h-4 w-4 text-violet-200" /> 誕生日
           </label>
           <input
             id="fortune-birthday"
@@ -276,14 +276,14 @@ function InputGate({
             max={date}
             min="1900-01-01"
             onChange={(e) => setBirthday(e.target.value)}
-            className="w-full rounded-xl border border-white/20 bg-white/10 px-4 py-3 text-base text-white outline-none transition focus:border-violet-300/70 focus:bg-white/15 [color-scheme:dark]"
+            className="block min-w-0 w-full appearance-none rounded-xl border border-white/30 bg-white/[0.16] px-4 py-3 text-base font-semibold text-white outline-none transition focus:border-violet-200 focus:bg-white/[0.22] focus:ring-2 focus:ring-violet-300/35 [color-scheme:dark]"
             required
           />
         </div>
 
         <div>
-          <span className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/70">
-            <CircleUser className="h-4 w-4 text-violet-300" /> 性別
+          <span className="mb-2 flex items-center gap-1.5 text-xs font-bold text-white/90">
+            <CircleUser className="h-4 w-4 text-violet-200" /> 性別
           </span>
           <div className="grid grid-cols-3 gap-2">
             {FORTUNE_GENDERS.map((g) => {
@@ -296,8 +296,8 @@ function InputGate({
                   onClick={() => setGender(g)}
                   className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-bold transition ${
                     active
-                      ? "border-violet-300/70 bg-violet-500/30 text-white"
-                      : "border-white/15 bg-white/5 text-white/60 hover:bg-white/10"
+                      ? "border-violet-200 bg-violet-500/45 text-white shadow-lg shadow-violet-950/25"
+                      : "border-white/25 bg-white/10 text-white/[0.82] hover:border-white/40 hover:bg-white/[0.16] hover:text-white"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -313,13 +313,13 @@ function InputGate({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:scale-100"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] hover:from-violet-400 hover:to-indigo-400 active:scale-95 disabled:cursor-not-allowed disabled:from-slate-500/70 disabled:to-slate-600/70 disabled:text-white/[0.88] disabled:shadow-none disabled:hover:scale-100"
         >
           <MoonStar className="h-5 w-5" /> {submitting ? "占っています…" : "この内容で占う"}
         </button>
       </form>
 
-      <p className="mt-4 max-w-xs text-xs leading-5 text-white/40">
+      <p className="mt-4 max-w-xs text-xs leading-5 text-white/65">
         {isGuest
           ? "今日の結果はこの内容で確定します。何度開いても変わりません。"
           : "プロフィールに保存され、次回からは入力を省略できます。"}

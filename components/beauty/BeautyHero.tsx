@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowRight, Gem, Scissors, Sparkles, Wind } from "lucide-react";
+import { ArrowRight, Gem, Palette, Scissors, Wind } from "lucide-react";
 import { routes } from "@/lib/routes";
 
 const container = {
@@ -18,7 +18,7 @@ const rise = {
 
 const FLOAT_PILLS = [
   { icon: Scissors, label: "カット",     delay: 0,    x: "8%",  y: "22%", rotate: -8  },
-  { icon: Sparkles, label: "カラー",     delay: 0.7,  x: "72%", y: "8%",  rotate: 6   },
+  { icon: Palette,  label: "カラー",     delay: 0.7,  x: "72%", y: "8%",  rotate: 6   },
   { icon: Wind,     label: "ヘッドスパ", delay: 1.4,  x: "80%", y: "68%", rotate: -4  },
   { icon: Gem,      label: "髪質改善",   delay: 0.4,  x: "12%", y: "76%", rotate: 10  },
 ];

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, ImageOff, MapPin } from "lucide-react";
 import { TagList } from "@/components/cards/TagList";
 import { getGenericItemsBySection } from "@/lib/content";
 import { isAllowedImageSrc } from "@/lib/image-hosts";
@@ -62,7 +62,7 @@ export async function RegionlessItems({
                   />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center bg-[var(--muted)]">
-                    <Sparkles className="h-8 w-8 text-[var(--primary)]/55" />
+                    <ImageOff className="h-8 w-8 text-[var(--primary)]/45" />
                   </div>
                 )}
               </div>

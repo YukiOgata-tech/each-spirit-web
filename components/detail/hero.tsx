@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { ExternalLink, Sparkles } from "lucide-react";
+import { ExternalLink, ImageOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TagList } from "@/components/cards/TagList";
 import { LikeButton } from "@/components/content/LikeButton";
@@ -21,7 +21,7 @@ export function HeroImage({ item, className, sizes, theme }: { item: GenericItem
   if (!src) {
     return (
       <div className={`flex items-center justify-center ${className} ${theme.imageFallback}`}>
-        <Sparkles className="h-10 w-10 text-[var(--primary)]/45" />
+        <ImageOff className="h-10 w-10 text-[var(--primary)]/45" />
       </div>
     );
   }

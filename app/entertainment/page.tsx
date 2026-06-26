@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { AppWindow, ArrowRight, CalendarDays, Clapperboard, Gamepad2, Sparkles, Tv } from "lucide-react";
+import { AppWindow, ArrowRight, CalendarDays, Clapperboard, Film, Gamepad2, Tv } from "lucide-react";
 import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { TitleCard } from "@/components/entertainment/TitleCard";
 import { toCatalogTitle } from "@/components/entertainment/labels";
@@ -16,7 +16,7 @@ export const metadata = pageMetadata({
   image: majorMetaImage("entertainment"),
 });
 
-// セクション（ジャンル）ごとのアイコン。未知ジャンルは Sparkles にフォールバック。
+// セクション（ジャンル）ごとのアイコン。未知ジャンルは Film にフォールバック。
 const GENRE_ICONS: Record<string, typeof Tv> = {
   anime: Tv,
   drama: Clapperboard,
@@ -25,7 +25,7 @@ const GENRE_ICONS: Record<string, typeof Tv> = {
   events: CalendarDays,
 };
 function genreIcon(slug: string) {
-  return GENRE_ICONS[slug] ?? Sparkles;
+  return GENRE_ICONS[slug] ?? Film;
 }
 
 export default async function EntertainmentPage() {

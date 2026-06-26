@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { ArrowUpRight, ExternalLink, ImageIcon, Sparkles } from "lucide-react";
+import { ArrowUpRight, ExternalLink, ImageIcon, Link2 } from "lucide-react";
 
 function stripFrontmatter(markdown: string) {
   return markdown
@@ -167,7 +167,7 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
           return (
             <aside key={index} className="rounded-xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
               <div className="mb-3 flex items-center gap-2 text-sm font-bold text-slate-950">
-                <Sparkles className="h-4 w-4 text-[var(--primary)]" />
+                <Link2 className="h-4 w-4 text-[var(--primary)]" />
                 関連コンテンツ
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
