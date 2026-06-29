@@ -692,7 +692,7 @@ function CategorySlugStatus({ category, selected }: { category: string; selected
   );
 }
 
-function Tool({ icon: Icon, label, onClick }: { icon: React.ElementType; label: string; onClick: () => void }) {
+function Tool({ icon: Icon, label, onClick }: { icon: React.ComponentType<{ className?: string }>; label: string; onClick: () => void }) {
   return (
     <Button type="button" variant="ghost" size="sm" onClick={onClick} title={label}>
       <Icon className="h-4 w-4" />

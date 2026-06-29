@@ -35,7 +35,7 @@ const CONTENT_KIND_LABELS: Record<string, string> = {
   article: "記事",
   ranking: "ランキング",
 };
-const LIKE_TYPE_LABELS: Record<string, { label: string; icon: React.ElementType; color: string }> = {
+const LIKE_TYPE_LABELS: Record<string, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   like:          { label: "いいね",   icon: Heart,    color: "text-rose-500" },
   bookmark:      { label: "保存",     icon: Bookmark, color: "text-blue-500" },
   want_to_visit: { label: "行きたい", icon: MapPin,   color: "text-amber-500" },
@@ -439,7 +439,7 @@ function StatPill({
   value,
   href,
 }: {
-  icon: React.ElementType;
+  icon: React.ComponentType<{ className?: string }>;
   iconClass: string;
   label: string;
   value: number;

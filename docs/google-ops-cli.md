@@ -41,12 +41,18 @@ GA4_PROPERTY_ID=
 GOOGLE_APPLICATION_CREDENTIALS=C:\projects\each-spirit\.google\ga4-service-account.json
 ```
 
-この repo では user ADC も使える。`gcloud auth application-default login` 後に、ADC の quota project を明示する。
+user ADC で `analytics.readonly` scope が Google 側にブロックされる場合があるため、GA4 は service account を優先する。
 
 ```powershell
 $env:CLOUDSDK_CONFIG = (Resolve-Path .google\gcloud).Path
-gcloud auth application-default login --scopes="https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/analytics.readonly,https://www.googleapis.com/auth/adsense.readonly"
-gcloud auth application-default set-quota-project each-sprit-499220
+gcloud iam service-accounts create each-spirit-ga4-reader --display-name="Each Spirit GA4 Reader" --project each-sprit-499220
+gcloud iam service-accounts keys create .google\ga4-service-account.json --iam-account each-spirit-ga4-reader@each-sprit-499220.iam.gserviceaccount.com --project each-sprit-499220
+```
+
+作成した service account email を GA4 property の Admin -> Property access management に Viewer 以上で追加する。
+
+```text
+each-spirit-ga4-reader@each-sprit-499220.iam.gserviceaccount.com
 ```
 
 利用できる CLI:

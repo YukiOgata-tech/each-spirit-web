@@ -19,7 +19,7 @@ export type ManagedRow = {
   updatedAt: string | null;
 };
 
-const KIND_META: Record<ManagedKind, { label: string; icon: React.ElementType; color: string }> = {
+const KIND_META: Record<ManagedKind, { label: string; icon: React.ComponentType<{ className?: string }>; color: string }> = {
   article: { label: "記事", icon: FileText, color: "text-sky-600" },
   item: { label: "店舗・商品", icon: Store, color: "text-emerald-600" },
   ranking: { label: "ランキング", icon: Trophy, color: "text-amber-600" },

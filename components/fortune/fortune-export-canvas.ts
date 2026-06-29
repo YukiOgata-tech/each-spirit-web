@@ -1,4 +1,4 @@
-import { LEVEL, type FortuneResult, type FortuneScore } from "@/lib/fortune";
+import { CATEGORY_LABEL, LEVEL, type FortuneResult, type FortuneScore } from "@/lib/fortune";
 
 const WIDTH = 1080;
 const HEIGHT = 1350;
@@ -111,10 +111,10 @@ function drawOverall(
   drawWrappedText(ctx, result.overall.text, 455, 328, 515, 36, 5);
 
   if (strongest) {
-    drawInsight(ctx, 455, 500, 240, 62, "今日の強み", strongest.label, LEVEL[strongest.band].color);
+    drawInsight(ctx, 455, 500, 240, 62, "今日の強み", CATEGORY_LABEL[strongest.key], LEVEL[strongest.band].color);
   }
   if (focus) {
-    drawInsight(ctx, 710, 500, 260, 62, "整えるポイント", focus.label, LEVEL[focus.band].color);
+    drawInsight(ctx, 710, 500, 260, 62, "整えるポイント", CATEGORY_LABEL[focus.key], LEVEL[focus.band].color);
   }
 }
 
@@ -231,7 +231,7 @@ function drawCategoryCard(
 
   ctx.fillStyle = "#ffffff";
   ctx.font = `900 19px ${FONT}`;
-  ctx.fillText(fitText(ctx, category.label, 185), x + 20, y + 38);
+  ctx.fillText(fitText(ctx, CATEGORY_LABEL[category.key], 185), x + 20, y + 38);
   ctx.fillStyle = level.color;
   ctx.font = `800 13px ${FONT}`;
   ctx.fillText(level.label, x + 20, y + 64);

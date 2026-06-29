@@ -9,7 +9,7 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { LEVEL, type FortuneCategoryKey, type FortuneScore } from "@/lib/fortune";
+import { CATEGORY_LABEL, LEVEL, type FortuneCategoryKey, type FortuneScore } from "@/lib/fortune";
 
 const CATEGORY_ACCENT: Partial<Record<FortuneCategoryKey, string>> = {
   love: "#fb7185",
@@ -65,7 +65,7 @@ function CategoryDetail({ category, index }: { category: FortuneScore; index: nu
           <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-white/60">
             Reading {String(index).padStart(2, "0")}
           </p>
-          <h3 className="mt-0.5 text-base font-bold text-white">{category.label}</h3>
+          <h3 className="mt-0.5 text-base font-bold text-white">{CATEGORY_LABEL[category.key]}</h3>
         </div>
         <div className="text-right">
           <p className="text-3xl font-bold leading-none tabular-nums" style={{ color: accent }}>

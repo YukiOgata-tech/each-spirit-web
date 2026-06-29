@@ -1,7 +1,6 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
-import { getRamenItems } from "@/lib/content";
-import { routes } from "@/lib/routes";
+import { getKeyItemPool } from "@/lib/content";
 import {
   generateDailyFortune,
   type FortuneInput,
@@ -9,15 +8,9 @@ import {
   type LuckyItem,
 } from "@/lib/fortune";
 
-/** おでかけ・グルメ運の「今日のラッキースポット」候補プール（暫定: ラーメン店） */
+/** 「今日のキーアイテム」候補プール（es.items を横断）。 */
 export async function buildLuckyItems(): Promise<LuckyItem[]> {
-  const items = await getRamenItems();
-  return items.map((i) => ({
-    type: "ramen_item",
-    slug: i.slug,
-    name: i.name,
-    href: routes.ramenItem(i.slug),
-  }));
+  return getKeyItemPool();
 }
 
 /**

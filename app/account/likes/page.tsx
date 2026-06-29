@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 
 type LikeType = "like" | "bookmark" | "want_to_visit";
 
-const TYPES: { key: LikeType; label: string; icon: React.ElementType; color: string }[] = [
+const TYPES: { key: LikeType; label: string; icon: React.ComponentType<{ className?: string }>; color: string }[] = [
   { key: "like", label: "いいね", icon: Heart, color: "text-rose-500" },
   { key: "bookmark", label: "ブックマーク", icon: Bookmark, color: "text-blue-500" },
   { key: "want_to_visit", label: "行きたい", icon: MapPin, color: "text-amber-500" },

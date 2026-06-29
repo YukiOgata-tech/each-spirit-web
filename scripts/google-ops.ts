@@ -1,7 +1,9 @@
-import "dotenv/config";
-
+import dotenv from "dotenv";
 import path from "node:path";
 import process from "node:process";
+
+dotenv.config({ path: ".env.local", quiet: true });
+dotenv.config({ quiet: true });
 
 type Args = Record<string, string | boolean>;
 
@@ -150,10 +152,13 @@ async function gaEvents(args: Args) {
 async function gaFortune(args: Args) {
   const client = await gaClient();
   const range = daysRange(args);
+  const details = args.details === true;
   const [res] = await client.runReport({
     property: `properties/${propertyId(args)}`,
     dateRanges: [range],
-    dimensions: [{ name: "eventName" }, { name: "customEvent:user_status" }, { name: "customEvent:overall_band" }],
+    dimensions: details
+      ? [{ name: "eventName" }, { name: "customEvent:user_status" }, { name: "customEvent:overall_band" }]
+      : [{ name: "eventName" }],
     metrics: [{ name: "eventCount" }, { name: "activeUsers" }],
     dimensionFilter: {
       orGroup: {
@@ -165,14 +170,24 @@ async function gaFortune(args: Args) {
     orderBys: [{ metric: { metricName: "eventCount" }, desc: true }],
     limit: 100,
   });
+  if (details) {
+    const rows = (res.rows ?? []).map((row) => [
+      row.dimensionValues?.[0]?.value ?? "",
+      row.dimensionValues?.[1]?.value ?? "",
+      row.dimensionValues?.[2]?.value ?? "",
+      row.metricValues?.[0]?.value ?? "0",
+      row.metricValues?.[1]?.value ?? "0",
+    ]);
+    printRows(["event", "user_status", "overall_band", "count", "active_users"], rows);
+    return;
+  }
+
   const rows = (res.rows ?? []).map((row) => [
     row.dimensionValues?.[0]?.value ?? "",
-    row.dimensionValues?.[1]?.value ?? "",
-    row.dimensionValues?.[2]?.value ?? "",
     row.metricValues?.[0]?.value ?? "0",
     row.metricValues?.[1]?.value ?? "0",
   ]);
-  printRows(["event", "user_status", "overall_band", "count", "active_users"], rows);
+  printRows(["event", "count", "active_users"], rows);
 }
 
 async function adsenseAccounts() {
@@ -212,6 +227,7 @@ async function main() {
       console.log("  npm run google:ops -- ga:pages -- --property <GA4_PROPERTY_ID> --days 7");
       console.log("  npm run google:ops -- ga:events -- --property <GA4_PROPERTY_ID> --days 7");
       console.log("  npm run google:ops -- ga:fortune -- --property <GA4_PROPERTY_ID> --days 30");
+      console.log("  npm run google:ops -- ga:fortune -- --property <GA4_PROPERTY_ID> --days 30 --details");
       console.log("  npm run google:ops -- adsense:accounts");
       process.exit(command ? 1 : 0);
   }

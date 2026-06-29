@@ -9,7 +9,7 @@ export type FortuneBand = 1 | 2 | 3 | 4 | 5;
 export type FortuneBandPool = Record<"1" | "2" | "3" | "4" | "5", string[]>;
 export type FortuneExplanations = Record<FortuneCategoryKey, { label: string; bands: FortuneBandPool }>;
 
-export type LuckyItem = { type: string; slug: string; name: string; href: string };
+export type LuckyItem = { type: string; slug: string; name: string; href: string; image?: string };
 
 /** 占いのパーソナライズ入力（誕生日・性別）。ゲストはフォーム、ログインユーザーは profiles から。 */
 export type FortuneGender = "male" | "female" | "other";
@@ -64,7 +64,7 @@ export const CATEGORY_LABEL: Record<FortuneCategoryKey, string> = {
   work: "仕事・学業運",
   health: "健康運",
   social: "対人運",
-  outing: "おでかけ・グルメ運",
+  outing: "おでかけ",
 };
 
 /** band(1–5) → レベル表記と表示色 */

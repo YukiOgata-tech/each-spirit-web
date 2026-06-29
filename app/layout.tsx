@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Cinzel } from "next/font/google";
 import { Suspense } from "react";
 import "./globals.css";
 import { SiteFooter } from "@/components/layout/SiteFooter";
@@ -13,6 +13,9 @@ import { site } from "@/content/site";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+// ラテンの碑文体（占い画面の見出し・数字用）。和の明朝はビルドを重くしないよう
+// システムの Mincho スタック（globals.css の .font-jp-serif）で表現する。
+const cinzel = Cinzel({ variable: "--font-cinzel", subsets: ["latin"], weight: ["500", "700", "900"], display: "swap" });
 
 // ISR: 全ルートのデフォルト再生成間隔（30日）。content/** を seed したら最大30日で
 // 本番に反映される。cookies を使う動的ページ（/account など）は自動的に動的のまま。
@@ -65,7 +68,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="ja">
-      <body className={geistSans.variable + " " + geistMono.variable}>
+      <body className={[geistSans.variable, geistMono.variable, cinzel.variable].join(" ")}>
         {/* ローディング Lottie(JSON) を先読みし、ローダー表示と同時に再生が始まるようにする */}
         <link rel="prefetch" href="/lottie/es-loading.json" as="fetch" crossOrigin="anonymous" />
         <link rel="preload" href="/lottie/es-loading02.json" as="fetch" crossOrigin="anonymous" />

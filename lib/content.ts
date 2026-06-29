@@ -11,6 +11,7 @@ import { proteinTargets } from "@/content/protein/targets";
 import { site } from "@/content/site";
 import { routes } from "@/lib/routes";
 import { deriveItemClass } from "@/lib/content-models";
+import type { LuckyItem } from "@/lib/fortune";
 import { SECTION_ITEM_SCHEMAS, type SectionItemSchema, type ItemField } from "@/lib/admin-item-schema";
 import type {
   Article,
@@ -657,6 +658,27 @@ export async function getGenericItemsBySection(majorCategory: string, sectionSlu
     .eq("status", "published")
     .order("name", { ascending: true });
   return (data ?? []).map(mapGenericItem);
+}
+
+/** キーアイテム候補プール: es.items から公開アイテムを横断取得（運勢のキーアイテム表示用）。
+ *  必要列だけ取得（body_md 等を含めると数MBになりキャッシュ上限を超えるため）。 */
+export async function getKeyItemPool(limit = 400): Promise<LuckyItem[]> {
+  const sb = createServerClient();
+  const { data } = await sb
+    .from("items")
+    .select("slug, name, canonical_path, image, item_kind")
+    .eq("status", "published")
+    .not("canonical_path", "is", null)
+    .limit(limit);
+  return (data ?? [])
+    .filter((r) => r.canonical_path && r.name)
+    .map((r) => ({
+      type: r.item_kind ?? "item",
+      slug: r.slug,
+      name: r.name,
+      href: r.canonical_path as string,
+      image: jstr(r.image, "url"),
+    }));
 }
 
 export async function getGenericItemBySection(majorCategory: string, sectionSlug: string, slug: string): Promise<GenericItem | undefined> {

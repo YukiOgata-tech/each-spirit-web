@@ -55,6 +55,40 @@
   }
 }
 
+/* ── 占い画面のフォント ───────────────────────────────
+   和の明朝（Shippori Mincho）とラテンの碑文体（Cinzel）。 */
+.font-jp-serif {
+  font-family: "Hiragino Mincho ProN", "Hiragino Mincho Pro", "Yu Mincho", "YuMincho",
+    "Noto Serif CJK JP", "Noto Serif JP", "ＭＳ Ｐ明朝", serif;
+  font-feature-settings: "palt";
+}
+.font-cinzel {
+  font-family: var(--font-cinzel), "Times New Roman", serif;
+  letter-spacing: 0.08em;
+}
+
+/* クリスタル等の明るい背景の上でも文字を読みやすくする影 */
+.text-legible {
+  text-shadow: 0 1px 2px rgba(6, 5, 18, 0.6), 0 2px 20px rgba(6, 5, 18, 0.6);
+}
+
+/* ブランド配色のシマー見出し（ラベンダー→ゴールド→パール） */
+.fortune-shimmer-text {
+  background: linear-gradient(100deg, #e9d5ff 0%, #f4c25b 32%, #fff7e8 48%, #c4b5fd 70%, #f4c25b 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer-beauty 5s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fortune-shimmer-text {
+    animation: none;
+  }
+}
+
 .section-shell {
   width: min(var(--site-max), calc(100% - 40px));
   margin: 0 auto;

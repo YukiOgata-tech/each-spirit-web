@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import Lottie, { type LottieRefCurrentProps } from "lottie-react";
-import { MoonStar, Orbit, Copy, Check, ArrowRight, MapPin, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser } from "lucide-react";
+import { MoonStar, Orbit, Copy, Check, ArrowRight, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser, Gem } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
+  CATEGORY_LABEL,
   FORTUNE_GENDERS,
   FORTUNE_GENDER_LABEL,
   LEVEL,
@@ -19,6 +21,7 @@ import { requestFortune } from "@/app/fortune/actions";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
 import { MobileFortuneResult } from "@/components/fortune/MobileFortuneResult";
 import { FortuneCategoryDetails } from "@/components/fortune/FortuneCategoryDetails";
+import { FortuneExperience3D } from "@/components/fortune/FortuneExperience3D";
 import { createFortuneExportPng } from "@/components/fortune/fortune-export-canvas";
 import { trackEvent } from "@/lib/analytics";
 
@@ -73,17 +76,17 @@ function FortuneBackdrop() {
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       <motion.div
-        className="absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-fuchsia-600/20 blur-[100px]"
+        className="absolute -left-32 top-0 h-[28rem] w-[28rem] rounded-full bg-violet-500/20 blur-[100px]"
         animate={{ x: [0, 40, 0], y: [0, 30, 0], scale: [1, 1.12, 1] }}
         transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute right-[-10rem] top-24 h-[26rem] w-[26rem] rounded-full bg-indigo-500/25 blur-[100px]"
+        className="absolute right-[-10rem] top-24 h-[26rem] w-[26rem] rounded-full bg-purple-400/20 blur-[100px]"
         animate={{ x: [0, -30, 0], y: [0, 40, 0], scale: [1.1, 1, 1.1] }}
         transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
       />
       <motion.div
-        className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-violet-500/15 blur-[110px]"
+        className="absolute bottom-[-8rem] left-1/3 h-[24rem] w-[24rem] rounded-full bg-amber-300/12 blur-[110px]"
         animate={{ x: [0, 30, 0], scale: [1, 1.15, 1] }}
         transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
       />
@@ -94,6 +97,16 @@ function FortuneBackdrop() {
           style={{ top: `${s.top}%`, left: `${s.left}%`, width: s.size, height: s.size }}
           animate={{ opacity: [s.op * 0.3, s.op, s.op * 0.3] }}
           transition={{ duration: s.dur, delay: s.delay, repeat: Infinity, ease: "easeInOut" }}
+        />
+      ))}
+      {/* 流れ星（周期的に斜めへ走る） */}
+      {[0, 1, 2].map((i) => (
+        <motion.span
+          key={`shoot-${i}`}
+          className="absolute h-px w-28 bg-gradient-to-r from-white/0 via-white/90 to-white/0"
+          style={{ top: `${8 + i * 20}%`, left: "-12%", rotate: "20deg" }}
+          animate={{ x: ["0vw", "126vw"], opacity: [0, 1, 0] }}
+          transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 8 + i * 5, delay: i * 3.5, ease: "easeIn" }}
         />
       ))}
       <div
@@ -118,6 +131,7 @@ export function FortuneReveal({
   date: string;
 }) {
   const [phase, setPhase] = useState<Phase>(needsInput ? "input" : "idle");
+  const [resultMode, setResultMode] = useState<"3d" | "simple">("3d");
   const [liveResult, setLiveResult] = useState<FortuneResult | null>(result);
   const [liveAwarded, setLiveAwarded] = useState<number | null>(awardedPoints);
   const [submitting, setSubmitting] = useState(false);
@@ -216,13 +230,14 @@ export function FortuneReveal({
 
   return (
     <div
-      className="relative min-h-[calc(100vh-4rem)] overflow-x-hidden text-white"
+      className="font-jp-serif relative min-h-[calc(100vh-4rem)] overflow-x-hidden text-white"
       style={{
         background:
-          "radial-gradient(1100px 600px at 72% -8%, #3b1d6e 0%, transparent 58%)," +
-          "radial-gradient(900px 520px at 8% 18%, rgba(30,58,138,0.45) 0%, transparent 55%)," +
-          "linear-gradient(180deg, rgba(12,10,30,0.56) 0%, rgba(18,16,48,0.42) 42%, rgba(6,10,30,0.76) 100%)," +
-          "url('/images/fortune/bg.png') center / cover no-repeat",
+          "radial-gradient(1200px 720px at 72% -10%, rgba(124,58,237,0.42) 0%, transparent 60%)," +
+          "radial-gradient(900px 600px at 8% 16%, rgba(99,102,241,0.30) 0%, transparent 55%)," +
+          "radial-gradient(700px 500px at 88% 82%, rgba(244,194,91,0.16) 0%, transparent 58%)," +
+          "linear-gradient(180deg, rgba(22,14,48,0.72) 0%, rgba(34,22,62,0.60) 42%, rgba(14,11,32,0.86) 100%)," +
+          "url('/images/fortune/meta.jpg') center / cover no-repeat",
       }}
     >
       <FortuneBackdrop />
@@ -230,7 +245,9 @@ export function FortuneReveal({
       <div
         className={
           phase === "result"
-            ? "relative mx-auto w-[min(1480px,calc(100%-28px))] py-6 sm:w-[min(1480px,calc(100%-40px))] sm:py-8"
+            ? resultMode === "3d"
+              ? "relative w-full"
+              : "relative mx-auto w-[min(1480px,calc(100%-28px))] py-6 sm:w-[min(1480px,calc(100%-40px))] sm:py-8"
             : "relative mx-auto w-[min(720px,calc(100%-28px))] py-7 sm:w-[min(720px,calc(100%-32px))] sm:py-14"
         }
       >
@@ -251,7 +268,15 @@ export function FortuneReveal({
           )}
           {ready && phase === "loading" && <FortuneLoading key="loading" animationData={loadingAnimationData} />}
           {ready && phase === "result" && liveResult && (
-            <ResultView key="result" result={liveResult} isGuest={isGuest} awardedPoints={liveAwarded} onReplay={start} />
+            <ResultView
+              key="result"
+              result={liveResult}
+              isGuest={isGuest}
+              awardedPoints={liveAwarded}
+              onReplay={start}
+              mode={resultMode}
+              onToggleMode={() => setResultMode((m) => (m === "3d" ? "simple" : "3d"))}
+            />
           )}
         </AnimatePresence>
       </div>
@@ -297,7 +322,7 @@ function InputGate({
       >
         <Orbit className="h-8 w-8 text-violet-200 sm:h-9 sm:w-9" />
       </motion.div>
-      <p className="mt-4 text-xs font-bold uppercase tracking-[0.3em] text-violet-200 sm:mt-5">Daily Fortune</p>
+      <p className="font-cinzel mt-4 text-xs font-bold uppercase tracking-[0.3em] text-violet-200 sm:mt-5">Daily Fortune</p>
       <h1 className="mt-2 text-3xl font-bold sm:text-4xl">今日の運勢</h1>
       <p className="mt-3 max-w-sm text-sm leading-7 text-white/85">
         あなただけの運勢を占うために、<br />
@@ -337,7 +362,7 @@ function InputGate({
                   className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-bold transition ${
                     active
                       ? "border-violet-200 bg-violet-500/45 text-white shadow-lg shadow-violet-950/25"
-                      : "border-white/25 bg-white/10 text-white/[0.82] hover:border-white/40 hover:bg-white/[0.16] hover:text-white"
+                      : "border-white/25 bg-white/10 text-white/[0.82] hover:border-white/40 hover:bg-white/16 hover:text-white"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -384,7 +409,7 @@ function IdleView({ onStart, date }: { onStart: () => void; date: string }) {
       >
         <Orbit className="h-10 w-10 text-violet-300" />
       </motion.div>
-      <p className="mt-6 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
+      <p className="font-cinzel mt-6 text-xs font-bold uppercase tracking-[0.3em] text-violet-300">Daily Fortune</p>
       <h1 className="mt-2 text-3xl font-black sm:text-4xl">今日の運勢</h1>
       <p className="mt-3 max-w-sm text-sm leading-7 text-white/70">
         総合運・恋愛運・金運・仕事運・健康運・対人運・おでかけ運。<br />
@@ -447,11 +472,15 @@ function ResultView({
   isGuest,
   awardedPoints,
   onReplay,
+  mode,
+  onToggleMode,
 }: {
   result: FortuneResult;
   isGuest: boolean;
   awardedPoints: number | null;
   onReplay: () => void;
+  mode: "3d" | "simple";
+  onToggleMode: () => void;
 }) {
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -497,6 +526,19 @@ function ResultView({
   const xUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}`;
   const lineUrl = `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(shareUrl)}`;
   const fullStars = Math.round(result.overall.score);
+
+  if (mode === "3d") {
+    return (
+      <FortuneExperience3D
+        result={result}
+        isGuest={isGuest}
+        awardedPoints={awardedPoints}
+        onReplay={onReplay}
+        onSwitchMode={onToggleMode}
+        share={{ onSaveImage: saveImage, saving, onCopy: copyShare, copied, xUrl, lineUrl }}
+      />
+    );
+  }
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
@@ -570,6 +612,12 @@ function ResultView({
 
       {/* フッター操作 */}
       <div className="mt-6 flex flex-col items-center gap-3">
+        <button
+          onClick={onToggleMode}
+          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
+        >
+          <Gem className="h-4 w-4" /> 3Dクリスタルで見る
+        </button>
         <button onClick={onReplay} className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/60 hover:text-white">
           <RefreshCw className="h-4 w-4" /> もう一度見る
         </button>
@@ -627,7 +675,7 @@ function DesktopResultDashboard({
             <AnalysisTile
               icon={<TrendingUp className="h-4 w-4" />}
               label="今日の強み"
-              title={strongest.label}
+              title={CATEGORY_LABEL[strongest.key]}
               value={strongest.score.toFixed(1)}
               color={LEVEL[strongest.band].color}
               expanded
@@ -637,7 +685,7 @@ function DesktopResultDashboard({
             <AnalysisTile
               icon={<BarChart3 className="h-4 w-4" />}
               label="整えるポイント"
-              title={focus.label}
+              title={CATEGORY_LABEL[focus.key]}
               value={focus.score.toFixed(1)}
               color={LEVEL[focus.band].color}
               expanded
@@ -668,11 +716,23 @@ function DesktopResultDashboard({
           <LuckyPanel label="ラッキーナンバー">
             <p className="mt-2 text-4xl font-black text-violet-200">{result.lucky.number}</p>
           </LuckyPanel>
-          <LuckyPanel label="ラッキースポット">
+          <LuckyPanel label="キーアイテム">
             {result.lucky.item ? (
-              <Link href={result.lucky.item.href} className="mt-2 inline-flex items-center justify-center gap-1 text-xs font-bold text-violet-200 hover:underline">
-                <MapPin className="h-3.5 w-3.5" />
-                {result.lucky.item.name.slice(0, 18)}
+              <Link href={result.lucky.item.href} className="group mt-2 block">
+                {result.lucky.item.image ? (
+                  <Image
+                    src={result.lucky.item.image}
+                    alt={result.lucky.item.name}
+                    width={72}
+                    height={72}
+                    className="mx-auto h-12 w-12 rounded-xl object-cover ring-1 ring-white/20 transition group-hover:ring-white/50"
+                  />
+                ) : (
+                  <span className="mx-auto grid h-12 w-12 place-items-center rounded-xl bg-white/10">
+                    <Gem className="h-5 w-5 text-violet-200" />
+                  </span>
+                )}
+                <span className="mt-1.5 block truncate text-xs font-bold text-violet-200 group-hover:underline">{result.lucky.item.name}</span>
               </Link>
             ) : (
               <p className="mt-2 text-xs text-white/40">—</p>
@@ -737,7 +797,7 @@ function ScoreMeter({ c, delay }: { c: FortuneScore; delay: number }) {
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <span className="text-sm font-black">{c.label}</span>
+          <span className="text-sm font-black">{CATEGORY_LABEL[c.key]}</span>
           <p className="mt-1 text-xs leading-5 text-white/60">{c.text}</p>
         </div>
         <span className="shrink-0 text-right text-sm">

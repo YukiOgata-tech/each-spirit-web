@@ -1,16 +1,17 @@
 "use client";
 
 import type { ReactNode } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   ChevronDown,
-  MapPin,
+  Gem,
   MoonStar,
 } from "lucide-react";
 import { categoryIcon } from "@/components/fortune/FortuneCategoryDetails";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
-import { LEVEL, type FortuneCategoryKey, type FortuneResult, type FortuneScore } from "@/lib/fortune";
+import { CATEGORY_LABEL, LEVEL, type FortuneCategoryKey, type FortuneResult, type FortuneScore } from "@/lib/fortune";
 
 const CATEGORY_ACCENT: Partial<Record<FortuneCategoryKey, string>> = {
   love: "#fb7185",
@@ -125,7 +126,7 @@ function CategoryCard({ category }: { category: FortuneScore }) {
   return (
     <a
       href={`#fortune-detail-${category.key}`}
-      aria-label={`${category.label}の詳しい説明を見る`}
+      aria-label={`${CATEGORY_LABEL[category.key]}の詳しい説明を見る`}
       className="group relative min-w-0 overflow-hidden rounded-2xl border px-3 py-1.5 shadow-lg shadow-black/20 transition active:scale-[0.98] sm:py-3"
       style={{
         borderColor: `${accent}38`,
@@ -141,7 +142,7 @@ function CategoryCard({ category }: { category: FortuneScore }) {
           <span className="relative" style={{ color: accent }}>{categoryIcon(category.key)}</span>
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-[11px] font-bold text-white/85">{category.label}</p>
+          <p className="truncate text-[11px] font-bold text-white/85">{CATEGORY_LABEL[category.key]}</p>
           <div className="mt-1 flex items-end gap-1">
             <p className="text-2xl font-bold leading-none tabular-nums text-white">{score}</p>
             <span className="mb-0.5 text-[9px] font-bold text-white/55">/100</span>
@@ -182,10 +183,20 @@ function LuckyNumber({ number }: { number: number }) {
 function LuckySpot({ item }: { item: FortuneResult["lucky"]["item"] }) {
   return (
     <div className="min-w-0 text-center">
-      <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-200 shadow-lg shadow-black/30">
-        <MapPin className="h-6 w-6" />
-      </span>
-      <p className="mt-2 text-[10px] font-bold text-white/65">スポット</p>
+      {item?.image ? (
+        <Image
+          src={item.image}
+          alt={item.name}
+          width={72}
+          height={72}
+          className="mx-auto h-14 w-14 rounded-2xl object-cover ring-1 ring-white/25 shadow-lg shadow-black/30"
+        />
+      ) : (
+        <span className="mx-auto grid h-14 w-14 place-items-center rounded-full border border-sky-300/30 bg-sky-400/12 text-sky-200 shadow-lg shadow-black/30">
+          <Gem className="h-6 w-6" />
+        </span>
+      )}
+      <p className="mt-2 text-[10px] font-bold text-white/65">キーアイテム</p>
       {item ? (
         <Link href={item.href} className="mt-1 block truncate text-xs font-bold text-sky-200 underline-offset-2 hover:underline">
           {item.name}
