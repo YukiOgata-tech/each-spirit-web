@@ -81,7 +81,10 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 REVALIDATE_SECRET=
+NEXT_PUBLIC_GA_MEASUREMENT_ID=
 ```
+
+`NEXT_PUBLIC_GA_MEASUREMENT_ID` は Google Analytics 4 の測定 ID（例: `G-XXXXXXXXXX`）です。未設定の場合、Google Analytics タグは出力されません。
 
 `es` スキーマを API から使うには、Supabase Dashboard の Settings -> API -> Exposed schemas に `es` を追加する必要があります。詳細は `supabase/README.md` を参照してください。
 
