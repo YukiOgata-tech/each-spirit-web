@@ -1,4 +1,5 @@
 import type { LeisureSpot } from "@/lib/types";
+import { isAllowedImageSrc } from "@/lib/image-hosts";
 
 export type LeisureIconKey = "building" | "cableCar" | "fish" | "flask" | "flower" | "mountain" | "ship" | "trees" | "waves";
 
@@ -120,5 +121,10 @@ const fallbackByKind: Record<LeisureSpot["kind"], LeisureVisual> = {
 };
 
 export function getLeisureVisual(spot: LeisureSpot): LeisureVisual {
-  return visuals[spot.slug] ?? fallbackByKind[spot.kind];
+  const base = visuals[spot.slug] ?? fallbackByKind[spot.kind];
+  // DB（es.items.image）に実画像が入っていればそれを最優先。未設定時のみ厳選ストック画像へフォールバック。
+  if (isAllowedImageSrc(spot.imageUrl)) {
+    return { ...base, imageUrl: spot.imageUrl as string, imageAlt: spot.name };
+  }
+  return base;
 }

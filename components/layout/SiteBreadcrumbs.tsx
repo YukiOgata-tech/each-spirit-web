@@ -19,6 +19,8 @@ const LABEL_MAP: Record<string, string> = {
   // 構造セグメント
   rankings: "ランキング", articles: "記事", shops: "店舗", products: "商品", salons: "サロン",
   hotels: "宿", agencies: "旅行会社", items: "店舗・商品",
+  // 地域
+  niigata: "新潟",
   // ユーティリティ / アカウント
   account: "マイページ", search: "検索", about: "運営情報", contact: "お問い合わせ",
   privacy: "プライバシーポリシー", disclaimer: "免責事項", fortune: "占い",
@@ -43,11 +45,15 @@ export function SiteBreadcrumbs() {
   const segments = pathname.split("/").filter(Boolean);
   if (segments.length === 0) return null;
 
-  const crumbs = segments.map((seg, i) => ({
+  // href は実URLどおりに維持しつつ、隣り合うラベルが重複するセグメントを畳む。
+  // 例: /leisure/spots/spots/{slug} は section_slug と item_path_segment が同じ "spots" のため
+  //     「スポット › スポット」と二重表示になる。これを1つにまとめる。
+  const allCrumbs = segments.map((seg, i) => ({
     label: LABEL_MAP[seg] ?? humanize(seg),
     href: "/" + segments.slice(0, i + 1).join("/"),
-    last: i === segments.length - 1,
   }));
+  const deduped = allCrumbs.filter((c, i) => i === 0 || c.label !== allCrumbs[i - 1].label);
+  const crumbs = deduped.map((c, i) => ({ ...c, last: i === deduped.length - 1 }));
 
   return (
     <nav aria-label="パンくずリスト" className="border-t border-slate-200/70 bg-slate-50/72">

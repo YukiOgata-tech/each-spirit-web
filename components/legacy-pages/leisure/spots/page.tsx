@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
-import { getLeisureRegions } from "@/lib/content";
+import { ArrowRight, BookOpen, Trophy } from "lucide-react";
+import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureRegions } from "@/lib/content";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
+import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
+import { ArticleCard } from "@/components/cards/ArticleCard";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -12,7 +14,11 @@ export const metadata = pageMetadata({
 });
 
 export default async function LeisureSpotsPage() {
-  const regions = await getLeisureRegions();
+  const [regions, rankings, articles] = await Promise.all([
+    getLeisureRegions(),
+    getLeisureRankings("niigata"),
+    getArticlesBySection("leisure", "spots"),
+  ]);
   return (
     <main className="section-shell">
       <section className="rounded-lg border border-cyan-100 bg-white p-5 shadow-soft sm:p-8">
@@ -30,7 +36,35 @@ export default async function LeisureSpotsPage() {
         ))}
       </div>
 
+      {rankings.length > 0 && (
+        <section className="mt-12">
+          <div className="mb-5 flex items-center gap-3">
+            <Trophy className="h-6 w-6 text-[var(--primary)]" />
+            <h2 className="section-heading">目的別ランキング</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {rankings.slice(0, 4).map((ranking) => (
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <RegionlessItems majorCategory="leisure" sectionSlug="spots" itemPathSegment="spots" className="mt-12" heading="エリアを問わず掲載のスポット" />
+
+      {articles.length > 0 && (
+        <section className="mt-12">
+          <div className="mb-5 flex items-center gap-3">
+            <BookOpen className="h-6 w-6 text-[var(--primary)]" />
+            <h2 className="section-heading">読みもの・選び方ガイド</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {articles.slice(0, 3).map((article) => (
+              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+            ))}
+          </div>
+        </section>
+      )}
     </main>
   );
 }

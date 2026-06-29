@@ -1,9 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
+import { ArrowRight, BookOpen, Trophy } from "lucide-react";
 import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
+import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
+import { ArticleCard } from "@/components/cards/ArticleCard";
 import { Badge } from "@/components/ui/badge";
-import { getCategory, getLeisureRegions, getContentSections } from "@/lib/content";
+import { Button } from "@/components/ui/button";
+import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, getLeisureRegions, getContentSections } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
@@ -28,7 +32,12 @@ const regionImages: Record<string, { src: string; alt: string }> = {
 
 export default async function LeisurePage() {
   const category = getCategory("leisure");
-  const [regions, sections] = await Promise.all([getLeisureRegions(), getContentSections("leisure")]);
+  const [regions, sections, rankings, articles] = await Promise.all([
+    getLeisureRegions(),
+    getContentSections("leisure"),
+    getLeisureRankings("niigata"),
+    getArticlesBySection("leisure", "spots"),
+  ]);
 
   return (
     <div className="leisure-theme">
@@ -79,6 +88,53 @@ export default async function LeisurePage() {
               </div>
             </Link>
           ))}
+        </div>
+      </section>
+
+      {rankings.length > 0 && (
+        <section className="section-shell">
+          <div className="mb-5 flex items-center gap-3">
+            <Trophy className="h-6 w-6 text-[var(--primary)]" />
+            <h2 className="section-heading">目的別の人気ランキング</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {rankings.slice(0, 4).map((ranking) => (
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {articles.length > 0 && (
+        <section className="section-shell">
+          <div className="mb-5 flex items-center gap-3">
+            <BookOpen className="h-6 w-6 text-[var(--primary)]" />
+            <h2 className="section-heading">読みもの・選び方ガイド</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {articles.slice(0, 3).map((article) => (
+              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      <section className="section-shell">
+        <div className="overflow-hidden rounded-lg border border-cyan-200 bg-[linear-gradient(135deg,#e6fbff_0%,#fff_55%,#fff0d8_100%)] p-6 shadow-soft sm:p-9">
+          <h2 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">行き先に迷ったら</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            天候・同行者・移動手段でレジャースポットを比較。まずは新潟のスポット一覧とランキングからチェックしてみてください。
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href={routes.leisureRegion("niigata")}>新潟のレジャーを見る<ArrowRight className="h-4 w-4" /></Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={routes.sectionRankings("leisure", "spots")}>
+                <Trophy className="h-4 w-4" />ランキング一覧
+              </Link>
+            </Button>
+          </div>
         </div>
       </section>
     </div>

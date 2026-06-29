@@ -1,12 +1,13 @@
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowRight, Building2, CloudRain, Mountain, TentTree, Trophy } from "lucide-react";
+import { ArrowRight, BookOpen, Building2, CloudRain, Mountain, TentTree, Trophy } from "lucide-react";
 import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
 import { LeisureIcon } from "@/components/leisure/LeisureIcon";
 import { LeisureSpotCard } from "@/components/leisure/LeisureSpotCard";
+import { ArticleCard } from "@/components/cards/ArticleCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { getLeisureRankings, getLeisureSpots } from "@/lib/content";
+import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureSpots } from "@/lib/content";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
@@ -23,7 +24,11 @@ const areaFacets = ["新潟市", "北区", "秋葉区", "十日町", "湯沢", "
 const purposeFacets = ["アウトドア", "インドア", "雨の日", "子連れ", "公共系", "車なし", "写真目的", "半日観光"];
 
 export default async function NiigataLeisurePage() {
-  const [spots, rankings] = await Promise.all([getLeisureSpots(region), getLeisureRankings(region)]);
+  const [spots, rankings, articles] = await Promise.all([
+    getLeisureSpots(region),
+    getLeisureRankings(region),
+    getArticlesBySection("leisure", "spots"),
+  ]);
   const outdoorSpots = spots.filter((spot) => spot.kind === "outdoor");
   const indoorSpots = spots.filter((spot) => spot.kind === "indoor");
   const hybridSpots = spots.filter((spot) => spot.kind === "hybrid");
@@ -136,6 +141,20 @@ export default async function NiigataLeisurePage() {
         </div>
       </section>
 
+      {articles.length > 0 && (
+        <section className="section-shell">
+          <div className="mb-5 flex items-center gap-3">
+            <BookOpen className="h-6 w-6 text-[var(--primary)]" />
+            <h2 className="section-heading">読みもの・選び方ガイド</h2>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {articles.slice(0, 3).map((article) => (
+              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+            ))}
+          </div>
+        </section>
+      )}
+
       <section className="section-shell">
         <div className="rounded-lg border border-cyan-200 bg-white p-5 shadow-sm">
           <div className="flex items-start gap-3">
@@ -146,6 +165,25 @@ export default async function NiigataLeisurePage() {
                 営業時間、料金、休館日、運行状況は変更される可能性があります。各スポットには確認日と参照ソースを残し、季節営業や予約が必要な施設は詳細ページで注意点を明記します。
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="section-shell">
+        <div className="overflow-hidden rounded-lg border border-cyan-200 bg-[linear-gradient(135deg,#e6fbff_0%,#fff_55%,#fff0d8_100%)] p-6 shadow-soft sm:p-9">
+          <h2 className="text-2xl font-bold tracking-normal text-slate-950 sm:text-3xl">次の休日の行き先を決める</h2>
+          <p className="mt-3 max-w-2xl text-sm leading-7 text-slate-600 sm:text-base">
+            目的別ランキングで候補を絞り込み、気になったスポットの詳細ページで料金・駐車場・営業時間をチェック。天気や同行者に合わせて選べます。
+          </p>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button asChild>
+              <Link href={routes.leisureRanking(region, "niigata-leisure-best")}>
+                <Trophy className="h-4 w-4" />おすすめランキングを見る
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="#spots">スポット一覧へ<ArrowRight className="h-4 w-4" /></Link>
+            </Button>
           </div>
         </div>
       </section>
