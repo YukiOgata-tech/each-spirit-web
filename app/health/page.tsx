@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -61,7 +61,7 @@ export default async function HealthPage() {
               <Link href={routes.articles} className="flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">記事一覧<ArrowRight className="h-4 w-4" /></Link>
             </div>
             <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.slice(0, 6).map((article) => <ArticleCard key={article.slug} article={article} href={articleHref(article)} />)}
+              {articles.slice(0, 6).map((article) => <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />)}
             </div>
           </section>
         )}

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { ArrowRight, ImageOff, MapPin, Trophy } from "lucide-react";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { TagList } from "@/components/cards/TagList";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -316,7 +316,7 @@ export async function GenericSectionIndex({ majorCategory, sectionSlug }: { majo
           <p className="text-sm font-semibold text-[var(--primary)]">Articles</p>
           <h2 className="mt-1 text-2xl font-bold tracking-normal text-slate-950">記事</h2>
           <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {articles.slice(0, 6).map((article) => <ArticleCard key={article.slug} article={article} href={articleHref(article)} />)}
+            {articles.slice(0, 6).map((article) => <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />)}
           </div>
         </section>
       )}

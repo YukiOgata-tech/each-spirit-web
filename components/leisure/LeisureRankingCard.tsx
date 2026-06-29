@@ -1,33 +1,75 @@
 import Link from "next/link";
-import { ArrowRight, Trophy } from "lucide-react";
+import Image from "next/image";
+import { ArrowRight, ListChecks, Trophy } from "lucide-react";
 import type { LeisureRanking } from "@/lib/types";
 import { routes } from "@/lib/routes";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { safeImageSrc } from "@/lib/image-hosts";
+import { RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
+import { Badge } from "@/components/ui/badge";
 
-export function LeisureRankingCard({ region, ranking }: { region: string; ranking: LeisureRanking }) {
+export function LeisureRankingCard({
+  region,
+  ranking,
+  imageUrl,
+}: {
+  region: string;
+  ranking: LeisureRanking;
+  /** カードごとに違う絵を出すための上位スポット画像（任意）。未指定なら ranking 自身の画像→フォールバック。 */
+  imageUrl?: string;
+}) {
+  const hero = safeImageSrc(imageUrl ?? ranking.imageUrl, RANKING_FALLBACK_IMAGE);
+  const criteria = ranking.criteria.slice(0, 3);
+
   return (
     <Link
       href={routes.leisureRanking(region, ranking.slug)}
-      className="group block h-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2 rounded-[var(--radius)]"
+      className="group flex h-full flex-col overflow-hidden rounded-lg border border-[var(--border)] bg-white shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-cyan-300 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2"
     >
-      <Card className="h-full border-[var(--border)] transition-all duration-200 group-hover:-translate-y-1 group-hover:shadow-md group-hover:border-cyan-300">
-        <CardHeader>
-          <div className="flex items-center gap-2 text-sm font-semibold text-[var(--primary)]">
-            <Trophy className="h-4 w-4" />
-            Ranking
+      <div className="relative aspect-video overflow-hidden">
+        <Image
+          src={hero}
+          alt={ranking.title}
+          fill
+          sizes="(min-width: 768px) 50vw, 100vw"
+          className="object-cover transition duration-500 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-950/12 to-transparent" />
+        <div className="absolute left-3 top-3 inline-flex items-center gap-1.5 rounded-md bg-white/92 px-2.5 py-1 text-xs font-bold text-[var(--primary)] shadow-sm backdrop-blur">
+          <Trophy className="h-3.5 w-3.5" />
+          ランキング
+        </div>
+        {ranking.items.length > 0 && (
+          <div className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-md bg-slate-950/55 px-2.5 py-1 text-xs font-bold text-white backdrop-blur">
+            <ListChecks className="h-3.5 w-3.5" />
+            {ranking.items.length}スポット
           </div>
-          <CardTitle className="transition-colors duration-200 group-hover:text-[var(--primary)]">
-            {ranking.title}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <p className="text-sm leading-7 text-slate-600">{ranking.description}</p>
-          <div className="flex items-center gap-1.5 text-sm font-semibold text-[var(--primary)]">
+        )}
+        <h3 className="absolute bottom-3 left-3 right-3 line-clamp-2 text-lg font-bold leading-snug text-white sm:text-xl">
+          {ranking.title}
+        </h3>
+      </div>
+
+      <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+        <p className="line-clamp-2 text-sm leading-6 text-slate-600">{ranking.description}</p>
+
+        {criteria.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {criteria.map((c) => (
+              <Badge key={c} className="bg-cyan-50 text-cyan-900">{c}</Badge>
+            ))}
+          </div>
+        )}
+
+        <div className="mt-auto flex items-center justify-between pt-1">
+          {ranking.lastUpdatedAt && (
+            <span className="text-xs text-slate-400">更新 {ranking.lastUpdatedAt}</span>
+          )}
+          <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">
             ランキングを見る
             <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
-          </div>
-        </CardContent>
-      </Card>
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }

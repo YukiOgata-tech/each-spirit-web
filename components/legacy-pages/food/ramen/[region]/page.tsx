@@ -2,13 +2,14 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, MapPin, Soup, Trophy } from "lucide-react";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { ItemCard } from "@/components/cards/ItemCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  articleHref,
   getRamenRegion,
   getRamenRegions,
   getRamenItemsByRegion,
@@ -175,7 +176,7 @@ export default async function RamenRegionPage({ params }: PageProps) {
           <h2 className="section-heading">{regionData.shortName}ラーメン記事</h2>
           <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {articles.map((article) => (
-              <ArticleCard key={article.slug} article={article} />
+              <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />
             ))}
           </div>
         </section>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Coffee, Trophy } from "lucide-react";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { CafeCard } from "@/components/cafe/CafeCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { JsonLd } from "@/components/seo/JsonLd";
@@ -142,7 +142,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
             <h2 className="section-heading mt-2">カフェ選びのガイド記事</h2>
             <div className="mt-6 grid gap-4 sm:grid-cols-2">
               {articles.map((article) => (
-                <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+                <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />
               ))}
             </div>
           </section>

@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Trophy } from "lucide-react";
-import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureRegions } from "@/lib/content";
+import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureRegions, getLeisureSpots } from "@/lib/content";
+import { leisureRankingImage } from "@/lib/leisure-visuals";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -14,10 +15,11 @@ export const metadata = pageMetadata({
 });
 
 export default async function LeisureSpotsPage() {
-  const [regions, rankings, articles] = await Promise.all([
+  const [regions, rankings, articles, spots] = await Promise.all([
     getLeisureRegions(),
     getLeisureRankings("niigata"),
     getArticlesBySection("leisure", "spots"),
+    getLeisureSpots("niigata"),
   ]);
   return (
     <main className="section-shell">
@@ -44,7 +46,7 @@ export default async function LeisureSpotsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {rankings.slice(0, 4).map((ranking) => (
-              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} imageUrl={leisureRankingImage(ranking, spots)} />
             ))}
           </div>
         </section>
@@ -60,7 +62,7 @@ export default async function LeisureSpotsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {articles.slice(0, 3).map((article) => (
-              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+              <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />
             ))}
           </div>
         </section>

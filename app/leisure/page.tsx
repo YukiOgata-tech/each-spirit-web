@@ -4,10 +4,11 @@ import { ArrowRight, BookOpen, Trophy } from "lucide-react";
 import { MajorCategoryHero } from "@/components/category/MajorCategoryHero";
 import { MajorSectionDirectory } from "@/components/generic/SectionNavigation";
 import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, getLeisureRegions, getContentSections } from "@/lib/content";
+import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, getLeisureRegions, getLeisureSpots, getContentSections } from "@/lib/content";
+import { leisureRankingImage } from "@/lib/leisure-visuals";
 import { pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
@@ -32,11 +33,12 @@ const regionImages: Record<string, { src: string; alt: string }> = {
 
 export default async function LeisurePage() {
   const category = getCategory("leisure");
-  const [regions, sections, rankings, articles] = await Promise.all([
+  const [regions, sections, rankings, articles, spots] = await Promise.all([
     getLeisureRegions(),
     getContentSections("leisure"),
     getLeisureRankings("niigata"),
     getArticlesBySection("leisure", "spots"),
+    getLeisureSpots("niigata"),
   ]);
 
   return (
@@ -99,7 +101,7 @@ export default async function LeisurePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {rankings.slice(0, 4).map((ranking) => (
-              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} imageUrl={leisureRankingImage(ranking, spots)} />
             ))}
           </div>
         </section>
@@ -113,7 +115,7 @@ export default async function LeisurePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {articles.slice(0, 3).map((article) => (
-              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+              <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />
             ))}
           </div>
         </section>

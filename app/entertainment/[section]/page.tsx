@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { JsonLd } from "@/components/seo/JsonLd";
-import { ArticleCard } from "@/components/cards/ArticleCard";
+import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { EntertainmentCatalog } from "@/components/entertainment/EntertainmentCatalog";
 import { toCatalogTitle } from "@/components/entertainment/labels";
 import {
@@ -72,7 +72,7 @@ export default async function EntertainmentSectionPage({ params }: PageProps) {
           <h2 className="section-heading mb-4">{s.label}の記事</h2>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {articles.slice(0, 6).map((article) => (
-              <ArticleCard key={article.slug} article={article} href={articleHref(article)} />
+              <NewsFeatureCard key={article.slug} article={article} href={articleHref(article)} />
             ))}
           </div>
         </section>
