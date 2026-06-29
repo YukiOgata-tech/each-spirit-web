@@ -41,7 +41,7 @@ export function MobileFortuneResult({
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.45, ease: "easeOut" }}
-        className="relative overflow-hidden rounded-[28px] border border-white/15 bg-[#100d28] px-4 py-4 sm:py-6 text-white shadow-2xl shadow-black/40 sm:px-7 sm:py-8"
+        className="relative overflow-hidden rounded-[28px] border border-white/15 bg-[#100d28] px-4 py-4 text-white shadow-2xl shadow-black/40 sm:px-7 sm:py-8"
       >
         <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_8%,rgba(168,85,247,0.28),transparent_30%),radial-gradient(circle_at_88%_18%,rgba(59,130,246,0.24),transparent_34%),linear-gradient(180deg,#19113d_0%,#100d28_45%,#090b1d_100%)]" />
         <div className="pointer-events-none absolute inset-0 opacity-25 [background-image:linear-gradient(rgba(255,255,255,0.035)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.035)_1px,transparent_1px)] [background-size:28px_28px]" />
@@ -111,9 +111,9 @@ export function MobileFortuneResult({
 function SectionTitle({ children }: { children: ReactNode }) {
   return (
     <div className="flex items-center justify-center gap-3">
-      <span className="h-px w-10 bg-gradient-to-r from-transparent to-amber-300" />
+      <span className="h-px w-10 bg-linear-to-r from-transparent to-amber-300" />
       <h2 className="text-sm font-bold tracking-[0.14em] text-violet-200">{children}</h2>
-      <span className="h-px w-10 bg-gradient-to-l from-transparent to-amber-300" />
+      <span className="h-px w-10 bg-linear-to-l from-transparent to-amber-300" />
     </div>
   );
 }
@@ -138,7 +138,7 @@ function CategoryCard({ category }: { category: FortuneScore }) {
           className="relative grid h-14.5 w-14.5 shrink-0 place-items-center rounded-full"
           style={{ background: `conic-gradient(${accent} ${score}%, rgba(255,255,255,0.1) 0)` }}
         >
-          <div className="absolute inset-[5px] rounded-full bg-[#15112d]" />
+          <div className="absolute inset-1.25 rounded-full bg-[#15112d]" />
           <span className="relative" style={{ color: accent }}>{categoryIcon(category.key)}</span>
         </div>
         <div className="min-w-0 flex-1">

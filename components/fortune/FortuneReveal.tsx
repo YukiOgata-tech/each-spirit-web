@@ -103,7 +103,7 @@ function FortuneBackdrop() {
       {[0, 1, 2].map((i) => (
         <motion.span
           key={`shoot-${i}`}
-          className="absolute h-px w-28 bg-gradient-to-r from-white/0 via-white/90 to-white/0"
+          className="absolute h-px w-28 bg-linear-to-r from-white/0 via-white/90 to-white/0"
           style={{ top: `${8 + i * 20}%`, left: "-12%", rotate: "20deg" }}
           animate={{ x: ["0vw", "126vw"], opacity: [0, 1, 0] }}
           transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 8 + i * 5, delay: i * 3.5, ease: "easeIn" }}
@@ -341,7 +341,7 @@ function InputGate({
             max={date}
             min="1900-01-01"
             onChange={(e) => setBirthday(e.target.value)}
-            className="block min-w-0 w-full appearance-none rounded-xl border border-white/30 bg-white/[0.16] px-4 py-3 text-base font-semibold text-white outline-none transition focus:border-violet-200 focus:bg-white/[0.22] focus:ring-2 focus:ring-violet-300/35 [color-scheme:dark]"
+            className="block min-w-0 w-full appearance-none rounded-xl border border-white/30 bg-white/16 px-4 py-3 text-base font-semibold text-white outline-none transition focus:border-violet-200 focus:bg-white/[0.22] focus:ring-2 focus:ring-violet-300/35 [color-scheme:dark]"
             required
           />
         </div>
@@ -362,7 +362,7 @@ function InputGate({
                   className={`flex flex-col items-center gap-1.5 rounded-xl border px-2 py-3 text-sm font-bold transition ${
                     active
                       ? "border-violet-200 bg-violet-500/45 text-white shadow-lg shadow-violet-950/25"
-                      : "border-white/25 bg-white/10 text-white/[0.82] hover:border-white/40 hover:bg-white/16 hover:text-white"
+                      : "border-white/25 bg-white/10 text-white/82 hover:border-white/40 hover:bg-white/16 hover:text-white"
                   }`}
                 >
                   <Icon className="h-5 w-5" />
@@ -378,7 +378,7 @@ function InputGate({
         <button
           type="submit"
           disabled={!canSubmit}
-          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] hover:from-violet-400 hover:to-indigo-400 active:scale-95 disabled:cursor-not-allowed disabled:from-slate-500/70 disabled:to-slate-600/70 disabled:text-white/[0.88] disabled:shadow-none disabled:hover:scale-100"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-full bg-linear-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.02] hover:from-violet-400 hover:to-indigo-400 active:scale-95 disabled:cursor-not-allowed disabled:from-slate-500/70 disabled:to-slate-600/70 disabled:text-white/[0.88] disabled:shadow-none disabled:hover:scale-100"
         >
           <MoonStar className="h-5 w-5" /> {submitting ? "占っています…" : "この内容で占う"}
         </button>
@@ -418,7 +418,7 @@ function IdleView({ onStart, date }: { onStart: () => void; date: string }) {
       <p className="mt-2 text-xs text-white/40">{date}</p>
       <button
         onClick={onStart}
-        className="mt-8 inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
+        className="mt-8 inline-flex items-center gap-2 rounded-full bg-linear-to-r from-violet-500 to-indigo-500 px-8 py-3.5 text-base font-bold shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
       >
         <MoonStar className="h-5 w-5" /> 今日の運勢を占う
       </button>
@@ -436,7 +436,7 @@ function FortuneLoading({ animationData }: { animationData: object | null }) {
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center pt-0 -mt-10 text-center sm:pt-20 -mx-4">
-      <div className="relative grid aspect-square w-full max-w-[30rem] place-items-center max-sm:max-w-none bg-violet-400/20">
+      <div className="relative grid aspect-square w-full max-w-120 place-items-center max-sm:max-w-none bg-violet-400/20">
         <div className="absolute inset-[7%] rounded-full bg-white/10 shadow-2xl shadow-white/10 backdrop-blur-[2px]" />
         <div className="absolute inset-4 rounded-full bg-violet-400/20 blur-3xl" />
         {animationData ? (
@@ -614,7 +614,7 @@ function ResultView({
       <div className="mt-6 flex flex-col items-center gap-3">
         <button
           onClick={onToggleMode}
-          className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-r from-violet-500 to-indigo-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
+          className="inline-flex items-center gap-1.5 rounded-full bg-linear-to-r from-violet-500 to-indigo-500 px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-violet-900/40 transition hover:scale-[1.03] active:scale-95"
         >
           <Gem className="h-4 w-4" /> 3Dクリスタルで見る
         </button>
