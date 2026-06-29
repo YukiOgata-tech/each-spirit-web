@@ -20,6 +20,7 @@ import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
 import { MobileFortuneResult } from "@/components/fortune/MobileFortuneResult";
 import { FortuneCategoryDetails } from "@/components/fortune/FortuneCategoryDetails";
 import { createFortuneExportPng } from "@/components/fortune/fortune-export-canvas";
+import { trackEvent } from "@/lib/analytics";
 
 const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
   male: Mars,
@@ -32,6 +33,20 @@ const FORTUNE_LOADING_LOTTIE = "/lottie/es-loading02.json";
 const FORTUNE_LOADING_DURATION_MS = 3400;
 
 type Phase = "input" | "idle" | "loading" | "result";
+
+function fortuneEventParams(result: FortuneResult, isGuest: boolean, source: string) {
+  const sortedCategories = [...result.categories].sort((a, b) => b.score - a.score);
+  return {
+    date: result.date,
+    source,
+    user_status: isGuest ? "guest" : "member",
+    overall_score: result.overall.score,
+    overall_band: result.overall.band,
+    strongest_category: sortedCategories[0]?.key,
+    weakest_category: sortedCategories[sortedCategories.length - 1]?.key,
+    lucky_item_type: result.lucky.item?.type,
+  };
+}
 
 // 星の位置を決定論生成（SSR/CSRで一致させハイドレーション差異を防ぐ）
 const STARS = (() => {
@@ -146,18 +161,36 @@ export function FortuneReveal({
   }, []);
 
   function start() {
+    trackEvent("fortune_start", {
+      source: liveResult ? "saved_result" : "unknown",
+      user_status: isGuest ? "guest" : "member",
+      has_result: !!liveResult,
+    });
     setPhase("loading");
-    window.setTimeout(() => setPhase("result"), FORTUNE_LOADING_DURATION_MS);
+    window.setTimeout(() => {
+      setPhase("result");
+      if (liveResult) {
+        trackEvent("fortune_result_view", fortuneEventParams(liveResult, isGuest, "saved_result"));
+      }
+    }, FORTUNE_LOADING_DURATION_MS);
   }
 
   async function handleSubmit(input: FortuneInput) {
     if (submitting) return;
     setSubmitting(true);
     setError(null);
+    trackEvent("fortune_generate_start", {
+      user_status: isGuest ? "guest" : "member",
+      date,
+    });
     try {
       const res = await requestFortune(input);
       setLiveResult(res.result);
       setLiveAwarded(res.awardedPoints);
+      trackEvent("fortune_generate", {
+        ...fortuneEventParams(res.result, isGuest, "input_submit"),
+        awarded_points: res.awardedPoints ?? 0,
+      });
       if (isGuest) {
         try {
           window.localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify({ input, result: res.result }));
@@ -166,8 +199,15 @@ export function FortuneReveal({
         }
       }
       setPhase("loading");
-      window.setTimeout(() => setPhase("result"), FORTUNE_LOADING_DURATION_MS);
+      window.setTimeout(() => {
+        setPhase("result");
+        trackEvent("fortune_result_view", fortuneEventParams(res.result, isGuest, "generated_result"));
+      }, FORTUNE_LOADING_DURATION_MS);
     } catch {
+      trackEvent("fortune_generate_error", {
+        user_status: isGuest ? "guest" : "member",
+        date,
+      });
       setError("運勢の生成に失敗しました。入力内容を確認して、もう一度お試しください。");
     } finally {
       setSubmitting(false);
@@ -429,6 +469,7 @@ function ResultView({
   async function copyShare() {
     try {
       await navigator.clipboard.writeText(shareText);
+      trackEvent("fortune_share_copy", fortuneEventParams(result, isGuest, "text_copy"));
       setCopied(true);
       window.setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -445,6 +486,7 @@ function ResultView({
       a.href = dataUrl;
       a.download = `each-spirit-fortune-${result.date}.png`;
       a.click();
+      trackEvent("fortune_image_download", fortuneEventParams(result, isGuest, "result_card"));
     } catch {
       /* noop */
     } finally {
@@ -498,10 +540,22 @@ function ResultView({
            >
             <Download className="h-4 w-4" /> {saving ? "生成中…" : "画像を保存"}
           </button>
-          <a href={xUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-white/90">
+          <a
+            href={xUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent("fortune_share_click", fortuneEventParams(result, isGuest, "x"))}
+            className="inline-flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-sm font-bold text-slate-900 transition hover:bg-white/90"
+          >
             X でシェア
           </a>
-          <a href={lineUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full bg-[#06c755] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90">
+          <a
+            href={lineUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={() => trackEvent("fortune_share_click", fortuneEventParams(result, isGuest, "line"))}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[#06c755] px-4 py-2 text-sm font-bold text-white transition hover:opacity-90"
+          >
             LINE
           </a>
           <button onClick={copyShare} className="inline-flex items-center gap-1.5 rounded-full border border-white/20 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10">
