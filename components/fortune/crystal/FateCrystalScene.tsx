@@ -115,6 +115,7 @@ function CrystalRig({
   onHover,
   scrollProgress,
   pointer,
+  spinOnly,
 }: {
   result: FortuneResult;
   form: CrystalForm;
@@ -122,6 +123,7 @@ function CrystalRig({
   onHover?: (key: string | null) => void;
   scrollProgress?: MutableRefObject<number>;
   pointer?: MutableRefObject<{ x: number; y: number }>;
+  spinOnly?: boolean;
 }) {
   const group = useRef<THREE.Group>(null);
   const coreLight = useRef<THREE.PointLight>(null);
@@ -144,11 +146,17 @@ function CrystalRig({
     const g = group.current;
     if (g) {
       const t = state.clock.elapsedTime;
-      const px = pointer?.current.x ?? state.pointer.x;
-      const py = pointer?.current.y ?? state.pointer.y;
-      const scroll = scrollProgress?.current ?? 0;
-      g.rotation.y = THREE.MathUtils.damp(g.rotation.y, t * 0.1 + scroll * Math.PI * 1.4 + px * 0.95, 5, delta);
-      g.rotation.x = THREE.MathUtils.damp(g.rotation.x, -py * 0.55 + scroll * 0.3, 5, delta);
+      if (spinOnly) {
+        // モバイル: スクロール/傾き非依存で、設計した一定速度でその場回転
+        g.rotation.y = t * 0.35;
+        g.rotation.x = Math.sin(t * 0.32) * 0.12;
+      } else {
+        const px = pointer?.current.x ?? state.pointer.x;
+        const py = pointer?.current.y ?? state.pointer.y;
+        const scroll = scrollProgress?.current ?? 0;
+        g.rotation.y = THREE.MathUtils.damp(g.rotation.y, t * 0.1 + scroll * Math.PI * 1.4 + px * 0.95, 5, delta);
+        g.rotation.x = THREE.MathUtils.damp(g.rotation.x, -py * 0.55 + scroll * 0.3, 5, delta);
+      }
       g.position.y = Math.sin(t * 0.8) * 0.05;
     }
     if (coreLight.current) {
@@ -210,7 +218,7 @@ function ambientRng(seed: number): () => number {
 }
 
 /** 奥行きのある星粒。ゆっくり回転＋スクロールで視差。 */
-function StarField({ scrollProgress }: { scrollProgress?: MutableRefObject<number> }) {
+function StarField({ scrollProgress, spinOnly }: { scrollProgress?: MutableRefObject<number>; spinOnly?: boolean }) {
   const ref = useRef<THREE.Points>(null);
   const geo = useMemo(() => {
     const r = ambientRng(7);
@@ -231,8 +239,10 @@ function StarField({ scrollProgress }: { scrollProgress?: MutableRefObject<numbe
   useEffect(() => () => geo.dispose(), [geo]);
   useFrame((state) => {
     if (ref.current) {
-      ref.current.rotation.y = state.clock.elapsedTime * 0.012;
-      ref.current.rotation.x = (scrollProgress?.current ?? 0) * 0.4;
+      const t = state.clock.elapsedTime;
+      ref.current.rotation.y = t * 0.012;
+      // モバイル(spinOnly)はスクロール非依存の一定ドリフト
+      ref.current.rotation.x = spinOnly ? t * 0.01 : (scrollProgress?.current ?? 0) * 0.4;
     }
   });
   return (
@@ -246,10 +256,12 @@ function StarField({ scrollProgress }: { scrollProgress?: MutableRefObject<numbe
 function AmbientShards({
   scrollProgress,
   pointer,
+  spinOnly,
   count = 46,
 }: {
   scrollProgress?: MutableRefObject<number>;
   pointer?: MutableRefObject<{ x: number; y: number }>;
+  spinOnly?: boolean;
   count?: number;
 }) {
   const mesh = useRef<THREE.InstancedMesh>(null);
@@ -305,6 +317,12 @@ function AmbientShards({
     const g = group.current;
     if (!g) return;
     const t = state.clock.elapsedTime;
+    if (spinOnly) {
+      // モバイル: スクロール/ポインタに依存せず、その場でゆっくり漂う
+      g.rotation.y = t * 0.03;
+      g.position.y = THREE.MathUtils.damp(g.position.y, Math.sin(t * 0.2) * 0.6, 3, delta);
+      return;
+    }
     const scroll = scrollProgress?.current ?? 0;
     const px = pointer?.current.x ?? 0;
     g.rotation.y = t * 0.03 + px * 0.18;
@@ -338,59 +356,34 @@ function CosmicRing() {
   );
 }
 
-type DeviceOrientationCtor = {
-  requestPermission?: () => Promise<"granted" | "denied">;
-};
-
 export function FateCrystalScene({
   result,
   hovered,
   onHover,
   scrollProgress,
+  spinOnly,
 }: {
   result: FortuneResult;
   hovered: string | null;
   onHover?: (key: string | null) => void;
   scrollProgress?: MutableRefObject<number>;
+  /** モバイル等: スクロール/ポインタ/端末の傾きに依存せず一定速度で回転させる */
+  spinOnly?: boolean;
 }) {
   const form = useMemo(() => classifyCrystal(result), [result]);
   const pointer = useRef({ x: 0, y: 0 });
 
-  // PC: カーソル位置に追従。モバイル: 端末の傾き（対応端末のみ）。
+  // PC のみ: カーソル位置に追従。spinOnly（モバイル）では追従しない。
+  // 端末の傾き（deviceorientation）連動は不安定なため廃止。
   useEffect(() => {
-    const clamp = (v: number) => Math.min(1, Math.max(-1, v));
-
+    if (spinOnly) return;
     const onPointer = (e: PointerEvent) => {
       pointer.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       pointer.current.y = (e.clientY / window.innerHeight) * 2 - 1;
     };
     window.addEventListener("pointermove", onPointer, { passive: true });
-
-    const onOrient = (e: DeviceOrientationEvent) => {
-      if (e.gamma == null || e.beta == null) return;
-      pointer.current.x = clamp(e.gamma / 45);
-      pointer.current.y = clamp((e.beta - 45) / 45);
-    };
-    window.addEventListener("deviceorientation", onOrient, true);
-
-    const DOE =
-      typeof window !== "undefined" && "DeviceOrientationEvent" in window
-        ? (window.DeviceOrientationEvent as unknown as DeviceOrientationCtor)
-        : undefined;
-    let askPermission: (() => void) | null = null;
-    if (DOE && typeof DOE.requestPermission === "function") {
-      askPermission = () => {
-        DOE.requestPermission?.().catch(() => {});
-      };
-      window.addEventListener("touchend", askPermission, { once: true });
-    }
-
-    return () => {
-      window.removeEventListener("pointermove", onPointer);
-      window.removeEventListener("deviceorientation", onOrient, true);
-      if (askPermission) window.removeEventListener("touchend", askPermission);
-    };
-  }, []);
+    return () => window.removeEventListener("pointermove", onPointer);
+  }, [spinOnly]);
 
   return (
     <Canvas
@@ -403,11 +396,11 @@ export function FateCrystalScene({
       <ambientLight intensity={0.4} />
       <directionalLight position={[3, 4, 5]} intensity={1.2} />
       {/* ページ全体を包むアンビエント3D層 */}
-      <StarField scrollProgress={scrollProgress} />
+      <StarField scrollProgress={scrollProgress} spinOnly={spinOnly} />
       <CosmicRing />
-      <AmbientShards scrollProgress={scrollProgress} pointer={pointer} />
+      <AmbientShards scrollProgress={scrollProgress} pointer={pointer} spinOnly={spinOnly} />
       <Float speed={1.4} rotationIntensity={0.25} floatIntensity={0.5}>
-        <CrystalRig result={result} form={form} hovered={hovered} onHover={onHover} scrollProgress={scrollProgress} pointer={pointer} />
+        <CrystalRig result={result} form={form} hovered={hovered} onHover={onHover} scrollProgress={scrollProgress} pointer={pointer} spinOnly={spinOnly} />
       </Float>
       <Environment preset="night" />
       <EffectComposer>
