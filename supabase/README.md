@@ -82,6 +82,9 @@ es.*                ← each-spirit 専用スキーマ
 | `es.content_sections` | 大カテゴリ配下の中カテゴリ管理。`food/ramen`、`health/protein`、`entertainment/anime` などの表示名、URL、content model、地域/ターゲット要否を保持 |
 | `es.content_regions` | section 別の地域候補と表示用 data jsonb |
 | `es.content_targets` | section 別の target 候補と表示用 data jsonb |
+| `es.affiliate_platforms` | Amazon / 楽天 / Yahoo / 旅行予約 / ASP などのアフィリエイト検索リンクテンプレート管理 |
+| `es.affiliate_targets` | item / article / ranking / section ごとのアフィリエイト検索語、開示文、公開状態 |
+| `es.affiliate_links` | 特定 target 向けの個別URL・バナー・本文リンクなどの例外/上書きリンク |
 
 ## content_likes の content_kind 値
 
