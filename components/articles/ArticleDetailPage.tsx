@@ -28,11 +28,18 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
   ];
 
   return (
-    <article className="section-shell max-w-4xl">
+    <div className="section-shell max-w-7xl xl:grid xl:grid-cols-[minmax(220px,260px)_minmax(0,56rem)] xl:items-start xl:justify-center xl:gap-8">
       <JsonLd data={articleSchema(article, path)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(article.faqs)} />
-      
+
+      {headings.length > 0 && (
+        <aside className="hidden xl:block">
+          <ArticleTableOfContents headings={headings} className="sticky top-32 mt-0 max-h-[calc(100vh-9rem)] overflow-y-auto" />
+        </aside>
+      )}
+
+      <article className="min-w-0">
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:p-8 max-sm:shadow-none">
         <div className="flex flex-wrap gap-2">
           <Badge>{categoryLabel}</Badge>
@@ -67,7 +74,7 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
         </section>
       )}
 
-      {headings.length > 0 && <ArticleTableOfContents headings={headings} />}
+      {headings.length > 0 && <ArticleTableOfContents headings={headings} className="mt-4 sm:mt-6 xl:hidden" />}
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:mt-8 sm:p-8">
         <MarkdownRenderer
@@ -109,13 +116,14 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
         <FaqSection faqs={article.faqs} />
         <SourceList sources={article.sources} />
       </div>
-    </article>
+      </article>
+    </div>
   );
 }
 
-function ArticleTableOfContents({ headings }: { headings: MarkdownHeading[] }) {
+function ArticleTableOfContents({ headings, className = "" }: { headings: MarkdownHeading[]; className?: string }) {
   return (
-    <nav aria-label="この記事の目次" className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-5">
+    <nav aria-label="この記事の目次" className={`rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 ${className}`}>
       <p className="text-sm font-bold text-slate-950">この記事の目次</p>
       <ol className="mt-3 space-y-0.5 text-sm leading-6 sm:space-y-2">
         {headings.map((heading) => (
@@ -124,8 +132,8 @@ function ArticleTableOfContents({ headings }: { headings: MarkdownHeading[] }) {
               href={`#${heading.id}`}
               className={
                 heading.level === 3
-                  ? "block break-words border-l border-slate-200 pl-3 font-semibold text-slate-600 transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
-                  : "block break-words font-bold text-slate-800 transition hover:text-[var(--primary)]"
+                  ? "block break-words border-l border-blue-200 pl-3 font-semibold text-blue-700 underline decoration-blue-300/70 underline-offset-4 transition hover:border-blue-500 hover:text-blue-900 hover:decoration-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/45"
+                  : "block break-words font-bold text-blue-700 underline decoration-blue-300/70 underline-offset-4 transition hover:text-blue-900 hover:decoration-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400/45"
               }
             >
               {heading.text}
