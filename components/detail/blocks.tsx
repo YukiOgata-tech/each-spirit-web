@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight, CalendarDays, CheckCircle2, ExternalLink, MapPin, ShoppingCart, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
+import { AffiliateMarkdownCard } from "@/components/affiliate/AffiliateMarkdownCard";
 import type { MajorTheme } from "@/lib/major-theme";
 import type { ItemField } from "@/lib/admin-item-schema";
 import type { GenericItem } from "@/lib/types";
@@ -238,7 +239,25 @@ export function ArticleBodyBlock({ item }: { item: GenericItem }) {
   if (!item.bodyMd || item.bodyMd.trim() === "") return null;
   return (
     <section className={panelClass}>
-      <MarkdownRenderer markdown={item.bodyMd} />
+      <MarkdownRenderer
+        markdown={item.bodyMd}
+        affiliateContext={{
+          kind: "item",
+          title: item.name,
+          targetId: item.id,
+          targetSlug: item.slug,
+          majorCategory: item.majorCategory,
+          sectionSlug: item.sectionSlug,
+        }}
+        renderAffiliateCard={(fields, context) => (
+          <AffiliateMarkdownCard
+            query={fields.query}
+            title={fields.title}
+            description={fields.description}
+            content={context}
+          />
+        )}
+      />
     </section>
   );
 }

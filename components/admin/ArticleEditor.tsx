@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { ImagePlus, LinkIcon, List, Pilcrow, Plus, Quote, Send, Sparkles, Trash2, Type, Underline } from "lucide-react";
+import { ImagePlus, LinkIcon, List, Pilcrow, Plus, Quote, Send, ShoppingBag, Sparkles, Trash2, Type, Underline } from "lucide-react";
 import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
 import { Button } from "@/components/ui/button";
 import { SubmitButton } from "@/components/admin/SubmitButton";
@@ -361,6 +361,7 @@ export function ArticleEditor({ action, categoryOptions, initial }: ArticleEdito
             <Tool icon={Quote} label="引用" onClick={() => apply("\n\n> 引用または要点\n\n")} />
             <Tool icon={LinkIcon} label="リンク" onClick={() => apply("[リンクテキスト](/path/to/page)")} />
             <Tool icon={Sparkles} label="関連カード" onClick={() => apply("\n\n:::link-cards\n- [関連記事タイトル](/articles/ramen/example-slug) - 説明文\n:::\n\n")} />
+            <Tool icon={ShoppingBag} label="アフィリエイト" onClick={() => apply("\n\n:::affiliate-card\nquery: 検索キーワード\ntitle: 関連商品を探す\ndescription: 商品名・価格・在庫はリンク先で確認してください。\n:::\n\n")} />
             <Tool icon={ImagePlus} label="外部画像" onClick={() => apply("\n\n:::official-image\nsrc: https://example.com/image.webp\nalt: 画像の説明\ncaption: キャプション\nsource: 出典名\nsourceUrl: https://example.com/\n:::\n\n")} />
             <Button type="button" variant="outline" size="sm" disabled={uploading} className="max-sm:w-full" onClick={() => fileRef.current?.click()}>
               <ImagePlus className="h-4 w-4" />

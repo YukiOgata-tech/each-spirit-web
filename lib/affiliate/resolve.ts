@@ -169,6 +169,54 @@ async function resolvePlatformUrl(platform: AffiliatePlatform, query: string, ex
   return replaceTemplate(platform.searchUrlTemplate, query, platform);
 }
 
+async function getEnabledPlatforms() {
+  const sb = createServerClient();
+  const { data: platformRows } = await sb
+    .from("affiliate_platforms")
+    .select("*")
+    .eq("enabled", true)
+    .order("sort_order", { ascending: true })
+    .order("provider", { ascending: true });
+
+  const platforms = ((platformRows ?? []) as PlatformRow[]).map(mapPlatform);
+  if (platforms.length === 0) platforms.push(...fallbackPlatforms());
+  return platforms;
+}
+
+export async function getAffiliateLinksForQuery(
+  query: string,
+  options: { maxLinks?: number } = {},
+): Promise<{ links: AffiliateLink[]; disclosureRequired: boolean }> {
+  const trimmedQuery = query.trim();
+  if (!trimmedQuery) return { links: [], disclosureRequired: false };
+
+  const platforms = await getEnabledPlatforms();
+  const links = await Promise.all(
+    platforms.map(async (platform): Promise<AffiliateLink> => {
+      const url = await resolvePlatformUrl(platform, trimmedQuery);
+      return {
+        provider: platform.provider,
+        platformLabel: platform.label,
+        label: platform.label,
+        ctaLabel: platform.defaultCtaLabel,
+        url,
+        rel: platform.defaultRel,
+        role: "search",
+        placement: "article_body",
+        priority: 1000 + platform.sortOrder,
+        query: trimmedQuery,
+      };
+    }),
+  );
+
+  return {
+    links: links
+      .sort((a, b) => a.priority - b.priority || a.platformLabel.localeCompare(b.platformLabel, "ja"))
+      .slice(0, options.maxLinks ?? 4),
+    disclosureRequired: platforms.some((platform) => platform.disclosureRequired),
+  };
+}
+
 async function findAffiliateTarget(ref: AffiliateContentRef): Promise<AffiliateTarget | undefined> {
   const sb = createServerClient();
 
@@ -207,13 +255,8 @@ export async function getAffiliateSurface(
   if (!target) return undefined;
 
   const sb = createServerClient();
-  const [{ data: platformRows }, { data: linkRows }] = await Promise.all([
-    sb
-      .from("affiliate_platforms")
-      .select("*")
-      .eq("enabled", true)
-      .order("sort_order", { ascending: true })
-      .order("provider", { ascending: true }),
+  const [platforms, { data: linkRows }] = await Promise.all([
+    getEnabledPlatforms(),
     sb
       .from("affiliate_links")
       .select("*")
@@ -222,8 +265,6 @@ export async function getAffiliateSurface(
       .order("priority", { ascending: true }),
   ]);
 
-  const platforms = ((platformRows ?? []) as PlatformRow[]).map(mapPlatform);
-  if (platforms.length === 0) platforms.push(...fallbackPlatforms());
   if (platforms.length === 0) return undefined;
 
   const platformById = new Map(platforms.map((platform) => [platform.id, platform]));

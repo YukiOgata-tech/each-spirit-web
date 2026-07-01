@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import { ArrowUpRight, ExternalLink, ImageIcon, Link2 } from "lucide-react";
+import type { AffiliateContentRef } from "@/lib/affiliate/types";
 
 function stripFrontmatter(markdown: string) {
   return markdown
@@ -146,7 +147,18 @@ function renderTable(block: string, index: number) {
   );
 }
 
-export function MarkdownRenderer({ markdown }: { markdown: string }) {
+type MarkdownAffiliateContext = Pick<AffiliateContentRef, "kind" | "targetId" | "targetSlug" | "majorCategory" | "sectionSlug" | "title">;
+type MarkdownFields = Record<string, string>;
+
+export function MarkdownRenderer({
+  markdown,
+  affiliateContext,
+  renderAffiliateCard,
+}: {
+  markdown: string;
+  affiliateContext?: MarkdownAffiliateContext;
+  renderAffiliateCard?: (fields: MarkdownFields, context?: MarkdownAffiliateContext) => ReactNode;
+}) {
   const blocks = stripFrontmatter(markdown).split(/\n\n+/).map((block) => block.trim()).filter(Boolean);
   const headings = getMarkdownHeadings(markdown);
   let headingIndex = 0;
@@ -184,6 +196,21 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
                 )}
               </figcaption>
             </figure>
+          );
+        }
+
+        const affiliateCard = parseDirective(block, "affiliate-card");
+        if (affiliateCard) {
+          const fields = parseFields(affiliateCard);
+          const query = fields.query;
+          if (!query) return null;
+
+          if (renderAffiliateCard) return <div key={index}>{renderAffiliateCard(fields, affiliateContext)}</div>;
+
+          return (
+            <aside key={index} className="rounded-xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm leading-6 text-slate-600">
+              アフィリエイトカード: {fields.title || fields.query}
+            </aside>
           );
         }
 

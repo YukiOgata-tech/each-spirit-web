@@ -6,6 +6,7 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/content/LikeButton";
 import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
+import { AffiliateMarkdownCard } from "@/components/affiliate/AffiliateMarkdownCard";
 import { articleSchema, breadcrumbSchema, faqSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import type { Article } from "@/lib/types";
@@ -69,7 +70,25 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
       {headings.length > 0 && <ArticleTableOfContents headings={headings} />}
 
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:mt-8 sm:p-8">
-        <MarkdownRenderer markdown={markdown} />
+        <MarkdownRenderer
+          markdown={markdown}
+          affiliateContext={{
+            kind: "article",
+            title: article.title,
+            targetId: article.id,
+            targetSlug: article.slug,
+            majorCategory: article.majorCategory,
+            sectionSlug: article.sectionSlug,
+          }}
+          renderAffiliateCard={(fields, context) => (
+            <AffiliateMarkdownCard
+              query={fields.query}
+              title={fields.title}
+              description={fields.description}
+              content={context}
+            />
+          )}
+        />
       </div>
 
       <AffiliateSurface
