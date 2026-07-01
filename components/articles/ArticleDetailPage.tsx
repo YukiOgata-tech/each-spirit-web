@@ -1,10 +1,11 @@
 import { FaqSection } from "@/components/cards/FaqSection";
-import { MarkdownRenderer } from "@/components/cards/MarkdownRenderer";
+import { getMarkdownHeadings, MarkdownRenderer, type MarkdownHeading } from "@/components/cards/MarkdownRenderer";
 import { RelatedLinks } from "@/components/cards/RelatedLinks";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/content/LikeButton";
+import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
 import { articleSchema, breadcrumbSchema, faqSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import type { Article } from "@/lib/types";
@@ -18,6 +19,7 @@ type ArticleDetailPageProps = {
 };
 
 export function ArticleDetailPage({ article, markdown, path, categoryLabel, categoryHref }: ArticleDetailPageProps) {
+  const headings = getMarkdownHeadings(markdown);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: categoryLabel, href: categoryHref },
@@ -64,9 +66,24 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
         </section>
       )}
 
+      {headings.length > 0 && <ArticleTableOfContents headings={headings} />}
+
       <div className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:mt-8 sm:p-8">
         <MarkdownRenderer markdown={markdown} />
       </div>
+
+      <AffiliateSurface
+        content={{
+          kind: "article",
+          title: article.title,
+          targetId: article.id,
+          targetSlug: article.slug,
+          majorCategory: article.majorCategory,
+          sectionSlug: article.sectionSlug,
+        }}
+        placement="article_body"
+        className="mt-6 sm:mt-8"
+      />
 
       <div className="mt-6 grid gap-4 sm:mt-8 sm:gap-6">
         <RelatedLinks links={article.relatedLinks} />
@@ -74,5 +91,29 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
         <SourceList sources={article.sources} />
       </div>
     </article>
+  );
+}
+
+function ArticleTableOfContents({ headings }: { headings: MarkdownHeading[] }) {
+  return (
+    <nav aria-label="この記事の目次" className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-5">
+      <p className="text-sm font-bold text-slate-950">この記事の目次</p>
+      <ol className="mt-3 space-y-0.5 text-sm leading-6 sm:space-y-2">
+        {headings.map((heading) => (
+          <li key={heading.id} className={heading.level === 3 ? "pl-3 sm:pl-4" : undefined}>
+            <a
+              href={`#${heading.id}`}
+              className={
+                heading.level === 3
+                  ? "block break-words border-l border-slate-200 pl-3 font-semibold text-slate-600 transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+                  : "block break-words font-bold text-slate-800 transition hover:text-[var(--primary)]"
+              }
+            >
+              {heading.text}
+            </a>
+          </li>
+        ))}
+      </ol>
+    </nav>
   );
 }

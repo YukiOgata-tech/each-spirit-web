@@ -35,6 +35,17 @@ Yahoo!で探す
 - ランキング順位や編集評価と広告出稿は混同しない。
 - PR / 広告 / スポンサー枠は読者に分かる形で明示する。
 
+## 実装済みの表示面
+
+- `components/affiliate/AffiliateSurface.tsx`: article / item / ranking で使う共通表示。
+- `components/affiliate/AffiliateClickLink.tsx`: 外部遷移と GA4 `affiliate_click` 計測。
+- `lib/affiliate/resolve.ts`: `affiliate_targets` / `affiliate_platforms` / `affiliate_links` から表示リンクを解決。
+- `lib/affiliate/rakuten.ts`: 楽天市場商品検索APIから `affiliateUrl` を取得。API失敗時は検索URLへフォールバック。
+
+記事詳細は本文後、汎用 item 詳細は本文ブロック後、汎用 ranking 詳細はヒーロー直下に表示する。`affiliate_targets` が未登録のページでは何も表示しない。
+
+楽天のAPIキーや Amazon の associate tag は DB に入れず、`.env.local` / Vercel の環境変数で管理する。
+
 ## 初期導入優先度
 
 1. プロテイン商品詳細・ランキング
@@ -45,9 +56,6 @@ Yahoo!で探す
 
 ## 今後の実装候補
 
-- `AffiliateDisclosure` 共通コンポーネント
-- `AffiliateButtons` / `AffiliateCard` コンポーネント
 - Markdown の `:::affiliate-card` ブロック対応
 - platform master の管理 UI
 - item / article / ranking 編集 UI での `affiliate_query` 入力
-- `affiliate_click` GA4 event 送信

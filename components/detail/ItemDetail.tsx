@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
 import { breadcrumbSchema, faqSchema, itemSchema, speakableWebPageSchema } from "@/lib/seo";
 import { majorTheme } from "@/lib/major-theme";
 import type { ContentSection, GenericItem } from "@/lib/types";
@@ -46,6 +47,19 @@ export function ItemDetail({ item, section, majorLabel, path, breadcrumbs, aggre
       {item.faqs.length > 0 && <JsonLd data={faqSchema(item.faqs)} />}
 
       {Layout(ctx)}
+
+      <AffiliateSurface
+        content={{
+          kind: "item",
+          title: item.name,
+          targetId: item.id,
+          targetSlug: item.slug,
+          majorCategory: item.majorCategory,
+          sectionSlug: item.sectionSlug,
+        }}
+        placement="item_detail"
+        className="mt-8"
+      />
 
       <div className="mt-10">
         <Button asChild variant="outline" size="sm">

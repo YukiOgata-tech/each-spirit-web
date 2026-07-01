@@ -12,6 +12,31 @@ function stripFrontmatter(markdown: string) {
     .trim();
 }
 
+export type MarkdownHeading = {
+  id: string;
+  level: 2 | 3;
+  text: string;
+};
+
+export function getMarkdownHeadings(markdown: string): MarkdownHeading[] {
+  const rawHeadings: Omit<MarkdownHeading, "id">[] = stripFrontmatter(markdown)
+    .split(/\n\n+/)
+    .map((block) => block.trim())
+    .filter(Boolean)
+    .flatMap<Omit<MarkdownHeading, "id">>((block) => {
+      const h2 = block.match(/^##\s+(.+)$/);
+      if (h2) return [{ level: 2 as const, text: h2[1].trim() }];
+      const h3 = block.match(/^###\s+(.+)$/);
+      if (h3) return [{ level: 3 as const, text: h3[1].trim() }];
+      return [];
+    });
+
+  return rawHeadings.map((heading, index) => ({
+      ...heading,
+      id: `article-heading-${index + 1}`,
+  }));
+}
+
 function renderInline(text: string): ReactNode[] {
   const nodes: ReactNode[] = [];
   const pattern = /(\*\*([^*]+)\*\*|`([^`]+)`|\[([^\]]+)\]\(([^)]+)\))/g;
@@ -123,6 +148,8 @@ function renderTable(block: string, index: number) {
 
 export function MarkdownRenderer({ markdown }: { markdown: string }) {
   const blocks = stripFrontmatter(markdown).split(/\n\n+/).map((block) => block.trim()).filter(Boolean);
+  const headings = getMarkdownHeadings(markdown);
+  let headingIndex = 0;
 
   return (
     <div className="space-y-7">
@@ -139,8 +166,9 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
 
           return (
             <figure key={index} className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
-              <div className="relative aspect-[16/9] overflow-hidden bg-slate-100">
-                <Image src={src} alt={alt} fill sizes="(min-width: 1024px) 820px, 100vw" className="object-cover transition duration-500 group-hover:scale-[1.02]" />
+              <div className="relative overflow-hidden bg-slate-100">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt={alt} className="h-auto max-h-[760px] w-full object-contain transition duration-500 group-hover:scale-[1.01]" loading="lazy" />
                 <div className="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700 shadow-sm backdrop-blur">
                   <ImageIcon className="h-3.5 w-3.5 text-[var(--primary)]" />
                   公式画像
@@ -220,10 +248,12 @@ export function MarkdownRenderer({ markdown }: { markdown: string }) {
           return <h1 key={index} className="pt-2 text-3xl font-bold leading-tight tracking-normal text-slate-950">{renderInline(block.replace(/^#\s+/, ""))}</h1>;
         }
         if (block.startsWith("## ")) {
-          return <h2 key={index} className="border-b border-slate-200 pb-3 pt-4 text-2xl font-bold tracking-normal text-slate-950">{renderInline(block.replace(/^##\s+/, ""))}</h2>;
+          const id = headings[headingIndex++]?.id;
+          return <h2 id={id} key={index} className="scroll-mt-28 border-b border-slate-200 pb-3 pt-4 text-2xl font-bold tracking-normal text-slate-950">{renderInline(block.replace(/^##\s+/, ""))}</h2>;
         }
         if (block.startsWith("### ")) {
-          return <h3 key={index} className="pt-2 text-xl font-semibold tracking-normal text-slate-900">{renderInline(block.replace(/^###\s+/, ""))}</h3>;
+          const id = headings[headingIndex++]?.id;
+          return <h3 id={id} key={index} className="scroll-mt-28 pt-2 text-xl font-semibold tracking-normal text-slate-900">{renderInline(block.replace(/^###\s+/, ""))}</h3>;
         }
         if (block.startsWith("> ")) {
           return (

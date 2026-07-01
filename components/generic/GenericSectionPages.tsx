@@ -8,6 +8,7 @@ import { TagList } from "@/components/cards/TagList";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
 import { MajorSectionDirectory, SectionActionNav } from "@/components/generic/SectionNavigation";
 import { ItemDetail } from "@/components/detail/ItemDetail";
 import {
@@ -408,6 +409,17 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
           </div>
         </div>
       </section>
+
+      <AffiliateSurface
+        content={{
+          kind: "ranking",
+          title: ranking.title,
+          targetSlug: ranking.slug,
+          majorCategory,
+          sectionSlug,
+        }}
+        className="mt-8"
+      />
 
       {/* Entries */}
       <section id="ranking" className="mt-8 scroll-mt-24 space-y-4">
