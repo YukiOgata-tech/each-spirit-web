@@ -1,20 +1,18 @@
 import Link from "next/link";
 import Image from "next/image";
-import { Newspaper } from "lucide-react";
 import type { Article } from "@/lib/types";
-import { routes } from "@/lib/routes";
-import { majorMetaImage } from "@/lib/category-media";
+import { ogArticleImage, routes } from "@/lib/routes";
 import { isAllowedImageSrc } from "@/lib/image-hosts";
 
 /**
  * 記事一覧用のニュースアプリ型の行（左にタイトル＋メタ、右にサムネイル）。
  * モバイルは divide-y の密なリスト、デスクトップ（lg）は2カラムのカード grid を想定。
- * 画像は coverImageUrl → メジャーカテゴリの meta 画像 → プレースホルダーの順でフォールバック。
+ * 画像は coverImageUrl → タイトルから自動生成するサムネ（/api/og/article）の順でフォールバック。
  */
 export function ArticleListItem({ article, href }: { article: Article; href?: string }) {
   const link = href ?? routes.articleByCategory(article.category || "general", article.slug);
-  const imageSrc = article.coverImageUrl ?? majorMetaImage(article.majorCategory);
-  const showImage = isAllowedImageSrc(imageSrc);
+  const cover = isAllowedImageSrc(article.coverImageUrl) ? article.coverImageUrl! : undefined;
+  const imageSrc = cover ?? ogArticleImage(article.title);
 
   return (
     <Link
@@ -35,19 +33,13 @@ export function ArticleListItem({ article, href }: { article: Article; href?: st
       </div>
 
       <div className="relative aspect-16/10 w-28 shrink-0 overflow-hidden rounded-none bg-slate-100 sm:w-40">
-        {showImage ? (
-          <Image
-            src={imageSrc as string}
-            alt={article.title}
-            fill
-            sizes="(min-width: 640px) 160px, 112px"
-            className="object-cover transition duration-500 group-hover:scale-105"
-          />
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,var(--muted),#fff)]">
-            <Newspaper className="h-6 w-6 text-[var(--primary)]/45" />
-          </div>
-        )}
+        <Image
+          src={imageSrc}
+          alt={article.title}
+          fill
+          sizes="(min-width: 640px) 160px, 112px"
+          className="object-cover transition duration-500 group-hover:scale-105"
+        />
       </div>
     </Link>
   );

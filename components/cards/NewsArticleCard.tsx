@@ -1,6 +1,7 @@
 import Link from "next/link";
-import { CalendarDays, Newspaper } from "lucide-react";
+import { CalendarDays } from "lucide-react";
 import type { Article } from "@/lib/types";
+import { ogArticleImage } from "@/lib/routes";
 
 // 記事カバーは任意ドメインのURLが入りうるため next/image の host 許可リストを避け、
 // プレーン <img> + グラデーション背景で「読み込めない場合も崩れない」ようにする。
@@ -40,21 +41,17 @@ function gradientOf(article: Article) {
 }
 
 function Cover({ article, className }: { article: Article; className?: string }) {
+  // カバー画像 → タイトルから自動生成するサムネ（/api/og/article）の順でフォールバック。
+  const src = article.coverImageUrl ?? ogArticleImage(article.title);
   return (
     <div className={`relative overflow-hidden bg-gradient-to-br ${gradientOf(article)} ${className ?? ""}`}>
-      {article.coverImageUrl ? (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={article.coverImageUrl}
-          alt={article.title}
-          loading="lazy"
-          className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-        />
-      ) : (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Newspaper className="h-7 w-7 text-slate-400/70" />
-        </div>
-      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={article.title}
+        loading="lazy"
+        className="absolute inset-0 h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+      />
     </div>
   );
 }

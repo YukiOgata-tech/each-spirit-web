@@ -78,3 +78,12 @@ export const routes = {
 export function absoluteUrl(path: string) {
   return new URL(path, siteUrl).toString();
 }
+
+/**
+ * 記事の自動サムネ/OG画像URL（thumbnail.webp 背景＋タイトルを /api/og/article で動的生成）。
+ * 相対パスを返すので、pageMetadata（absoluteUrl で絶対化）と next/image（ローカルパス扱い）の
+ * 双方でそのまま使える。カバー画像未設定時のフォールバックに用いる。
+ */
+export function ogArticleImage(title: string) {
+  return `/api/og/article?title=${encodeURIComponent(title)}`;
+}

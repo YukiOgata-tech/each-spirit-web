@@ -2,8 +2,7 @@ import { notFound } from "next/navigation";
 import { ArticleDetailPage } from "@/components/articles/ArticleDetailPage";
 import { getGenericArticle, getGenericArticleMarkdown, getLatestArticles } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
-import { routes } from "@/lib/routes";
-import { majorMetaImage } from "@/lib/category-media";
+import { ogArticleImage, routes } from "@/lib/routes";
 
 type PageProps = { params: Promise<{ category: string; slug: string }> };
 
@@ -22,7 +21,7 @@ export async function generateMetadata({ params }: PageProps) {
     title: article.title,
     description: article.description,
     path: routes.articleByCategory(category, slug),
-    image: article.coverImageUrl ?? majorMetaImage(article.majorCategory),
+    image: article.coverImageUrl ?? ogArticleImage(article.title),
   });
 }
 
