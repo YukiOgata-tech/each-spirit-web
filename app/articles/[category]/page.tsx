@@ -1,4 +1,4 @@
-import { ArticleListItem } from "@/components/articles/ArticleListItem";
+import { ArticleTagBrowser } from "@/components/articles/ArticleTagBrowser";
 import { ArticleDiscovery } from "@/components/articles/ArticleDiscovery";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { articleHref, getGenericArticlesByCategory, getLatestArticles } from "@/lib/content";
@@ -40,15 +40,11 @@ export default async function ArticleCategoryPage({ params }: PageProps) {
       <div className="mb-5 border-b border-slate-400 pb-5 sm:mb-6">
         <p className="text-xs font-semibold uppercase tracking-widest text-[var(--primary)]">Articles / {category}</p>
         <h1 className="mt-2 text-2xl font-bold tracking-normal text-slate-950 sm:text-4xl">{category}の記事一覧</h1>
-        <p className="mt-2 text-sm leading-7 text-slate-500">公開記事を新しい順に表示しています（{articles.length}件）。</p>
+        <p className="mt-2 text-sm leading-7 text-slate-500">公開記事を新しい順に表示しています（{articles.length}件）。タグで絞り込んで探せます。</p>
       </div>
 
       {articles.length > 0 ? (
-        <div className="divide-y divide-slate-400 lg:grid lg:grid-cols-2 lg:gap-3 lg:divide-y-0">
-          {articles.map((article) => (
-            <ArticleListItem key={article.slug} article={article} href={articleHref(article)} />
-          ))}
-        </div>
+        <ArticleTagBrowser entries={articles.map((article) => ({ article, href: articleHref(article) }))} />
       ) : (
         <div className="rounded-lg border border-dashed border-slate-300 bg-white p-6 text-sm text-slate-500">公開中の記事はまだありません。</div>
       )}

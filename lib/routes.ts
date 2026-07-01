@@ -10,6 +10,7 @@ export const routes = {
   articles: "/articles",
   articleCategory: (category: string) => "/articles/" + category,
   articleByCategory: (category: string, slug: string) => "/articles/" + category + "/" + slug,
+  articleTag: (tag: string) => "/articles/tags/" + encodeURIComponent(tag),
   majorCategory: (category: string) => "/" + category,
   sectionRegion: (majorCategory: string, section: string, region: string) => "/" + majorCategory + "/" + section + "/" + region,
   sectionRankings: (majorCategory: string, section: string) => "/" + majorCategory + "/" + section + "/rankings",

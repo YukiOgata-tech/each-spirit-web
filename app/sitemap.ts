@@ -110,6 +110,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...Array.from(new Set(articles.map((article) => article.category || "general"))).map((category) => (
       { url: absoluteUrl(routes.articleCategory(category)), lastModified: new Date("2026-06-21") }
     )),
+    { url: absoluteUrl(routes.articles + "/tags"), lastModified: new Date("2026-06-21") },
+    ...Array.from(new Set(articles.flatMap((article) => article.tags))).filter(Boolean).map((tag) => (
+      { url: absoluteUrl(routes.articleTag(tag)), lastModified: new Date("2026-06-21") }
+    )),
     ...(await getRamenRegions()).map((region) => ({ url: absoluteUrl(routes.ramenRegion(region.slug)), lastModified: new Date("2026-06-08") })),
     ...articles.map((article) => ({ url: absoluteUrl(articleHref(article)), lastModified: new Date(article.updatedAt) })),
     ...ramenRankings.map((ranking) => ({ url: absoluteUrl(routes.ramenRanking(ranking.slug)), lastModified: new Date(ranking.lastUpdatedAt) })),

@@ -1,7 +1,9 @@
+import Link from "next/link";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { getMarkdownHeadings, MarkdownRenderer, type MarkdownHeading } from "@/components/cards/MarkdownRenderer";
 import { RelatedLinks } from "@/components/cards/RelatedLinks";
 import { SourceList } from "@/components/cards/SourceList";
+import { ArticleListItem } from "@/components/articles/ArticleListItem";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/content/LikeButton";
@@ -9,6 +11,7 @@ import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
 import { AffiliateMarkdownCard } from "@/components/affiliate/AffiliateMarkdownCard";
 import { articleSchema, breadcrumbSchema, faqSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
+import { readingTimeMinutes } from "@/lib/reading-time";
 import type { Article } from "@/lib/types";
 
 type ArticleDetailPageProps = {
@@ -17,10 +20,12 @@ type ArticleDetailPageProps = {
   path: string;
   categoryLabel: string;
   categoryHref: string;
+  related?: { article: Article; href: string }[];
 };
 
-export function ArticleDetailPage({ article, markdown, path, categoryLabel, categoryHref }: ArticleDetailPageProps) {
+export function ArticleDetailPage({ article, markdown, path, categoryLabel, categoryHref, related = [] }: ArticleDetailPageProps) {
   const headings = getMarkdownHeadings(markdown);
+  const readingMinutes = readingTimeMinutes(markdown);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: categoryLabel, href: categoryHref },
@@ -43,7 +48,11 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
       <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:p-8 max-sm:shadow-none">
         <div className="flex flex-wrap gap-2">
           <Badge>{categoryLabel}</Badge>
-          {article.tags.map((tag) => <Badge key={tag}>{tag}</Badge>)}
+          {article.tags.map((tag) => (
+            <Link key={tag} href={routes.articleTag(tag)} className="transition hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-1 rounded-full">
+              <Badge>#{tag}</Badge>
+            </Link>
+          ))}
         </div>
         <h1 data-speakable="title" className="mt-4 text-[1.75rem] font-bold leading-[1.15] tracking-normal text-slate-950 sm:mt-5 sm:text-5xl">{article.title}</h1>
         <p data-speakable="description" className="mt-3 text-sm leading-6 text-slate-600 sm:mt-4 sm:text-base sm:leading-8">{article.description}</p>
@@ -52,6 +61,7 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
           <p>更新日: {article.updatedAt}</p>
           <p>著者: {article.author.name}</p>
           <p>カテゴリ: {categoryLabel}</p>
+          <p>読了時間: 約{readingMinutes}分</p>
         </div>
         <LikeButton contentKind="article" targetId={article.id} className="mt-5" />
       </div>
@@ -116,6 +126,18 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
         <FaqSection faqs={article.faqs} />
         <SourceList sources={article.sources} />
       </div>
+
+      {related.length > 0 && (
+        <section className="mt-6 rounded-lg border border-slate-200 bg-white p-4 sm:mt-8 sm:p-6">
+          <h2 className="text-lg font-semibold text-slate-900">関連記事</h2>
+          <p className="mt-1 text-xs text-slate-500">同じタグが付いた記事です。</p>
+          <div className="mt-4 divide-y divide-slate-200 sm:grid sm:grid-cols-2 sm:gap-3 sm:divide-y-0">
+            {related.map(({ article: item, href }) => (
+              <ArticleListItem key={item.id} article={item} href={href} />
+            ))}
+          </div>
+        </section>
+      )}
       </article>
     </div>
   );
