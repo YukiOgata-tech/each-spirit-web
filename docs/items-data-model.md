@@ -43,7 +43,7 @@
 | `canonical_path` | text | 正規URLパス 基本的に /[major_category]/[section_slug]/[slug] or /[major_category]/[section_slug]/[region] があるので注意|
 | `item_class` | text | physical_service / intangible_service / media / person / product / other |
 | `item_kind` | text | 任意（genre 的な補助分類）。travel の agency/app 判定は item_class へ移行済み。あってもなくてもよい |
-| `created_at` / `updated_at` | timestamptz | 作成・更新（`lastVerifiedAt` は updated_at 由来） |
+| `created_at` / `updated_at` | timestamptz | 作成・更新。**`updated_at` は自動更新トリガを外した手動制御列**（INSERT は default now()。以降は明示的に書いた UPDATE のときだけ変わり、通常の編集で自動 now() されない）。表示日付として運用側で調整する。`lastVerifiedAt`（最終確認日）は updated_at 由来 |
 | `changed_at` | timestamptz | **データ変更検知用（非表示）**。INSERT/UPDATE でトリガ `es.set_changed_at()` が `now()` を入れる。差分 on-demand revalidation（`/api/revalidate` 既定の差分モード）が「前回以降に変わった行」を判定するのに使う。表示・SEO・並び替えには一切使わない（`updated_at` の手動調整と干渉させないための専用列） |
 
 ### 旧カラム（DROP 済み 2026-06）
