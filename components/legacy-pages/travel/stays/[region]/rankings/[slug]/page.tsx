@@ -4,6 +4,7 @@ import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { HotelCard } from "@/components/travel/HotelCard";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema, travelRankingItemListSchema } from "@/lib/seo";
@@ -56,7 +57,9 @@ export default async function TravelRankingPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.travelRanking(region, slug), ranking.title)} />
 
       
-      <section className="mt-4 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft sm:p-8">
+      <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mt-4" />
+
+      <section className="mt-6 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft sm:p-8">
         <Badge className="bg-[var(--muted)] text-[var(--primary)]">Ranking</Badge>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-4xl">{ranking.title}</h1>
         <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>

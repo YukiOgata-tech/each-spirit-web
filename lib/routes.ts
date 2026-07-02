@@ -88,3 +88,12 @@ export function absoluteUrl(path: string) {
 export function ogArticleImage(title: string) {
   return `/api/og/article?title=${encodeURIComponent(title)}`;
 }
+
+/**
+ * ランキングの自動サムネ/OG画像URL（表彰台背景＋タイトルを /api/og/ranking で動的生成）。
+ * 相対パスなので pageMetadata（absoluteUrl で絶対化）と next/image の双方でそのまま使える。
+ * ランキング画像未設定時のフォールバックに用いる。
+ */
+export function ogRankingImage(title: string) {
+  return `/api/og/ranking?title=${encodeURIComponent(title)}`;
+}

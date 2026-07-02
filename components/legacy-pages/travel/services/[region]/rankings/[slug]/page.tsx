@@ -4,6 +4,7 @@ import { ArrowRight, Building2, CheckCircle2, Trophy } from "lucide-react";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { TravelAgencyCard } from "@/components/travel-services/TravelAgencyCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,7 +60,9 @@ export default async function TravelServiceRankingPage({ params }: PageProps) {
       <JsonLd data={travelAgencyRankingItemListSchema(region, ranking, entries)} />
 
       
-      <header className="mt-5 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft">
+      <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mt-5" />
+
+      <header className="mt-6 rounded-xl border border-[var(--border)] bg-white p-6 shadow-soft">
         <Badge className="bg-[var(--muted)] text-[var(--primary)]"><Trophy className="mr-1 h-3.5 w-3.5" />Ranking</Badge>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">{ranking.title}</h1>
         <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>

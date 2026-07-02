@@ -18,8 +18,8 @@ import type {
   TravelAgency,
   TravelApp,
 } from "@/lib/types";
-import { absoluteUrl, routes, siteUrl } from "@/lib/routes";
-import { majorMetaImage, RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
+import { absoluteUrl, ogRankingImage, routes, siteUrl } from "@/lib/routes";
+import { majorMetaImage } from "@/lib/category-media";
 import { itemClassDef } from "@/lib/content-models";
 import type { GenericItem } from "@/lib/types";
 import { site } from "@/content/site";
@@ -66,8 +66,11 @@ export function pageMetadata({
   // 個別ページ・ランキングは generateMetadata 側で DB の image_url を image に渡すため、
   // image_url があればそれが最優先。無い場合のみこのフォールバックが効く。
   const isRankingPath = /\/rankings(?:\/|$)/.test(path);
-  const fallbackImage = isRankingPath ? RANKING_FALLBACK_IMAGE : majorImageForPath(path);
-  const resolvedImage = image ?? fallbackImage ?? site.ogImage;
+  // ランキングは画像未設定なら、タイトルから自動生成する OG 画像へフォールバック（記事と同方針）
+  const fallbackImage = isRankingPath ? ogRankingImage(title) : majorImageForPath(path);
+  // image は空文字も「未設定」とみなす（DB の image_url が空のケース）
+  const explicitImage = typeof image === "string" && image.trim() !== "" ? image : undefined;
+  const resolvedImage = explicitImage ?? fallbackImage ?? site.ogImage;
   const fullTitle =
     title === site.name || title === site.title ? title : title + " | " + site.titleSuffix;
   return {

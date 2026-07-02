@@ -7,6 +7,7 @@ import { SourceList } from "@/components/cards/SourceList";
 import { AttributedImage, resolveCredit } from "@/components/ui/AttributedImage";
 import { ScoreCircle } from "@/components/ui/ScoreCircle";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, cafeRankingItemListSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { getCafeRanking, getCafeRankingEntries, getCafeRankingsByRegion, getCafeRegions } from "@/lib/content";
@@ -70,6 +71,8 @@ export default async function CafeRankingPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.cafeRanking(region, slug), ranking.title)} />
 
       
+      <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mt-4" />
+
       {/* Hero */}
       <section className="mt-4 overflow-hidden rounded-xl border border-[var(--border)] bg-gradient-to-br from-[var(--muted)] to-[#f0e4cc]">
         <div className="p-6 sm:p-8">

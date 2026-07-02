@@ -6,6 +6,7 @@ import { SourceList } from "@/components/cards/SourceList";
 import { ProteinRankingEntriesClient } from "@/components/protein/ProteinRankingEntriesClient";
 import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { breadcrumbSchema, faqSchema, pageMetadata, proteinRankingItemListSchema, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import {
@@ -93,6 +94,7 @@ export default async function ProteinRankingPage({ params }: PageProps) {
       </div>
 
       <div className="section-shell mx-auto max-w-4xl">
+        <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mb-6" />
         {/* Quick table */}
         <section className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-800">{ranking.quickTableLabel}</h2>

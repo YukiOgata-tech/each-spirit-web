@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLeisureRanking, getLeisureRankingEntries, getLeisureRankings } from "@/lib/content";
@@ -49,7 +50,8 @@ export default async function LeisureRankingPage({ params }: PageProps) {
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
       <JsonLd data={speakableWebPageSchema(routes.leisureRanking(region, ranking.slug), ranking.title)} />
-            <section className="rounded-lg border border-cyan-200 bg-white p-5 shadow-soft sm:p-8">
+            <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mb-6" />
+      <section className="rounded-lg border border-cyan-200 bg-white p-5 shadow-soft sm:p-8">
         <Badge>Ranking</Badge>
         <h1 data-speakable="title" className="mt-5 text-3xl font-bold leading-tight tracking-normal sm:text-5xl">{ranking.title}</h1>
         <p data-speakable="description" className="mt-4 max-w-3xl text-base leading-8 text-slate-600">{ranking.description}</p>

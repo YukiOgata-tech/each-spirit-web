@@ -2,8 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Trophy } from "lucide-react";
 import type { Ranking } from "@/lib/types";
-import { routes } from "@/lib/routes";
-import { RANKING_FALLBACK_IMAGE } from "@/lib/category-media";
+import { ogRankingImage, routes } from "@/lib/routes";
 import { safeImageSrc } from "@/lib/image-hosts";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -16,7 +15,7 @@ export function RankingCard({ ranking, href }: { ranking: Ranking; href?: string
       <Card className="h-full overflow-hidden border-[var(--border)] p-0 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-[var(--primary)]/40 group-hover:shadow-md">
         <div className="relative aspect-[16/9] overflow-hidden bg-[linear-gradient(135deg,var(--muted),#ffffff)]">
           <Image
-            src={safeImageSrc(ranking.imageUrl, RANKING_FALLBACK_IMAGE)}
+            src={safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title))}
             alt={ranking.title}
             fill
             sizes="(min-width: 768px) 50vw, 100vw"

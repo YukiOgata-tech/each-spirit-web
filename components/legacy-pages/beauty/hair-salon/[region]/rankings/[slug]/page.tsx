@@ -6,6 +6,7 @@ import { SourceList } from "@/components/cards/SourceList";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
 import { BeautyRankingEntriesClient } from "@/components/beauty/BeautyRankingEntriesClient";
 import { JsonLd } from "@/components/seo/JsonLd";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 import { beautyRankingItemListSchema, breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getBeautyRanking, getBeautyRankingEntries, getBeautyRegions, getBeautyRankings } from "@/lib/content";
@@ -69,6 +70,7 @@ export default async function BeautyRankingPage({ params }: PageProps) {
       </div>
 
       <div className="section-shell mx-auto max-w-4xl">
+        <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} className="mb-6" />
         <section className="rounded-2xl border border-[#f2d5e8] bg-white p-5 shadow-sm">
           <h2 className="text-lg font-bold text-slate-800">{ranking.quickTableLabel}</h2>
           <div className="mt-4 overflow-x-auto">

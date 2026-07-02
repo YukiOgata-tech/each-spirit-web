@@ -14,6 +14,7 @@ import { getRankingEntries, getRamenRanking, getRamenRankings } from "@/lib/cont
 import { routes } from "@/lib/routes";
 import { getRamenImageUrl } from "@/lib/ramen-images";
 import { RamenImagePlaceholder } from "@/components/ramen/RamenImagePlaceholder";
+import { RankingHeroImage } from "@/components/cards/RankingHeroImage";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
@@ -93,6 +94,8 @@ export default async function RankingPage({ params }: PageProps) {
       </section>
 
       <div className="mx-auto w-[min(1360px,calc(100%-40px))] py-10 space-y-10">
+
+        <RankingHeroImage imageUrl={ranking.imageUrl} title={ranking.title} />
 
         {/* Top 3 podium */}
         {top3.length > 0 && (
