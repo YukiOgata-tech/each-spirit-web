@@ -28,7 +28,16 @@ export function getRankingSection(key: string): RankingSection | undefined {
 
 export type RankingItemRow = {
   rank: number;
+  entryKind: "item" | "manual";
   itemSlug: string;
+  displayName: string;
+  description: string;
+  externalUrl: string;
+  imageUrl: string;
+  imageAlt: string;
+  priceRange: string;
+  area: string;
+  tags: string;
   score: number | null;
   reason: string;
   isPr: boolean;

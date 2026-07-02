@@ -1,5 +1,4 @@
-import { notFound } from "next/navigation";
-import ProteinRankingPage from "@/app/health/[section]/[segment]/rankings/[slug]/page";
+import { notFound, permanentRedirect } from "next/navigation";
 import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
@@ -20,7 +19,8 @@ export async function generateMetadata({ params }: PageProps) {
   return pageMetadata({
     title: ranking.title,
     description: ranking.description,
-    path: routes.sectionRanking("health", "protein", slug),
+    path: routes.proteinRanking(ranking.target, slug),
+    image: ranking.imageUrl,
   });
 }
 
@@ -29,5 +29,5 @@ export default async function HealthSectionRankingPage({ params }: PageProps) {
   if (section !== "protein") return <GenericRankingDetailPage majorCategory="health" sectionSlug={section} slug={slug} />;
   const ranking = await getProteinRanking(slug);
   if (!ranking) notFound();
-  return <ProteinRankingPage params={Promise.resolve({ section, segment: ranking.target, slug })} />;
+  permanentRedirect(routes.proteinRanking(ranking.target, slug));
 }

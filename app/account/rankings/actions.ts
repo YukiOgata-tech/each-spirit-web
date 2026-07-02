@@ -13,6 +13,9 @@ function text(formData: FormData, key: string) {
 function list(formData: FormData, key: string) {
   return text(formData, key).split(/[\n,]/).map((v) => v.trim()).filter(Boolean);
 }
+function listFromText(input: string | undefined) {
+  return String(input ?? "").split(/[\n,]/).map((v) => v.trim()).filter(Boolean);
+}
 function slugify(input: string) {
   return input.toLowerCase().replace(/[^a-z0-9-]+/g, "-").replace(/^-+|-+$/g, "").replace(/-{2,}/g, "-");
 }
@@ -36,13 +39,19 @@ export async function saveRanking(formData: FormData) {
 
   // metadata（編集時は既存をマージして sources/faqs 等を保全。target は protein のみ）
   let baseMetadata: Record<string, unknown> = {};
+  let previousSlug = "";
+  let previousTarget = "";
   if (id) {
-    const { data: existing } = await service.from("rankings").select("metadata").eq("id", id).maybeSingle();
+    const { data: existing } = await service.from("rankings").select("metadata, slug").eq("id", id).maybeSingle();
     baseMetadata = (existing?.metadata as Record<string, unknown>) ?? {};
+    previousSlug = typeof existing?.slug === "string" ? existing.slug : "";
+    previousTarget = typeof baseMetadata.target === "string" ? slugify(baseMetadata.target) : "";
   }
   const metadata = { ...baseMetadata };
+  let target = "";
   if (section.hasTarget) {
-    const target = slugify(text(formData, "target"));
+    target = slugify(text(formData, "target"));
+    if (!target) throw new Error("この section では target が必須です");
     if (target) metadata.target = target;
   }
 
@@ -52,7 +61,10 @@ export async function saveRanking(formData: FormData) {
     .eq("major_category", section.majorCategory).eq("section_slug", section.sectionSlug).eq("slug", slug);
   if ((dup ?? []).some((row) => row.id !== id)) throw new Error("この section に同じ slug のランキングが既に存在します");
 
-  const canonical = routes.sectionRanking(section.majorCategory, section.sectionSlug, slug);
+  const sectionCanonical = routes.sectionRanking(section.majorCategory, section.sectionSlug, slug);
+  const canonical = section.majorCategory === "health" && section.sectionSlug === "protein" && target
+    ? routes.proteinRanking(target, slug)
+    : sectionCanonical;
   const payload = {
     slug,
     major_category: section.majorCategory,
@@ -90,9 +102,29 @@ export async function saveRanking(formData: FormData) {
   } catch {
     rows = [];
   }
-  rows = rows.filter((r) => r && r.itemSlug);
+  rows = rows
+    .filter((r) => r && (r.itemSlug || r.displayName))
+    .map((r) => {
+      const entryKind = r.entryKind === "manual" ? "manual" : "item";
+      const displayName = String(r.displayName ?? "").trim();
+      const itemSlug = slugify(String(r.itemSlug ?? "") || displayName || `entry-${r.rank}`);
+      return {
+        ...r,
+        entryKind,
+        itemSlug,
+        displayName,
+        description: String(r.description ?? ""),
+        externalUrl: String(r.externalUrl ?? ""),
+        imageUrl: String(r.imageUrl ?? ""),
+        imageAlt: String(r.imageAlt ?? ""),
+        priceRange: String(r.priceRange ?? ""),
+        area: String(r.area ?? ""),
+        tags: String(r.tags ?? ""),
+        reason: String(r.reason ?? ""),
+      };
+    });
 
-  const slugs = rows.map((r) => r.itemSlug);
+  const slugs = rows.filter((r) => r.entryKind === "item").map((r) => r.itemSlug);
   const { data: itemRows } = await service
     .from("items").select("id, slug")
     .eq("major_category", section.majorCategory).eq("section_slug", section.sectionSlug)
@@ -100,12 +132,22 @@ export async function saveRanking(formData: FormData) {
   const bySlug = new Map((itemRows ?? []).map((r) => [r.slug as string, r.id as string]));
 
   const insertRows = rows
-    .filter((r) => bySlug.has(r.itemSlug))
+    .filter((r) => r.entryKind === "manual" || bySlug.has(r.itemSlug))
+    .filter((r) => r.entryKind === "item" || r.displayName.trim())
     .map((r, index) => ({
       ranking_id: rankingId,
       rank: Number(r.rank) || index + 1,
       item_slug: r.itemSlug,
-      item_id: bySlug.get(r.itemSlug)!,
+      entry_kind: r.entryKind,
+      item_id: r.entryKind === "item" ? bySlug.get(r.itemSlug)! : null,
+      display_name: r.entryKind === "manual" ? r.displayName.trim() : null,
+      description: r.entryKind === "manual" ? r.description.trim() || null : null,
+      external_url: r.entryKind === "manual" ? r.externalUrl.trim() || null : null,
+      image_url: r.entryKind === "manual" ? r.imageUrl.trim() || null : null,
+      image_alt: r.entryKind === "manual" ? r.imageAlt.trim() || null : null,
+      price_range: r.entryKind === "manual" ? r.priceRange.trim() || null : null,
+      area: r.entryKind === "manual" ? r.area.trim() || null : null,
+      tags: r.entryKind === "manual" ? listFromText(r.tags) : [],
       score: r.score === null || r.score === undefined || Number.isNaN(Number(r.score)) ? null : Number(r.score),
       reason: r.reason ?? "",
       is_pr: !!r.isPr,
@@ -121,6 +163,11 @@ export async function saveRanking(formData: FormData) {
   // 公開ページ・管理一覧・編集フォームに変更を反映する。
   revalidateTag(ES_CONTENT_CACHE_TAG);
   revalidatePath(canonical);
+  if (sectionCanonical !== canonical) revalidatePath(sectionCanonical);
+  if (section.majorCategory === "health" && section.sectionSlug === "protein" && previousTarget && previousSlug) {
+    const previousCanonical = routes.proteinRanking(previousTarget, previousSlug);
+    if (previousCanonical !== canonical) revalidatePath(previousCanonical);
+  }
   revalidatePath("/" + section.majorCategory + "/" + section.sectionSlug);
   revalidatePath(routes.sectionRankings(section.majorCategory, section.sectionSlug));
   if (region) revalidatePath(routes.sectionRegion(section.majorCategory, section.sectionSlug, region));

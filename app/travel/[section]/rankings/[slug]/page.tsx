@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import TravelRankingPage from "@/components/legacy-pages/travel/stays/[region]/rankings/[slug]/page";
 import TravelServiceRankingPage from "@/components/legacy-pages/travel/services/[region]/rankings/[slug]/page";
 import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
-import { getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
+import { getRankingBySection, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
@@ -16,6 +16,9 @@ export async function generateStaticParams() {
 
 export default async function TravelSectionRankingPage({ params }: PageProps) {
   const { section, slug } = await params;
+  const genericRanking = await getRankingBySection("travel", section, slug);
+  const hasManualEntry = genericRanking?.items.some((entry) => entry.entryKind === "manual") ?? false;
+  if (hasManualEntry) return <GenericRankingDetailPage majorCategory="travel" sectionSlug={section} slug={slug} />;
   if (section === "stays") {
     const pairs = await Promise.all((await getTravelRegions()).map(async (region) => ({ region: region.slug, rankings: await getTravelRankings(region.slug) })));
     const match = pairs.find((pair) => pair.rankings.some((ranking) => ranking.slug === slug));

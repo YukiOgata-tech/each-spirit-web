@@ -1,15 +1,16 @@
-import { notFound } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
 import { FaqSection } from "@/components/cards/FaqSection";
 import { SourceList } from "@/components/cards/SourceList";
 import { ProteinRankingEntriesClient } from "@/components/protein/ProteinRankingEntriesClient";
+import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { breadcrumbSchema, faqSchema, pageMetadata, proteinRankingItemListSchema, speakableWebPageSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import {
   getProteinRanking, getProteinRankingEntries,
-  getProteinRankings, getProteinTargets,
+  getProteinRankings, getProteinTargets, getRankingBySection,
 } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; segment: string; slug: string }> };
@@ -45,19 +46,26 @@ const MEDAL = ["🥇", "🥈", "🥉"];
 
 export default async function ProteinRankingPage({ params }: PageProps) {
   const { section, segment, slug } = await params;
-  const target = segment;
   if (section !== "protein") notFound();
   const ranking = await getProteinRanking(slug);
   if (!ranking) notFound();
 
+  const canonicalPath = routes.proteinRanking(ranking.target, slug);
+  if (segment !== ranking.target) permanentRedirect(canonicalPath);
+
+  const genericRanking = await getRankingBySection("health", "protein", slug);
+  if (genericRanking?.items.some((entry) => entry.entryKind === "manual")) {
+    return <GenericRankingDetailPage majorCategory="health" sectionSlug="protein" slug={slug} />;
+  }
+
   const entries = await getProteinRankingEntries(slug);
-  const targetLabel = TARGET_LABEL[target] ?? target;
+  const targetLabel = TARGET_LABEL[ranking.target] ?? ranking.target;
 
   const breadcrumbs = [
     { name: "トップ",             href: routes.home },
     { name: "プロテイン",          href: routes.protein },
-    { name: `${targetLabel}`,     href: routes.proteinTarget(target) },
-    { name: ranking.title,        href: routes.proteinRanking(target, slug) },
+    { name: `${targetLabel}`,     href: routes.proteinTarget(ranking.target) },
+    { name: ranking.title,        href: canonicalPath },
   ];
 
   return (
@@ -65,7 +73,7 @@ export default async function ProteinRankingPage({ params }: PageProps) {
       <JsonLd data={proteinRankingItemListSchema(ranking, entries)} />
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
       <JsonLd data={faqSchema(ranking.faqs)} />
-      <JsonLd data={speakableWebPageSchema(routes.proteinRanking(target, slug), ranking.title)} />
+      <JsonLd data={speakableWebPageSchema(canonicalPath, ranking.title)} />
 
       {/* hero */}
       <div className="protein-hero-bg border-b border-blue-900 px-4 py-10">
@@ -142,7 +150,7 @@ export default async function ProteinRankingPage({ params }: PageProps) {
         </div>
 
         <div className="mt-8 text-center">
-          <Link href={routes.proteinTarget(target)} className="inline-flex items-center gap-2 rounded-full border border-blue-200 px-5 py-2.5 text-sm font-bold text-[#1e3a5f] hover:bg-blue-50 transition-colors">
+          <Link href={routes.proteinTarget(ranking.target)} className="inline-flex items-center gap-2 rounded-full border border-blue-200 px-5 py-2.5 text-sm font-bold text-[#1e3a5f] hover:bg-blue-50 transition-colors">
             ← {targetLabel}ガイドに戻る
           </Link>
         </div>

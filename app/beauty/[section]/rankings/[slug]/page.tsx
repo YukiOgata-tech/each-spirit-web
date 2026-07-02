@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import BeautyRankingPage from "@/components/legacy-pages/beauty/hair-salon/[region]/rankings/[slug]/page";
 import { GenericRankingDetailPage } from "@/components/generic/GenericSectionPages";
-import { getBeautyRankings, getBeautyRegions } from "@/lib/content";
+import { getBeautyRankings, getBeautyRegions, getRankingBySection } from "@/lib/content";
 
 type PageProps = { params: Promise<{ section: string; slug: string }> };
 
@@ -13,6 +13,10 @@ export async function generateStaticParams() {
 export default async function BeautySectionRankingPage({ params }: PageProps) {
   const { section, slug } = await params;
   if (section !== "hair-salon") return <GenericRankingDetailPage majorCategory="beauty" sectionSlug={section} slug={slug} />;
+  const genericRanking = await getRankingBySection("beauty", section, slug);
+  if (genericRanking?.items.some((entry) => entry.entryKind === "manual")) {
+    return <GenericRankingDetailPage majorCategory="beauty" sectionSlug={section} slug={slug} />;
+  }
   const pairs = await Promise.all((await getBeautyRegions()).map(async (region) => ({ region: region.slug, rankings: await getBeautyRankings(region.slug) })));
   const match = pairs.find((pair) => pair.rankings.some((ranking) => ranking.slug === slug));
   if (!match) notFound();

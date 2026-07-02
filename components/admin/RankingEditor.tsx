@@ -34,7 +34,22 @@ const labelClass = "mb-1 block text-xs font-bold text-slate-600";
 const sectionClass = "rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5 max-sm:shadow-none";
 
 function emptyRow(rank: number): RankingItemRow {
-  return { rank, itemSlug: "", score: null, reason: "", isPr: false };
+  return {
+    rank,
+    entryKind: "item",
+    itemSlug: "",
+    displayName: "",
+    description: "",
+    externalUrl: "",
+    imageUrl: "",
+    imageAlt: "",
+    priceRange: "",
+    area: "",
+    tags: "",
+    score: null,
+    reason: "",
+    isPr: false,
+  };
 }
 
 export function RankingEditor({ action, sections, regionOptions, itemsBySection, targetOptions, initial }: RankingEditorProps) {
@@ -152,22 +167,46 @@ export function RankingEditor({ action, sections, regionOptions, itemsBySection,
           </button>
         </div>
         {items.length === 0 && (
-          <p className="mb-3 text-xs text-amber-600">この section には登録済みの item がありません。先に店舗・商品を作成してください。</p>
+          <p className="mb-3 text-xs text-amber-600">この section には登録済みの item がありません。手入力のランキング項目として保存できます。</p>
         )}
         <div className="space-y-3">
           {rows.map((row, index) => (
-            <div key={index} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 sm:grid-cols-[64px_1fr_80px_auto]">
+            <div key={index} className="grid grid-cols-1 gap-2 rounded-lg border border-slate-200 bg-slate-50/60 p-3 sm:grid-cols-[64px_140px_1fr_80px_auto]">
               <div>
                 <label className={labelClass}>順位</label>
                 <input type="number" min={1} value={row.rank} onChange={(e) => updateRow(index, { rank: Number(e.target.value) })} className={inputClass} />
               </div>
               <div>
-                <label className={labelClass}>item</label>
-                <select value={row.itemSlug} onChange={(e) => updateRow(index, { itemSlug: e.target.value })} className={inputClass}>
-                  <option value="">（選択）</option>
-                  {items.map((it) => <option key={it.slug} value={it.slug}>{it.name}（{it.slug}）</option>)}
+                <label className={labelClass}>項目タイプ</label>
+                <select
+                  value={row.entryKind}
+                  onChange={(e) => updateRow(index, { entryKind: e.target.value === "manual" ? "manual" : "item" })}
+                  className={inputClass}
+                >
+                  <option value="item">既存item</option>
+                  <option value="manual">手入力</option>
                 </select>
               </div>
+              {row.entryKind === "item" ? (
+                <div>
+                  <label className={labelClass}>item</label>
+                  <select value={row.itemSlug} onChange={(e) => updateRow(index, { itemSlug: e.target.value })} className={inputClass}>
+                    <option value="">（選択）</option>
+                    {items.map((it) => <option key={it.slug} value={it.slug}>{it.name}（{it.slug}）</option>)}
+                  </select>
+                </div>
+              ) : (
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>表示名 *</label>
+                    <input value={row.displayName} onChange={(e) => updateRow(index, { displayName: e.target.value })} className={inputClass} placeholder="掲載名・商品名・サービス名" />
+                  </div>
+                  <div>
+                    <label className={labelClass}>項目slug *</label>
+                    <input value={row.itemSlug} onChange={(e) => updateRow(index, { itemSlug: e.target.value })} className={inputClass} placeholder="manual-entry-slug" />
+                  </div>
+                </div>
+              )}
               <div>
                 <label className={labelClass}>スコア</label>
                 <input type="number" step="any" value={row.score ?? ""} onChange={(e) => updateRow(index, { score: e.target.value === "" ? null : Number(e.target.value) })} className={inputClass} />
@@ -180,7 +219,39 @@ export function RankingEditor({ action, sections, regionOptions, itemsBySection,
                   <Trash2 className="h-4 w-4" />
                 </button>
               </div>
-              <div className="sm:col-span-4">
+              {row.entryKind === "manual" && (
+                <div className="grid gap-2 sm:col-span-5 sm:grid-cols-2">
+                  <div>
+                    <label className={labelClass}>説明</label>
+                    <textarea value={row.description} onChange={(e) => updateRow(index, { description: e.target.value })} rows={2} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>外部URL</label>
+                    <input value={row.externalUrl} onChange={(e) => updateRow(index, { externalUrl: e.target.value })} className={inputClass} placeholder="https://..." />
+                  </div>
+                  <div>
+                    <label className={labelClass}>画像URL</label>
+                    <input value={row.imageUrl} onChange={(e) => updateRow(index, { imageUrl: e.target.value })} className={inputClass} placeholder="https://..." />
+                  </div>
+                  <div>
+                    <label className={labelClass}>画像alt</label>
+                    <input value={row.imageAlt} onChange={(e) => updateRow(index, { imageAlt: e.target.value })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>価格帯</label>
+                    <input value={row.priceRange} onChange={(e) => updateRow(index, { priceRange: e.target.value })} className={inputClass} />
+                  </div>
+                  <div>
+                    <label className={labelClass}>エリア・補足</label>
+                    <input value={row.area} onChange={(e) => updateRow(index, { area: e.target.value })} className={inputClass} />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <label className={labelClass}>タグ（カンマ/改行区切り）</label>
+                    <input value={row.tags} onChange={(e) => updateRow(index, { tags: e.target.value })} className={inputClass} />
+                  </div>
+                </div>
+              )}
+              <div className="sm:col-span-5">
                 <label className={labelClass}>理由</label>
                 <textarea value={row.reason} onChange={(e) => updateRow(index, { reason: e.target.value })} rows={2} className={inputClass} />
               </div>

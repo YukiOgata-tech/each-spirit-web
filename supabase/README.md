@@ -57,6 +57,7 @@ es.*                ← each-spirit 専用スキーマ
 | `20260622172750_es_entertainment_anime_section.sql` | `entertainment` major を許可し、anime section を追加 | 2026-06-22 |
 | `20260622183317_es_entertainment_drama_section.sql` | entertainment / drama section を追加 | 2026-06-22 |
 | `20260622191816_es_entertainment_planned_sections.sql` | entertainment 配下の追加予定 section を登録 | 2026-06-22 |
+| `20260702093000_normalize_protein_ranking_canonical_paths.sql` | プロテインランキングの canonical_path を target 付きURLへ統一 | 2026-07-02 |
 
 ## es スキーマ テーブル一覧
 

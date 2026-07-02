@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRight, ImageOff, MapPin, Trophy } from "lucide-react";
+import { ArrowRight, ExternalLink, ImageOff, MapPin, Trophy } from "lucide-react";
 import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { RankingCard } from "@/components/cards/RankingCard";
 import { TagList } from "@/components/cards/TagList";
@@ -425,13 +425,19 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
       <section id="ranking" className="mt-8 scroll-mt-24 space-y-4">
         {entries.map(({ entry, item }) => {
           const top = entry.rank <= 3;
-          const href = item ? (item.canonicalPath ?? itemHref(section, item)) : undefined;
-          const name = item?.name ?? entry.itemSlug;
+          const href = item ? (item.canonicalPath ?? itemHref(section, item)) : entry.externalUrl;
+          const isExternal = !item && Boolean(entry.externalUrl);
+          const name = item?.name ?? entry.displayName ?? entry.itemSlug;
+          const imageUrl = item?.imageUrl ?? entry.imageUrl;
+          const description = entry.reason || entry.description;
+          const tags = item?.tags?.length ? item.tags : (entry.tags ?? []);
+          const areaText = [item?.region, item?.area ?? entry.area].filter(Boolean).join(" ・ ");
+          const priceRange = item?.priceRange ?? entry.priceRange;
           const body = (
             <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]">
               <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
-                {item?.imageUrl ? (
-                  <Image src={item.imageUrl} alt={name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                {imageUrl ? (
+                  <Image src={imageUrl} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}
@@ -440,26 +446,33 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
               </div>
               <div className="min-w-0">
                 <h3 className="text-lg font-bold tracking-normal text-slate-950 transition-colors group-hover:text-[var(--primary)] sm:text-xl">{name}</h3>
-                {(item?.region || item?.area) && (
-                  <p className="mt-1 text-xs font-medium text-slate-400">{[item?.region, item?.area].filter(Boolean).join(" ・ ")}</p>
+                {areaText && (
+                  <p className="mt-1 text-xs font-medium text-slate-400">{areaText}</p>
                 )}
-                {entry.reason && <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">{entry.reason}</p>}
-                <TagList tags={item?.tags ?? []} max={3} className="mt-2" />
+                {description && <p className="mt-2 line-clamp-3 text-sm leading-7 text-slate-600">{description}</p>}
+                <TagList tags={tags} max={3} className="mt-2" />
                 <div className="mt-3 flex flex-wrap items-center gap-3">
                   {entry.score > 0 && (
                     <span className="inline-flex items-baseline gap-1 rounded-md bg-[var(--muted)] px-2.5 py-1 text-sm font-black text-[var(--primary)]">
                       {entry.score}<span className="text-[10px] font-bold text-slate-500">{scoreLabel}</span>
                     </span>
                   )}
-                  {item?.priceRange && <span className="text-xs font-semibold text-slate-500">{item.priceRange}</span>}
-                  {href && <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">詳しく見る<ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" /></span>}
+                  {priceRange && <span className="text-xs font-semibold text-slate-500">{priceRange}</span>}
+                  {href && (
+                    <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">
+                      {isExternal ? "公式・詳細を見る" : "詳しく見る"}
+                      {isExternal ? <ExternalLink className="h-4 w-4 transition-transform group-hover:translate-x-1" /> : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
           );
           const cardClass = `group block overflow-hidden rounded-lg border bg-white shadow-sm transition ${top ? "border-[var(--primary)]/35" : "border-[var(--border)]"} ${href ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
-          return href ? (
+          return item && href ? (
             <Link key={`${entry.rank}-${entry.itemSlug}`} href={href} className={cardClass}>{body}</Link>
+          ) : isExternal && href ? (
+            <a key={`${entry.rank}-${entry.itemSlug}`} href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>{body}</a>
           ) : (
             <div key={`${entry.rank}-${entry.itemSlug}`} className={cardClass}>{body}</div>
           );

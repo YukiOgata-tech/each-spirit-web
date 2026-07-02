@@ -127,7 +127,7 @@ export default async function CafeRegionPage({ params }: PageProps) {
               {rankings.map((ranking: CafeRanking) => (
                 <RankingCard
                   key={ranking.slug}
-                  ranking={{ ...ranking, items: ranking.items.map((item) => ({ rank: item.rank, itemSlug: item.cafeSlug, score: item.score, reason: item.reason, isPr: item.isPr })) }}
+                  ranking={{ ...ranking, items: ranking.items.map((item) => ({ rank: item.rank, entryKind: "item", itemSlug: item.cafeSlug, score: item.score, reason: item.reason, isPr: item.isPr, tags: [] })) }}
                   href={routes.cafeRanking(region, ranking.slug)}
                 />
               ))}

@@ -417,7 +417,8 @@ function mapRanking(row: any, items: any[]): Ranking {
   const m = row.metadata ?? {};
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
   // ランキング専用画像が無ければ、上位アイテムの画像をカード/メタ画像に流用する
-  const topItemImage = sorted.find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
+  const topItemImage = sorted.find((ri) => ri.items?.image?.url || ri.image_url);
+  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
@@ -425,7 +426,7 @@ function mapRanking(row: any, items: any[]): Ranking {
     majorCategory: row.major_category ?? undefined,
     sectionSlug: row.section_slug ?? undefined,
     canonicalPath: row.canonical_path ?? undefined,
-    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
     region: row.region ?? undefined,
     target: m.target ?? undefined,
     criteria: (row.criteria ?? []) as string[],
@@ -434,7 +435,16 @@ function mapRanking(row: any, items: any[]): Ranking {
     lastUpdatedAt: toDateStr(row.last_updated_at),
     items: sorted.map((ri): RankingItem => ({
       rank: ri.rank,
+      entryKind: ri.entry_kind === "manual" ? "manual" : "item",
       itemSlug: ri.item_slug,
+      displayName: ri.display_name ?? undefined,
+      description: ri.description ?? undefined,
+      externalUrl: ri.external_url ?? undefined,
+      imageUrl: ri.image_url ?? undefined,
+      imageAlt: ri.image_alt ?? undefined,
+      priceRange: ri.price_range ?? undefined,
+      area: ri.area ?? undefined,
+      tags: (ri.tags ?? []) as string[],
       score: Number(ri.score ?? 0),
       reason: ri.reason ?? "",
       isPr: ri.is_pr ?? false,
@@ -447,12 +457,13 @@ function mapRanking(row: any, items: any[]): Ranking {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCafeRanking(row: any, items: any[]): CafeRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url || ri.image_url);
+  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
-    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -536,13 +547,14 @@ function mapProteinProduct(row: any): ProteinProduct {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProteinRanking(row: any, items: any[]): ProteinRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url)?.items?.image?.url as string | undefined;
+  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url || ri.image_url);
+  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
   return {
     slug: row.slug,
     target: (m.target ?? "beginner") as ProteinTarget,
     title: row.title,
     description: row.description,
-    imageUrl: jstr(row.image, "url") ?? topItemImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -835,8 +847,11 @@ export function articleHref(article: Pick<Article, "category" | "region" | "slug
   return routes.articleByCategory(article.category || "general", article.slug);
 }
 
-export function rankingHref(ranking: Pick<Ranking, "region" | "slug" | "target">) {
-  const r = ranking as Pick<Ranking, "region" | "slug" | "target" | "canonicalPath" | "majorCategory" | "sectionSlug">;
+export function rankingHref(
+  ranking: Pick<Ranking, "region" | "slug" | "target"> & Partial<Pick<Ranking, "canonicalPath" | "majorCategory" | "sectionSlug">>,
+) {
+  const r = ranking;
+  if (r.majorCategory === "health" && r.sectionSlug === "protein" && r.target) return routes.proteinRanking(r.target, r.slug);
   if (r.canonicalPath) return r.canonicalPath;
   if (r.majorCategory && r.sectionSlug) return routes.sectionRanking(r.majorCategory, r.sectionSlug, r.slug);
   if (r.target) return routes.proteinRanking(r.target, r.slug);

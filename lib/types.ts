@@ -193,7 +193,16 @@ export type GenericItem = {
 
 export type RankingItem = {
   rank: number;
+  entryKind?: "item" | "manual";
   itemSlug: string;
+  displayName?: string;
+  description?: string;
+  externalUrl?: string;
+  imageUrl?: string;
+  imageAlt?: string;
+  priceRange?: string;
+  area?: string;
+  tags?: string[];
   score: number;
   reason: string;
   isPr: boolean;

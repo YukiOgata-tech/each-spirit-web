@@ -33,7 +33,16 @@ export default async function EditRankingPage({ params }: PageProps) {
     .sort((a, b) => a.rank - b.rank)
     .map((ri) => ({
       rank: ri.rank,
+      entryKind: ri.entry_kind === "manual" ? "manual" : "item",
       itemSlug: ri.item_slug,
+      displayName: ri.display_name ?? "",
+      description: ri.description ?? "",
+      externalUrl: ri.external_url ?? "",
+      imageUrl: ri.image_url ?? "",
+      imageAlt: ri.image_alt ?? "",
+      priceRange: ri.price_range ?? "",
+      area: ri.area ?? "",
+      tags: ((ri.tags as string[]) ?? []).join(", "),
       score: ri.score === null || ri.score === undefined ? null : Number(ri.score),
       reason: ri.reason ?? "",
       isPr: ri.is_pr ?? false,
