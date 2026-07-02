@@ -71,7 +71,6 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       <body className={[geistSans.variable, geistMono.variable, cinzel.variable].join(" ")}>
         {/* ローディング Lottie(JSON) を先読みし、ローダー表示と同時に再生が始まるようにする */}
         <link rel="prefetch" href="/lottie/es-loading.json" as="fetch" crossOrigin="anonymous" />
-        <link rel="preload" href="/lottie/es-loading02.json" as="fetch" crossOrigin="anonymous" />
         <JsonLd data={websiteSchema()} />
         <JsonLd data={organizationSchema()} />
         <Suspense fallback={null}>

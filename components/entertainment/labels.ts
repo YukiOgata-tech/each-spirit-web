@@ -29,6 +29,9 @@ const ORIGIN_LABELS: Record<string, string> = {
   drama_light_novel_series: "ライトノベル原作",
   drama_original_series: "オリジナル脚本",
   drama_game_series: "ゲーム原作",
+  book_novel: "小説",
+  book_light_novel: "ライトノベル",
+  book_nonfiction: "ノンフィクション",
 };
 
 export function originLabel(itemKind: string): string {

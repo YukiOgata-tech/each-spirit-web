@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import Lottie, { type LottieRefCurrentProps } from "lottie-react";
 import { MoonStar, Orbit, Copy, Check, ArrowRight, RefreshCw, Download, Coins, BarChart3, Gauge, TrendingUp, Cake, Venus, Mars, CircleUser, Gem } from "lucide-react";
 import { siteUrl, routes } from "@/lib/routes";
 import {
@@ -32,8 +32,13 @@ const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
 };
 
 const GUEST_STORAGE_KEY = "es_fortune_guest_v1";
-const FORTUNE_LOADING_LOTTIE = "/lottie/es-loading02.json";
-const FORTUNE_LOADING_DURATION_MS = 3400;
+const FORTUNE_LOADING_DURATION_MS = 4200;
+
+// 占い中の 3D ローディング（three.js を初期バンドルから分離。読込中は CSS の光球）
+const FortuneLoading3D = dynamic(() => import("@/components/fortune/FortuneLoading3D"), {
+  ssr: false,
+  loading: () => <LoadingOrbFallback />,
+});
 
 type Phase = "input" | "idle" | "loading" | "result";
 
@@ -136,21 +141,13 @@ export function FortuneReveal({
   const [liveAwarded, setLiveAwarded] = useState<number | null>(awardedPoints);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [loadingAnimationData, setLoadingAnimationData] = useState<object | null>(null);
   // 入力が必要なゲストは localStorage 確認まで描画を保留（フォームのちらつき防止）
   const [ready, setReady] = useState(!needsInput);
 
+  // 3D チャンク（ローディング演出・結晶シーン）を先読みしてフェーズ切替を即座にする
   useEffect(() => {
-    let alive = true;
-    fetch(FORTUNE_LOADING_LOTTIE)
-      .then((res) => res.json())
-      .then((data) => {
-        if (alive) setLoadingAnimationData(data);
-      })
-      .catch(() => {});
-    return () => {
-      alive = false;
-    };
+    void import("@/components/fortune/FortuneLoading3D");
+    void import("@/components/fortune/crystal/FateCrystalScene");
   }, []);
 
   // ゲストは当日分の選択・結果を localStorage に保持し、再訪・再実行で固定する
@@ -252,7 +249,7 @@ export function FortuneReveal({
         }
       >
         <AnimatePresence mode="wait">
-          {!ready && <FortuneLoading key="hydrate" animationData={loadingAnimationData} />}
+          {!ready && <FortuneLoading key="hydrate" />}
           {ready && phase === "input" && (
             <InputGate
               key="input"
@@ -266,7 +263,7 @@ export function FortuneReveal({
           {ready && phase === "idle" && (
             <IdleView key="idle" onStart={start} date={date} />
           )}
-          {ready && phase === "loading" && <FortuneLoading key="loading" animationData={loadingAnimationData} />}
+          {ready && phase === "loading" && <FortuneLoading key="loading" />}
           {ready && phase === "result" && liveResult && (
             <ResultView
               key="result"
@@ -427,42 +424,65 @@ function IdleView({ onStart, date }: { onStart: () => void; date: string }) {
 }
 
 // ── 占い中 ────────────────────────────────────────────────────────────────────
-function FortuneLoading({ animationData }: { animationData: object | null }) {
-  const lottieRef = useRef<LottieRefCurrentProps>(null);
 
-  useEffect(() => {
-    lottieRef.current?.play();
-  }, [animationData]);
-
+/** 3D チャンク読込中のつなぎ（CSS のみの脈動する光球） */
+function LoadingOrbFallback() {
   return (
-    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="flex flex-col items-center pt-0 -mt-10 text-center sm:pt-20 -mx-4">
-      <div className="relative grid aspect-square w-full max-w-120 place-items-center max-sm:max-w-none bg-violet-400/20">
-        <div className="absolute inset-[7%] rounded-full bg-white/10 shadow-2xl shadow-white/10 backdrop-blur-[2px]" />
-        <div className="absolute inset-4 rounded-full bg-violet-400/20 blur-3xl" />
-        {animationData ? (
-          <Lottie
-            lottieRef={lottieRef}
-            animationData={animationData}
-            loop
-            autoplay
-            style={{ width: "100%", height: "100%" }}
-          />
-        ) : null}
+    <div className="grid h-full w-full place-items-center">
+      <motion.div
+        className="h-24 w-24 rounded-full bg-violet-300/60 blur-xl"
+        animate={{ scale: [1, 1.25, 1], opacity: [0.5, 0.9, 0.5] }}
+        transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </div>
+  );
+}
+
+function FortuneLoading() {
+  // ディスプレイ全体を占う空間で満たすテイクオーバー（ヘッダー z-40 の上、ルートローダー z-90 の下）
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 z-70 bg-[#0b0722]"
+    >
+      <FortuneLoading3D />
+      <div className="pointer-events-none absolute inset-x-0 bottom-[13%] flex justify-center">
+        <LoadingCaption />
       </div>
-      <LoadingCaption />
     </motion.div>
   );
 }
 
+const LOADING_MESSAGES = [
+  "星の巡りを読んでいます…",
+  "運命の糸を手繰っています…",
+  "結晶の芽を探しています…",
+];
+
 function LoadingCaption() {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const id = window.setInterval(() => setIdx((i) => (i + 1) % LOADING_MESSAGES.length), 1400);
+    return () => window.clearInterval(id);
+  }, []);
   return (
-    <motion.p
-      className="mt-8 text-sm font-semibold tracking-wide text-white/80"
-      animate={{ opacity: [0.4, 1, 0.4] }}
-      transition={{ duration: 1.6, repeat: Infinity }}
-    >
-      星を読み解いています…
-    </motion.p>
+    <div className="h-6">
+      <AnimatePresence mode="wait">
+        <motion.p
+          key={idx}
+          className="text-sm font-semibold tracking-wide text-white/80"
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.35 }}
+        >
+          {LOADING_MESSAGES[idx]}
+        </motion.p>
+      </AnimatePresence>
+    </div>
   );
 }
 

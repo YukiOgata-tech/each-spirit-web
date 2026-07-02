@@ -1,5 +1,5 @@
 import { scoreToBand, SCORED_KEYS, CATEGORY_LABEL, type FortuneResult } from "@/lib/fortune";
-import { classifyCrystal } from "@/lib/crystal-form";
+import { classifyCrystal, CRYSTAL_FAMILY_META, type CrystalFamilyKey } from "@/lib/crystal-form";
 
 /** 6スコアから検証用の FortuneResult を組み立てる。 */
 function makeResult(scores: number[], date = "2026-06-30"): FortuneResult {
@@ -28,46 +28,67 @@ const a = classifyCrystal(makeResult([2.4, 3.1, 1.8, 4.2, 0.9, 3.6]));
 const b = classifyCrystal(makeResult([2.4, 3.1, 1.8, 4.2, 0.9, 3.6]));
 check("determinism", JSON.stringify(a) === JSON.stringify(b));
 
-// 2) ポイントは6本・各カテゴリ対応・長さはスコアに比例
+// 2) ポイントは6本・各カテゴリ対応（SCORED_KEYS順を維持）
 check("6 points", a.points.length === 6);
 check("points keyed by category", a.points.map((p) => p.key).join(",") === SCORED_KEYS.join(","));
-const hi = classifyCrystal(makeResult([5, 0, 0, 0, 0, 0]));
-check("higher score => longer point", hi.points[0].length > hi.points[1].length);
 
-// 3) 整い具合 → 真正（歪みゼロ）/ ばらつき → いびつ
+// 3) ファミリー判定
+const cases: [string, number[], CrystalFamilyKey][] = [
+  ["完全均一・中庸 → 単晶柱", [3, 3, 3, 3, 3, 3], "prism-monolith"],
+  ["完全均一・高運勢 → 宝珠", [4.3, 4.3, 4.3, 4.3, 4.3, 4.3], "celestial-orb"],
+  ["極端な乱高下 → 群晶", [0, 5, 0, 5, 0, 5], "wild-cluster"],
+  ["全体が低調 → 欠片", [1.4, 0.8, 1.6, 1.1, 0.6, 1.2], "shard-relic"],
+  ["一強 → 尖塔", [4.8, 2.6, 2.7, 2.5, 2.6, 2.8], "solar-obelisk"],
+  ["双璧 → 双晶", [4.6, 4.5, 2.8, 2.7, 2.9, 2.6], "twin-spires"],
+  ["複数好調 → 星芒", [4.0, 3.9, 4.1, 2.5, 2.6, 2.4], "stellate-burst"],
+  ["穏やかな共鳴 → 晶洞", [2.6, 3.1, 2.4, 3.3, 2.7, 3.0], "geode-bloom"],
+];
+const seen = new Set<CrystalFamilyKey>();
+for (const [name, scores, expected] of cases) {
+  const f = classifyCrystal(makeResult(scores));
+  seen.add(f.family);
+  check(`family: ${name}`, f.family === expected);
+}
+check("all 8 families reachable", seen.size === 8);
+
+// 4) 主役カテゴリの対応（尖塔・双晶の pillar は上位カテゴリに割り当たる）
+const obelisk = classifyCrystal(makeResult([4.8, 2.6, 2.7, 2.5, 2.6, 2.8]));
+check(
+  "obelisk pillar = dominant category",
+  obelisk.points.find((p) => p.style === "pillar")?.key === "love",
+);
+const twins = classifyCrystal(makeResult([4.6, 4.5, 2.8, 2.7, 2.9, 2.6]));
+check(
+  "twin pillars = top-2 categories",
+  twins.points.filter((p) => p.style === "pillar").map((p) => p.key).sort().join(",") === "love,money",
+);
+
+// 5) スコアが高いほど要素は長い（同一フォーム内で単調）
+const grad = classifyCrystal(makeResult([4.5, 1.0, 3.0, 3.1, 2.9, 3.0]));
+const lenOf = (key: string) => grad.points.find((p) => p.key === key)!.length;
+check("higher score => longer element", lenOf("love") > lenOf("money"));
+
+// 6) 完全に揃うと真正（isPerfect）
 const even = classifyCrystal(makeResult([3, 3, 3, 3, 3, 3]));
 check("even => purity ~1", Math.abs(even.purity - 1) < 1e-6);
-check("even => lumpiness 0", even.lumpiness === 0);
 check("even => isPerfect", even.isPerfect === true);
-check("even => high resonance => coreDetail 2", even.coreDetail === 2);
 
-const spread = classifyCrystal(makeResult([0, 5, 0, 5, 0, 5]));
-check("spread => purity 0", spread.purity === 0);
-check("spread => lumpiness > 0.3", spread.lumpiness > 0.3);
-check("spread => not perfect", spread.isPerfect === false);
-check("spread => fewer facets than even", spread.coreDetail < even.coreDetail);
+// 7) radius は総合平均で増える
+check(
+  "radius grows with mean",
+  classifyCrystal(makeResult([5, 5, 5, 5, 5, 5])).radius > classifyCrystal(makeResult([0, 0, 0, 0, 0, 0])).radius,
+);
 
-// 4) 近さ(resonance) は揃うほど高い
-check("resonance higher when closer", even.resonance > spread.resonance);
-
-// 5) radius は総合平均で増える
-check("radius grows with mean", classifyCrystal(makeResult([5, 5, 5, 5, 5, 5])).radius > classifyCrystal(makeResult([0, 0, 0, 0, 0, 0])).radius);
-
-// 6) 同じ平均でも揃い具合が違えば別の形（平均だけでは決まらない）
+// 8) 同じ平均でも揃い具合が違えば別の形（平均だけでは決まらない）
 const flatMean3 = classifyCrystal(makeResult([3, 3, 3, 3, 3, 3]));
 const bumpyMean3 = classifyCrystal(makeResult([5, 1, 4, 2, 5, 1])); // mean=3 だが凸凹
-check("same mean, different evenness => different form", flatMean3.lumpiness !== bumpyMean3.lumpiness || flatMean3.coreDetail !== bumpyMean3.coreDetail);
+check("same mean, different evenness => different family", flatMean3.family !== bumpyMean3.family);
 
 console.log("\n例:");
-for (const [label, sc] of [
-  ["完全均一(3,3,3,3,3,3)", [3, 3, 3, 3, 3, 3]],
-  ["ほぼ均一", [3.0, 3.1, 2.9, 3.0, 3.2, 2.8]],
-  ["凸凹(平均3)", [5, 1, 4, 2, 5, 1]],
-  ["極端", [0, 5, 0, 5, 0, 5]],
-] as [string, number[]][]) {
+for (const [label, sc] of cases.map(([n, s]) => [n, s] as [string, number[]])) {
   const f = classifyCrystal(makeResult(sc));
   console.log(
-    `  ${label}: purity=${f.purity.toFixed(2)} lumpiness=${f.lumpiness.toFixed(2)} coreDetail=${f.coreDetail} resonance=${f.resonance.toFixed(2)} perfect=${f.isPerfect} radius=${f.radius.toFixed(2)} pointLen=[${f.points.map((p) => p.length.toFixed(1)).join(",")}]`,
+    `  ${label}: family=${f.family}「${CRYSTAL_FAMILY_META[f.family].label}」 purity=${f.purity.toFixed(2)} resonance=${f.resonance.toFixed(2)} perfect=${f.isPerfect} radius=${f.radius.toFixed(2)} core=${f.core.kind} styles=[${[...new Set(f.points.map((p) => p.style))].join(",")}]`,
   );
 }
 
