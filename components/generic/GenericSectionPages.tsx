@@ -454,7 +454,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
             <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]">
               <div className="group/image relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
                 {imageUrl ? (
-                  <Image src={imageUrl} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover/image:scale-105" />
+                  <Image src={safeImageSrc(imageUrl, ogRankingImage(name))} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover/image:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}

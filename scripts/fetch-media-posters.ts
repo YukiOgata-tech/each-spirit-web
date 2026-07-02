@@ -57,6 +57,29 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 type ItemRow = { id: string; slug: string; name: string; section_slug: string; image: Record<string, unknown> };
 type Poster = { url: string; matchedTitle: string; year?: number; country?: string; credit: { name: string; url: string } };
+type TvdbSearchResult = {
+  id?: number | string;
+  tvdb_id?: number | string;
+  image_url?: string;
+  country?: string;
+  primary_language?: string;
+  translations?: { jpn?: string };
+  name?: string;
+  extended_title?: string;
+  year?: number | string;
+  slug?: string;
+};
+type TvdbSearchResponse = { data?: TvdbSearchResult[] };
+type AniListResponse = {
+  data?: {
+    Media?: {
+      id?: number | string;
+      title?: { romaji?: string; native?: string; english?: string };
+      startDate?: { year?: number };
+      coverImage?: { extraLarge?: string; large?: string };
+    };
+  };
+};
 
 /** 検索クエリ候補（日本語名 → 括弧等を除去、slug をスペース区切りにした保険）。 */
 function queryVariants(name: string, slug: string): string[] {
@@ -100,8 +123,7 @@ query ($q: String) {
 // 全リクエストを最小間隔で間引き、429 は Retry-After に従って同一クエリを再試行する。
 let lastAniAt = 0;
 const ANI_MIN_GAP = 1600;
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function anilistRequest(q: string): Promise<any | null> {
+async function anilistRequest(q: string): Promise<AniListResponse | null> {
   for (let attempt = 0; attempt < 4; attempt++) {
     const wait = ANI_MIN_GAP - (Date.now() - lastAniAt);
     if (wait > 0) await sleep(wait);
@@ -118,7 +140,7 @@ async function anilistRequest(q: string): Promise<any | null> {
         await sleep((ra + 1) * 1000);
         continue;
       }
-      return await res.json();
+      return (await res.json()) as AniListResponse;
     } catch {
       await sleep(1000);
     }
@@ -175,16 +197,14 @@ async function fetchTheTvdb(name: string, slug: string): Promise<Poster | null> 
   const wantYear = yearFromName(name);
   const target = norm(name.replace(/[(（]\s*\d{4}\s*[)）]\s*$/, ""));
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const seen = new Set<string>();
-  const candidates: { r: any; score: number }[] = [];
+  const candidates: { r: TvdbSearchResult; score: number }[] = [];
   for (const q of dramaQueries(name, slug)) {
     try {
       const u = `https://api4.thetvdb.com/v4/search?query=${encodeURIComponent(q)}&type=series&limit=8`;
       const res = await fetch(u, { headers: { Authorization: `Bearer ${token}`, Accept: "application/json" } });
-      const json = await res.json();
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const results: any[] = Array.isArray(json?.data) ? json.data : [];
+      const json = (await res.json()) as TvdbSearchResponse;
+      const results = Array.isArray(json?.data) ? json.data : [];
       results.forEach((r, idx) => {
         const id = String(r?.tvdb_id ?? r?.id ?? "");
         if (id && seen.has(id)) return;
@@ -193,7 +213,7 @@ async function fetchTheTvdb(name: string, slug: string): Promise<Poster | null> 
         if (!img || img.includes("missing/series")) return;
         const isJp = r?.country === "jpn" || r?.primary_language === "jpn";
         if (!isJp) return;
-        const titles = [r?.translations?.jpn, r?.name].filter(Boolean).map((t: string) => norm(t));
+        const titles = [r?.translations?.jpn, r?.name].filter((t): t is string => Boolean(t)).map((t) => norm(t));
         const titleExact = titles.some((t: string) => t === target && t.length >= 2);
         const titleIncl = titles.some((t: string) => t.length >= 3 && target.length >= 3 && (t.includes(target) || target.includes(t)));
         if (!titleExact && !titleIncl) return; // タイトル根拠なしは不採用（誤マッチ防止）
@@ -210,8 +230,10 @@ async function fetchTheTvdb(name: string, slug: string): Promise<Poster | null> 
   if (!candidates.length) return null;
   candidates.sort((a, b) => b.score - a.score);
   const r = candidates[0].r;
+  const imageUrl = r.image_url;
+  if (!imageUrl) return null;
   return {
-    url: r.image_url,
+    url: imageUrl,
     matchedTitle: r.translations?.jpn || r.name || r.extended_title || "",
     year: r.year ? Number(r.year) : undefined,
     country: r.country,

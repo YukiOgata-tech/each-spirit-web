@@ -1,5 +1,5 @@
 import { scoreToBand, SCORED_KEYS, CATEGORY_LABEL, type FortuneResult } from "@/lib/fortune";
-import { classifyCrystal, CRYSTAL_PERFECT_PURITY } from "@/lib/crystal-form";
+import { classifyCrystal } from "@/lib/crystal-form";
 
 /** 6スコアから検証用の FortuneResult を組み立てる。 */
 function makeResult(scores: number[], date = "2026-06-30"): FortuneResult {

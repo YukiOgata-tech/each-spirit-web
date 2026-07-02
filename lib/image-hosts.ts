@@ -16,6 +16,10 @@ export const ALLOWED_IMAGE_HOSTS = [
   "artworks.thetvdb.com",
   "commons.wikimedia.org",
   "upload.wikimedia.org",
+  // 書籍ランキング用の書影。ISBN ベースで保存し、表示時は DB の固定URLを使う。
+  "www.hanmoto.com",
+  "thumbnail.image.rakuten.co.jp",
+  "m.media-amazon.com",
   "images.unsplash.com", "make-it-tech.com",
   "www.tomita-cocoro.jp",
   "sugitaya.com",
