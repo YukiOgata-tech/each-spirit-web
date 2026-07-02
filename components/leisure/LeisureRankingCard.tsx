@@ -9,14 +9,12 @@ import { Badge } from "@/components/ui/badge";
 export function LeisureRankingCard({
   region,
   ranking,
-  imageUrl,
 }: {
   region: string;
   ranking: LeisureRanking;
-  /** カードごとに違う絵を出すための上位スポット画像（任意）。未指定なら ranking 自身の画像→フォールバック。 */
-  imageUrl?: string;
 }) {
-  const hero = safeImageSrc(imageUrl ?? ranking.imageUrl, ogRankingImage(ranking.title));
+  // ランキング専用画像が無ければ thumbnail-og.jpg にタイトルを合成した自動画像へフォールバック。
+  const hero = safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title));
   const criteria = ranking.criteria.slice(0, 3);
 
   return (

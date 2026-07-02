@@ -417,9 +417,8 @@ function mapSalonItem(row: any): Salon {
 function mapRanking(row: any, items: any[]): Ranking {
   const m = row.metadata ?? {};
   const sorted = [...items].sort((a, b) => a.rank - b.rank);
-  // ランキング専用画像が無ければ、上位アイテムの画像をカード/メタ画像に流用する
-  const topItemImage = sorted.find((ri) => ri.items?.image?.url || ri.image_url);
-  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
+  // ランキング専用画像が無い場合はアイテム画像を流用せず、UI 側で thumbnail-og.jpg への
+  // 自動生成フォールバック（ogRankingImage）に委ねる。
   return {
     slug: row.slug,
     title: row.title,
@@ -427,7 +426,7 @@ function mapRanking(row: any, items: any[]): Ranking {
     majorCategory: row.major_category ?? undefined,
     sectionSlug: row.section_slug ?? undefined,
     canonicalPath: row.canonical_path ?? undefined,
-    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? undefined,
     region: row.region ?? undefined,
     target: m.target ?? undefined,
     criteria: (row.criteria ?? []) as string[],
@@ -460,13 +459,11 @@ function mapRanking(row: any, items: any[]): Ranking {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapCafeRanking(row: any, items: any[]): CafeRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url || ri.image_url);
-  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
   return {
     slug: row.slug,
     title: row.title,
     description: row.description,
-    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",
@@ -550,14 +547,12 @@ function mapProteinProduct(row: any): ProteinProduct {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapProteinRanking(row: any, items: any[]): ProteinRanking {
   const m = row.metadata ?? {};
-  const topItemImage = [...items].sort((a, b) => a.rank - b.rank).find((ri) => ri.items?.image?.url || ri.image_url);
-  const fallbackImage = (topItemImage?.items?.image?.url ?? topItemImage?.image_url) as string | undefined;
   return {
     slug: row.slug,
     target: (m.target ?? "beginner") as ProteinTarget,
     title: row.title,
     description: row.description,
-    imageUrl: row.image_url ?? jstr(row.image, "url") ?? fallbackImage ?? undefined,
+    imageUrl: row.image_url ?? jstr(row.image, "url") ?? undefined,
     criteria: (row.criteria ?? []) as string[],
     conclusion: row.conclusion ?? "",
     quickTableLabel: row.quick_table_label ?? "",

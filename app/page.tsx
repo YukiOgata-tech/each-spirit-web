@@ -1,10 +1,10 @@
 import Link from "next/link";
 import { ArrowRight, CheckCircle2, Newspaper, TrendingUp } from "lucide-react";
 import { NewsArticleRow, NewsFeatureCard } from "@/components/cards/NewsArticleCard";
-import { RankingCard } from "@/components/cards/RankingCard";
+import { RankingFeatureCard, RankingRow } from "@/components/cards/RankingListCards";
+import { FortuneCta } from "@/components/home/FortuneCta";
 import { HomeVisualStory } from "@/components/home/HomeVisualStory";
 import { DiscoverySearch } from "@/components/search/DiscoverySearch";
-import { SearchForm } from "@/components/search/SearchForm";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { articleHref, getCategories, getLatestArticles, getPopularRankings, rankingHref } from "@/lib/content";
@@ -51,13 +51,12 @@ export default async function HomePage() {
             </p>
             <div className="mt-5 grid w-full grid-cols-2 gap-2.5 sm:mt-6 sm:flex sm:flex-wrap sm:gap-3">
               <Button asChild size="lg" className="max-sm:h-11 max-sm:px-3 max-sm:text-sm">
-                <Link href={routes.search}>検索ページを開く<SearchArrow /></Link>
+                <Link href={routes.search}>サイト内を検索<SearchArrow /></Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="max-sm:h-11 max-sm:px-3 max-sm:text-sm">
-                <Link href={routes.ramen}>公開中カテゴリへ</Link>
+                <Link href="#search">カテゴリから探す</Link>
               </Button>
             </div>
-            <SearchForm className="mt-4 w-full max-w-2xl rounded-xl border border-slate-200 bg-white/95 p-2 shadow-sm sm:mt-5" placeholder="店名・地域・ジャンル・記事テーマで検索" />
           </div>
 
           <HomeVisualStory categories={liveCategories} />
@@ -102,15 +101,27 @@ export default async function HomePage() {
           )}
         </div>
         <div>
-          <div className="mb-3 flex items-center gap-2.5 sm:mb-5">
-            <TrendingUp className="h-6 w-6 shrink-0 text-[var(--accent)]" />
-            <h2 className="section-heading">ランキング</h2>
+          <div className="mb-3 flex items-center justify-between gap-2 sm:mb-5">
+            <div className="flex items-center gap-2.5">
+              <TrendingUp className="h-6 w-6 shrink-0 text-[var(--accent)]" />
+              <h2 className="section-heading">ランキング</h2>
+            </div>
+            <Link href={routes.search} className="flex items-center gap-1 text-xs font-bold text-[var(--accent)] sm:text-sm">もっと見る<ArrowRight className="h-4 w-4" /></Link>
           </div>
-          <div className="grid gap-3 sm:gap-4">
-            {rankings.map((ranking) => <RankingCard key={`${ranking.majorCategory ?? ""}-${ranking.sectionSlug ?? ""}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />)}
-          </div>
+          {rankings.length > 0 && (
+            <div>
+              <RankingFeatureCard ranking={rankings[0]} href={rankingHref(rankings[0])} />
+              <div className="mt-2 divide-y divide-slate-100 sm:mt-3">
+                {rankings.slice(1).map((ranking) => (
+                  <RankingRow key={`${ranking.majorCategory ?? ""}-${ranking.sectionSlug ?? ""}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </section>
+
+      <FortuneCta />
 
       <section className="section-shell">
         <div className="grid gap-5 rounded-lg bg-slate-950 p-5 text-white sm:gap-6 sm:p-8 lg:grid-cols-[0.9fr_1.1fr]">

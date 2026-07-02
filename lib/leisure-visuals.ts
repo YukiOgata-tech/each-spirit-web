@@ -1,4 +1,4 @@
-import type { LeisureRanking, LeisureSpot } from "@/lib/types";
+import type { LeisureSpot } from "@/lib/types";
 import { isAllowedImageSrc } from "@/lib/image-hosts";
 
 export type LeisureIconKey = "building" | "cableCar" | "fish" | "flask" | "flower" | "mountain" | "ship" | "trees" | "waves";
@@ -127,14 +127,4 @@ export function getLeisureVisual(spot: LeisureSpot): LeisureVisual {
     return { ...base, imageUrl: spot.imageUrl as string, imageAlt: spot.name };
   }
   return base;
-}
-
-/**
- * ランキングカードのヒーロー画像を決める。1位（無ければ最上位）のスポットのビジュアルを使い、
- * カードごとに違う画像が出るようにする。該当スポットが解決できなければ ranking 自身の画像にフォールバック。
- */
-export function leisureRankingImage(ranking: LeisureRanking, spots: LeisureSpot[]): string | undefined {
-  const top = [...ranking.items].sort((a, b) => a.rank - b.rank)[0];
-  const spot = top ? spots.find((s) => s.slug === top.itemSlug) : undefined;
-  return spot ? getLeisureVisual(spot).imageUrl : ranking.imageUrl;
 }

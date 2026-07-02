@@ -376,6 +376,16 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
 
   const majorLabel = majorCategoryLabels[majorCategory] ?? majorCategory;
   const theme = genericTheme(majorCategory);
+  const isBookSection = majorCategory === "entertainment" && sectionSlug === "books";
+  const rankingItemGridClass = isBookSection
+    ? "grid grid-cols-[5.5rem_1fr] gap-4 p-4 sm:grid-cols-[7rem_1fr] sm:p-5 lg:grid-cols-[8rem_1fr]"
+    : "grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]";
+  const rankingImageFrameClass = isBookSection
+    ? "group/image relative aspect-[2/3] overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm"
+    : "group/image relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]";
+  const rankingImageClass = isBookSection
+    ? "object-contain p-2 transition-transform duration-500 group-hover/image:scale-105"
+    : "object-cover transition-transform duration-500 group-hover/image:scale-105";
   const path = rankingHref(ranking);
   const scoreLabel = ranking.quickTableLabel || "スコア";
   const sectionTop = section.href || `/${majorCategory}/${sectionSlug}`;
@@ -425,17 +435,6 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
         </div>
       </section>
 
-      <AffiliateSurface
-        content={{
-          kind: "ranking",
-          title: ranking.title,
-          targetSlug: ranking.slug,
-          majorCategory,
-          sectionSlug,
-        }}
-        className="mt-8"
-      />
-
       {/* Entries */}
       <section id="ranking" className="mt-8 scroll-mt-24 space-y-4">
         {entries.map(({ entry, item }) => {
@@ -451,10 +450,10 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
           const priceRange = item?.priceRange ?? entry.priceRange;
           const affiliate = affiliateByEntry.get(key);
           const body = (
-            <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]">
-              <div className="group/image relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
+            <div className={rankingItemGridClass}>
+              <div className={rankingImageFrameClass}>
                 {imageUrl ? (
-                  <Image src={safeImageSrc(imageUrl, ogRankingImage(name))} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover/image:scale-105" />
+                  <Image src={safeImageSrc(imageUrl, ogRankingImage(name))} alt={entry.imageAlt || name} fill sizes={isBookSection ? "(min-width: 1024px) 128px, 28vw" : "(min-width: 1024px) 192px, 40vw"} className={rankingImageClass} />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}
@@ -525,6 +524,17 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
           <p className="mt-2 text-sm leading-7 text-slate-700">{ranking.conclusion}</p>
         </section>
       )}
+
+      <AffiliateSurface
+        content={{
+          kind: "ranking",
+          title: ranking.title,
+          targetSlug: ranking.slug,
+          majorCategory,
+          sectionSlug,
+        }}
+        className="mt-8"
+      />
 
       <section className="mt-8 grid gap-2 sm:grid-cols-3">
         <Button asChild variant="outline" className="justify-between">

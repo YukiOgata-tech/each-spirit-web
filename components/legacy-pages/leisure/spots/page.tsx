@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { ArrowRight, BookOpen, Trophy } from "lucide-react";
-import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureRegions, getLeisureSpots } from "@/lib/content";
-import { leisureRankingImage } from "@/lib/leisure-visuals";
+import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureRegions } from "@/lib/content";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
 import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
@@ -15,11 +14,10 @@ export const metadata = pageMetadata({
 });
 
 export default async function LeisureSpotsPage() {
-  const [regions, rankings, articles, spots] = await Promise.all([
+  const [regions, rankings, articles] = await Promise.all([
     getLeisureRegions(),
     getLeisureRankings("niigata"),
     getArticlesBySection("leisure", "spots"),
-    getLeisureSpots("niigata"),
   ]);
   return (
     <main className="section-shell">
@@ -46,7 +44,7 @@ export default async function LeisureSpotsPage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {rankings.slice(0, 4).map((ranking) => (
-              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} imageUrl={leisureRankingImage(ranking, spots)} />
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
             ))}
           </div>
         </section>

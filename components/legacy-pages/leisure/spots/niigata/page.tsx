@@ -8,7 +8,7 @@ import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureSpots } from "@/lib/content";
-import { getLeisureVisual, leisureRankingImage } from "@/lib/leisure-visuals";
+import { getLeisureVisual } from "@/lib/leisure-visuals";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -107,7 +107,7 @@ export default async function NiigataLeisurePage() {
           <h2 className="section-heading">目的別ランキング</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
-          {rankings.map((ranking) => <LeisureRankingCard key={ranking.slug} region={region} ranking={ranking} imageUrl={leisureRankingImage(ranking, spots)} />)}
+          {rankings.map((ranking) => <LeisureRankingCard key={ranking.slug} region={region} ranking={ranking} />)}
         </div>
       </section>
 

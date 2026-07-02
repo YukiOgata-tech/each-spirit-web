@@ -7,8 +7,7 @@ import { LeisureRankingCard } from "@/components/leisure/LeisureRankingCard";
 import { NewsFeatureCard } from "@/components/cards/NewsArticleCard";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, getLeisureRegions, getLeisureSpots, getContentSections } from "@/lib/content";
-import { leisureRankingImage } from "@/lib/leisure-visuals";
+import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, getLeisureRegions, getContentSections } from "@/lib/content";
 import { pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
@@ -33,12 +32,11 @@ const regionImages: Record<string, { src: string; alt: string }> = {
 
 export default async function LeisurePage() {
   const category = getCategory("leisure");
-  const [regions, sections, rankings, articles, spots] = await Promise.all([
+  const [regions, sections, rankings, articles] = await Promise.all([
     getLeisureRegions(),
     getContentSections("leisure"),
     getLeisureRankings("niigata"),
     getArticlesBySection("leisure", "spots"),
-    getLeisureSpots("niigata"),
   ]);
 
   return (
@@ -101,7 +99,7 @@ export default async function LeisurePage() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             {rankings.slice(0, 4).map((ranking) => (
-              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} imageUrl={leisureRankingImage(ranking, spots)} />
+              <LeisureRankingCard key={ranking.slug} region="niigata" ranking={ranking} />
             ))}
           </div>
         </section>
