@@ -53,9 +53,10 @@
 | `criteria` | text[] | 評価軸 |
 | `tags` | text[] | タグ |
 | `status` | text | `draft` / `published` / `archived` |
-| `last_updated_at` | date | 公開上の更新日 |
+| `last_updated_at` | date | 公開上の更新日（表示用。手動設定可） |
+| `changed_at` | timestamptz | データ変更検知用（非表示）。INSERT/UPDATE でトリガが `now()` を入れ、差分 on-demand revalidation の判定に使う。表示・並び替えには使わない |
 | `metadata` | jsonb | 追加情報。プロテインの `target` など |
-| `like_count` / `view_count` | integer | 集計用 |
+| `like_count` / `view_count` | integer | 集計用（`like_count` は現在サイト上では非表示） |
 
 制約・index:
 
@@ -421,5 +422,6 @@ insert into es.rankings (
 - `supabase/migrations/20260624120000_es_initial_schema.sql`
 - `supabase/migrations/20260701215229_extend_ranking_items_manual_entries.sql`
 - `supabase/migrations/20260702093000_normalize_protein_ranking_canonical_paths.sql`
+- `supabase/migrations/20260702170000_add_changed_at_and_revalidation_state.sql`（`changed_at` 列・トリガ・`es.revalidation_state`）
 
-2026-07-02 の直前作業で、Supabase MCP により `normalize_protein_ranking_canonical_paths` の適用とプロテイン `canonical_path` の target 付きURL化は確認済みです。一方、このドキュメント作成時点では MCP SQL が利用上限で拒否されたため、リモートDBの全列・全制約を再照会する確認は未実施です。DB実スキーマの再監査が必要な場合は、MCP利用可能状態で `information_schema.columns`、`pg_constraint`、`pg_indexes` を再確認してください。
+2026-07-02 に Supabase MCP でリモートDBを再照会し、`es.rankings` を含む主要テーブルへ `changed_at`（非表示・変更検知用）とトリガ `es.set_changed_at()` を適用済みであることを確認しました。差分 on-demand revalidation の基準を保持する 1 行テーブル `es.revalidation_state` も作成済みです（RLS 有効）。プロテイン `canonical_path` の target 付きURL化も適用済みです。

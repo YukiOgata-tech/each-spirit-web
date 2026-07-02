@@ -37,13 +37,14 @@
 | `genres` | text[] | **分類ジャンル軸（全型共通・複数可・GIN索引）**につかえるようなもの。anime=ジャンル＋原作、ramen=スープ系統 等 |
 | `status` | text | draft / published / archived |
 | `editor_comment` | text | 編集部コメント |
-| `like_count` / `view_count` | int | エンゲージメント |
+| `like_count` / `view_count` | int | エンゲージメント（`like_count` は**現在サイト上では非表示**。いいね機能・データは保持し、数のみ非表示） |
 | `major_category` | text | 大カテゴリ |
 | `section_slug` | text | section |
 | `canonical_path` | text | 正規URLパス 基本的に /[major_category]/[section_slug]/[slug] or /[major_category]/[section_slug]/[region] があるので注意|
 | `item_class` | text | physical_service / intangible_service / media / person / product / other |
 | `item_kind` | text | 任意（genre 的な補助分類）。travel の agency/app 判定は item_class へ移行済み。あってもなくてもよい |
 | `created_at` / `updated_at` | timestamptz | 作成・更新（`lastVerifiedAt` は updated_at 由来） |
+| `changed_at` | timestamptz | **データ変更検知用（非表示）**。INSERT/UPDATE でトリガ `es.set_changed_at()` が `now()` を入れる。差分 on-demand revalidation（`/api/revalidate` 既定の差分モード）が「前回以降に変わった行」を判定するのに使う。表示・SEO・並び替えには一切使わない（`updated_at` の手動調整と干渉させないための専用列） |
 
 ### 旧カラム（DROP 済み 2026-06）
 `image_url` → `image.url` ／ `address` `area` `map_url` `address_region` `latitude` `longitude` → `address_info` ／ `seo_title` `seo_description` → `seo`。
