@@ -649,6 +649,10 @@ function normalizeProteinRanking(r: any) {
  * On-demand ISR 再検証を叩く（任意）。
  * SITE_REVALIDATE_URL（例: https://each-spirit.com/api/revalidate）と
  * REVALIDATE_SECRET が両方設定されている場合のみ実行。ローカル dev では不要。
+ *
+ * body は "{}" を送るため、エンドポイントは「差分モード」で動く
+ * （前回以降に changed_at が動いた行のページと影響一覧だけを再検証）。
+ * 全体を作り直したいときだけ手動で {"scope":"all"} を送ること。
  */
 async function triggerRevalidation() {
   const revalUrl = process.env.SITE_REVALIDATE_URL

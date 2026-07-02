@@ -30,3 +30,19 @@ export function createServerClient() {
     }
   );
 }
+
+/**
+ * キャッシュを挟まない service-role クライアント。
+ * ISR データキャッシュ（esContentFetch は revalidate=1か月）を経由すると古い行を
+ * 読んでしまうため、差分 revalidate の判定など「常に最新を読む」用途で使う。
+ */
+export function createUncachedServerClient() {
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    {
+      db: { schema: "es" },
+      global: { fetch: (input, init) => fetch(input, { ...init, cache: "no-store" }) },
+    }
+  );
+}
