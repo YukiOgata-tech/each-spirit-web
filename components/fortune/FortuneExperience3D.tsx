@@ -174,7 +174,7 @@ export function FortuneExperience3D({
   if (isMobile) {
     return (
       <div className="relative">
-        <section className="relative h-[60svh] min-h-100 w-full overflow-hidden">
+        <section className="relative h-[68svh] min-h-110 w-full overflow-hidden">
           {/* 回転クリスタル。タッチはスクロールに透過させる */}
           <div className="pointer-events-none absolute inset-0">
             <FateCrystalScene result={result} hovered={null} />
@@ -225,6 +225,8 @@ export function FortuneExperience3D({
             <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-slate-950/45 px-4 py-1.5 text-xs font-bold text-violet-200 backdrop-blur-sm">
               <Gem className="h-3.5 w-3.5" /> 今日の結晶「{form.label}」
             </p>
+            {/* 総合運の解説文（PC ヒーローと同様、モバイルでもここに集約） */}
+            <p className="mt-3 max-w-sm text-[13px] leading-6 text-white/90">{result.overall.text}</p>
           </motion.div>
 
           {/* モード切替 */}
