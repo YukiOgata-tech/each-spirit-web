@@ -12,8 +12,10 @@ type LikeType = "like" | "bookmark";
 /**
  * コンテンツ詳細ページ用のいいね / 保存ボタン。
  *
- * - 未ログイン: クリックでログインページへ（戻り先付き）。いいね数は閲覧可能。
+ * - 未ログイン: クリックでログインページへ（戻り先付き）。
  * - ログイン済み: es.content_likes に insert/delete（楽観更新・失敗時ロールバック）。
+ *
+ * いいね数（人気カウント）はサイト方針で非表示。ボタンは on/off の状態のみ示す。
  *
  * 識別キーは content_kind('item'|'article'|'ranking') + targetId(es の行 uuid)。
  */
@@ -33,7 +35,6 @@ export function LikeButton({
   const [userId, setUserId] = useState<string | null>(null);
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
-  const [likeCount, setLikeCount] = useState(0);
   const [pending, setPending] = useState<LikeType | null>(null);
 
   useEffect(() => {
@@ -45,20 +46,8 @@ export function LikeButton({
     let active = true;
 
     (async () => {
-      const [{ data: auth }, { data: countRow }] = await Promise.all([
-        supabase.auth.getUser(),
-        supabase
-          .schema("es")
-          .from("content_like_counts")
-          .select("count")
-          .eq("content_kind", contentKind)
-          .eq("target_id", targetId)
-          .eq("like_type", "like")
-          .maybeSingle(),
-      ]);
+      const { data: auth } = await supabase.auth.getUser();
       if (!active) return;
-
-      setLikeCount(countRow?.count ?? 0);
 
       const user = auth.user;
       if (user) {
@@ -97,7 +86,6 @@ export function LikeButton({
     // 楽観更新
     if (type === "like") {
       setLiked(!isOn);
-      setLikeCount((c) => Math.max(0, c + (isOn ? -1 : 1)));
     } else {
       setBookmarked(!isOn);
     }
@@ -128,7 +116,6 @@ export function LikeButton({
       // ロールバック
       if (type === "like") {
         setLiked(isOn);
-        setLikeCount((c) => Math.max(0, c + (isOn ? 1 : -1)));
       } else {
         setBookmarked(isOn);
       }
@@ -152,7 +139,7 @@ export function LikeButton({
         )}
       >
         <Heart className={cn("h-4 w-4", liked && "fill-current")} />
-        <span className="tabular-nums">{likeCount}</span>
+        <span>いいね</span>
       </button>
 
       <button
