@@ -203,6 +203,8 @@ export type RankingItem = {
   priceRange?: string;
   area?: string;
   tags?: string[];
+  affiliateQuery?: string;
+  metadata?: Record<string, unknown>;
   score: number;
   reason: string;
   isPr: boolean;

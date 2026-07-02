@@ -15,6 +15,7 @@ export type SectionConfig = {
 export async function SectionRankingsIndex({ config }: { config: SectionConfig }) {
   const rankings = await getRankingsBySection(config.majorCategory, config.sectionSlug);
   const path = routes.sectionRankings(config.majorCategory, config.sectionSlug);
+  const themeClass = config.majorCategory === "entertainment" ? "entertainment-theme" : "";
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: config.majorLabel, href: routes.majorCategory(config.majorCategory) },
@@ -23,7 +24,7 @@ export async function SectionRankingsIndex({ config }: { config: SectionConfig }
   ];
 
   return (
-    <main className="section-shell">
+    <main className={`${themeClass} section-shell`}>
       <JsonLd data={breadcrumbSchema(breadcrumbs)} />
             <div className="mb-6">
         <p className="text-sm font-semibold text-[var(--primary)]">{config.majorLabel} / {config.sectionLabel}</p>
@@ -35,6 +36,11 @@ export async function SectionRankingsIndex({ config }: { config: SectionConfig }
           <RankingCard key={`${ranking.majorCategory}-${ranking.sectionSlug}-${ranking.slug}`} ranking={ranking} href={rankingHref(ranking)} />
         ))}
       </div>
+      {rankings.length === 0 && (
+        <div className="rounded-lg border border-dashed border-[var(--border)] bg-white px-4 py-12 text-center text-sm leading-7 text-slate-500">
+          このカテゴリの公開ランキングは準備中です。
+        </div>
+      )}
     </main>
   );
 }

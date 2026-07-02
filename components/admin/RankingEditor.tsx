@@ -46,6 +46,7 @@ function emptyRow(rank: number): RankingItemRow {
     priceRange: "",
     area: "",
     tags: "",
+    affiliateQuery: "",
     score: null,
     reason: "",
     isPr: false,
@@ -251,6 +252,16 @@ export function RankingEditor({ action, sections, regionOptions, itemsBySection,
                   </div>
                 </div>
               )}
+              <div className="sm:col-span-5">
+                <label className={labelClass}>アフィリエイト検索語</label>
+                <input
+                  value={row.affiliateQuery}
+                  onChange={(e) => updateRow(index, { affiliateQuery: e.target.value })}
+                  className={inputClass}
+                  placeholder="例: 書籍名 著者名 / 商品名 ブランド名"
+                />
+                <p className="mt-1 text-[11px] leading-5 text-slate-500">空欄の場合、この項目単位の購入リンクは表示しません。</p>
+              </div>
               <div className="sm:col-span-5">
                 <label className={labelClass}>理由</label>
                 <textarea value={row.reason} onChange={(e) => updateRow(index, { reason: e.target.value })} rows={2} className={inputClass} />

@@ -66,6 +66,7 @@ const fallbackContentSections: ContentSection[] = [
   { majorCategory: "travel", sectionSlug: "stays", label: "宿・温泉", description: "温泉旅館や宿泊施設を旅スタイルで選べる旅行ガイド。", href: routes.travelStays, contentModel: "hotel", itemPathSegment: "hotels", regionMode: "optional", targetMode: "none", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "travel", sectionSlug: "services", label: "旅行サービス", description: "旅行会社と旅行アプリを比較する旅行サービスガイド。", href: routes.travelServices, contentModel: "travel-service", itemPathSegment: "agencies", regionMode: "optional", targetMode: "none", status: "published", sortOrder: 20, displayConfig: {}, seoConfig: {}, metadata: {} },
   { majorCategory: "leisure", sectionSlug: "spots", label: "スポット", description: "天候、同行者、移動手段で選べるレジャースポットガイド。", href: routes.leisureSpots, contentModel: "spot", itemPathSegment: "spots", regionMode: "optional", targetMode: "none", status: "published", sortOrder: 10, displayConfig: {}, seoConfig: {}, metadata: {} },
+  { majorCategory: "entertainment", sectionSlug: "books", label: "書籍", description: "小説、ミステリー、話題作をテーマ別に比較する書籍ガイド。", href: routes.entertainmentSection("books"), contentModel: "media", itemPathSegment: "books", regionMode: "none", targetMode: "none", status: "published", sortOrder: 30, displayConfig: {}, seoConfig: {}, metadata: {} },
 ];
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -445,6 +446,8 @@ function mapRanking(row: any, items: any[]): Ranking {
       priceRange: ri.price_range ?? undefined,
       area: ri.area ?? undefined,
       tags: (ri.tags ?? []) as string[],
+      affiliateQuery: typeof ri.metadata?.affiliate_query === "string" ? ri.metadata.affiliate_query : undefined,
+      metadata: ri.metadata ?? {},
       score: Number(ri.score ?? 0),
       reason: ri.reason ?? "",
       isPr: ri.is_pr ?? false,

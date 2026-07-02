@@ -9,8 +9,10 @@ import { JsonLd } from "@/components/seo/JsonLd";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
+import { AffiliateClickLink } from "@/components/affiliate/AffiliateClickLink";
 import { MajorSectionDirectory, SectionActionNav } from "@/components/generic/SectionNavigation";
 import { ItemDetail } from "@/components/detail/ItemDetail";
+import { getAffiliateLinksForQuery } from "@/lib/affiliate/resolve";
 import {
   articleHref,
   getArticlesBySection,
@@ -156,6 +158,10 @@ export async function genericRankingMetadata(majorCategory: string, sectionSlug:
 
 function itemHref(section: ContentSection, item: GenericItem) {
   return item.canonicalPath ?? routes.sectionItem(section.majorCategory, section.sectionSlug, section.itemPathSegment ?? "items", item.slug);
+}
+
+function entryKey(entry: { rank: number; itemSlug: string }) {
+  return `${entry.rank}-${entry.itemSlug}`;
 }
 
 function GenericItemCard({ section, item, theme }: { section: ContentSection; item: GenericItem; theme: GenericTheme }) {
@@ -373,6 +379,15 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
   const path = rankingHref(ranking);
   const scoreLabel = ranking.quickTableLabel || "スコア";
   const sectionTop = section.href || `/${majorCategory}/${sectionSlug}`;
+  const entryAffiliateRows = await Promise.all(
+    entries.map(async ({ entry }) => {
+      const query = entry.affiliateQuery?.trim();
+      if (!query) return [entryKey(entry), undefined] as const;
+      const result = await getAffiliateLinksForQuery(query, { maxLinks: 2 });
+      return [entryKey(entry), result] as const;
+    }),
+  );
+  const affiliateByEntry = new Map(entryAffiliateRows);
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: majorLabel, href: routes.majorCategory(majorCategory) },
@@ -424,6 +439,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
       {/* Entries */}
       <section id="ranking" className="mt-8 scroll-mt-24 space-y-4">
         {entries.map(({ entry, item }) => {
+          const key = entryKey(entry);
           const top = entry.rank <= 3;
           const href = item ? (item.canonicalPath ?? itemHref(section, item)) : entry.externalUrl;
           const isExternal = !item && Boolean(entry.externalUrl);
@@ -433,11 +449,12 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
           const tags = item?.tags?.length ? item.tags : (entry.tags ?? []);
           const areaText = [item?.region, item?.area ?? entry.area].filter(Boolean).join(" ・ ");
           const priceRange = item?.priceRange ?? entry.priceRange;
+          const affiliate = affiliateByEntry.get(key);
           const body = (
             <div className="grid gap-4 p-4 sm:grid-cols-[8rem_1fr] sm:p-5 lg:grid-cols-[12rem_1fr]">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
+              <div className="group/image relative aspect-[4/3] overflow-hidden rounded-lg bg-[var(--muted)]">
                 {imageUrl ? (
-                  <Image src={imageUrl} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover:scale-105" />
+                  <Image src={imageUrl} alt={entry.imageAlt || name} fill sizes="(min-width: 1024px) 192px, 40vw" className="object-cover transition-transform duration-500 group-hover/image:scale-105" />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}
@@ -459,23 +476,46 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
                   )}
                   {priceRange && <span className="text-xs font-semibold text-slate-500">{priceRange}</span>}
                   {href && (
-                    <span className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] sm:text-sm">
-                      {isExternal ? "公式・詳細を見る" : "詳しく見る"}
-                      {isExternal ? <ExternalLink className="h-4 w-4 transition-transform group-hover:translate-x-1" /> : <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />}
-                    </span>
+                    isExternal ? (
+                      <a href={href} target="_blank" rel="noopener noreferrer" className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] underline-offset-4 hover:underline sm:text-sm">
+                        公式・詳細を見る
+                        <ExternalLink className="h-4 w-4" />
+                      </a>
+                    ) : (
+                      <Link href={href} className="ml-auto inline-flex items-center gap-1 text-xs font-bold text-[var(--primary)] underline-offset-4 hover:underline sm:text-sm">
+                        詳しく見る
+                        <ArrowRight className="h-4 w-4" />
+                      </Link>
+                    )
                   )}
                 </div>
+                {affiliate && affiliate.links.length > 0 && (
+                  <div className="mt-4 rounded-lg border border-[var(--border)] bg-[var(--muted)]/35 p-3">
+                    {affiliate.disclosureRequired && (
+                      <p className="mb-2 text-[11px] leading-5 text-slate-500">この項目には広告・アフィリエイトリンクを含みます。価格や在庫はリンク先で確認してください。</p>
+                    )}
+                    <div className="flex flex-wrap gap-x-4 gap-y-2">
+                      {affiliate.links.map((link) => (
+                        <AffiliateClickLink
+                          key={`${link.provider}-${link.url}`}
+                          href={link.url}
+                          rel={link.rel}
+                          provider={link.provider}
+                          label={link.ctaLabel}
+                          targetKind="ranking"
+                          targetSlug={`${ranking.slug}:${entry.itemSlug}`}
+                          query={link.query}
+                          variant="text"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           );
-          const cardClass = `group block overflow-hidden rounded-lg border bg-white shadow-sm transition ${top ? "border-[var(--primary)]/35" : "border-[var(--border)]"} ${href ? "hover:-translate-y-0.5 hover:shadow-md" : ""}`;
-          return item && href ? (
-            <Link key={`${entry.rank}-${entry.itemSlug}`} href={href} className={cardClass}>{body}</Link>
-          ) : isExternal && href ? (
-            <a key={`${entry.rank}-${entry.itemSlug}`} href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>{body}</a>
-          ) : (
-            <div key={`${entry.rank}-${entry.itemSlug}`} className={cardClass}>{body}</div>
-          );
+          const cardClass = `overflow-hidden rounded-lg border bg-white shadow-sm transition ${top ? "border-[var(--primary)]/35" : "border-[var(--border)]"}`;
+          return <div key={key} className={cardClass}>{body}</div>;
         })}
       </section>
 

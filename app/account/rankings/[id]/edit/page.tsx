@@ -43,6 +43,7 @@ export default async function EditRankingPage({ params }: PageProps) {
       priceRange: ri.price_range ?? "",
       area: ri.area ?? "",
       tags: ((ri.tags as string[]) ?? []).join(", "),
+      affiliateQuery: typeof ri.metadata?.affiliate_query === "string" ? ri.metadata.affiliate_query : "",
       score: ri.score === null || ri.score === undefined ? null : Number(ri.score),
       reason: ri.reason ?? "",
       isPr: ri.is_pr ?? false,

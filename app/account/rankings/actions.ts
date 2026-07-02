@@ -120,6 +120,7 @@ export async function saveRanking(formData: FormData) {
         priceRange: String(r.priceRange ?? ""),
         area: String(r.area ?? ""),
         tags: String(r.tags ?? ""),
+        affiliateQuery: String(r.affiliateQuery ?? ""),
         reason: String(r.reason ?? ""),
       };
     });
@@ -148,6 +149,7 @@ export async function saveRanking(formData: FormData) {
       price_range: r.entryKind === "manual" ? r.priceRange.trim() || null : null,
       area: r.entryKind === "manual" ? r.area.trim() || null : null,
       tags: r.entryKind === "manual" ? listFromText(r.tags) : [],
+      metadata: r.affiliateQuery.trim() ? { affiliate_query: r.affiliateQuery.trim() } : {},
       score: r.score === null || r.score === undefined || Number.isNaN(Number(r.score)) ? null : Number(r.score),
       reason: r.reason ?? "",
       is_pr: !!r.isPr,

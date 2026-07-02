@@ -20,6 +20,7 @@ export const RANKING_SECTIONS: RankingSection[] = [
   { key: "travel:stays", majorCategory: "travel", sectionSlug: "stays", label: "宿・ホテルランキング", regionMode: "required", hasTarget: false },
   { key: "travel:services", majorCategory: "travel", sectionSlug: "services", label: "旅行会社ランキング", regionMode: "required", hasTarget: false },
   { key: "leisure:spots", majorCategory: "leisure", sectionSlug: "spots", label: "レジャーランキング", regionMode: "required", hasTarget: false },
+  { key: "entertainment:books", majorCategory: "entertainment", sectionSlug: "books", label: "書籍ランキング", regionMode: "none", hasTarget: false },
 ];
 
 export function getRankingSection(key: string): RankingSection | undefined {
@@ -38,6 +39,7 @@ export type RankingItemRow = {
   priceRange: string;
   area: string;
   tags: string;
+  affiliateQuery: string;
   score: number | null;
   reason: string;
   isPr: boolean;
