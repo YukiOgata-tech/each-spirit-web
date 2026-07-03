@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Article } from "@/lib/types";
 import { ogArticleImage, routes } from "@/lib/routes";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 /**
  * 記事一覧用のニュースアプリ型の行（左にタイトル＋メタ、右にサムネイル）。
@@ -38,6 +38,7 @@ export function ArticleListItem({ article, href }: { article: Article; href?: st
           alt={article.title}
           fill
           sizes="(min-width: 640px) 160px, 112px"
+          unoptimized={shouldUnoptimizeImage(imageSrc)}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
       </div>

@@ -3,6 +3,7 @@ import Image from "next/image";
 import type { ReactNode } from "react";
 import { ArrowUpRight, ExternalLink, ImageIcon, Link2 } from "lucide-react";
 import type { AffiliateContentRef } from "@/lib/affiliate/types";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 function stripFrontmatter(markdown: string) {
   return markdown
@@ -263,7 +264,7 @@ export function MarkdownRenderer({
         if (image) {
           return (
             <figure key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
-              <Image src={image.src} alt={image.alt} width={1200} height={800} className="h-auto w-full object-cover" />
+              <Image src={image.src} alt={image.alt} width={1200} height={800} unoptimized={shouldUnoptimizeImage(image.src)} className="h-auto w-full object-cover" />
               {(image.caption || image.alt) && (
                 <figcaption className="px-4 py-3 text-sm leading-6 text-slate-600">{image.caption || image.alt}</figcaption>
               )}

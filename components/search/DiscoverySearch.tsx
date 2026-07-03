@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowUpRight, FileText, MapPin, Search, SlidersHorizontal, Trophy } from "lucide-react";
 import type { Category, SearchResult } from "@/lib/types";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { Button } from "@/components/ui/button";
 
 const typeLabels: Record<SearchResult["type"], string> = {
@@ -168,7 +168,7 @@ export function DiscoverySearch({
                   className="group relative flex min-h-[136px] flex-col justify-end overflow-hidden rounded-lg border border-slate-300 shadow-sm transition hover:shadow-lg sm:min-h-[150px] sm:rounded-xl"
                 >
                   {item.images?.[0]?.url ? (
-                    <Image src={item.images[0].url} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover transition duration-500 group-hover:scale-105" />
+                    <Image src={item.images[0].url} alt="" fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" unoptimized={shouldUnoptimizeImage(item.images[0].url)} className="object-cover transition duration-500 group-hover:scale-105" />
                   ) : (
                     <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${item.theme.primary}, ${item.theme.accent})` }} />
                   )}
@@ -209,6 +209,7 @@ export function DiscoverySearch({
                         alt=""
                         fill
                         sizes="(min-width: 1024px) 168px, 100vw"
+                        unoptimized={shouldUnoptimizeImage(imageUrl)}
                         className="object-cover transition duration-500 group-hover:scale-105"
                       />
                     ) : (

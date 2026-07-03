@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { Clapperboard } from "lucide-react";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { originLabel, type CatalogTitle } from "@/components/entertainment/labels";
 
 /** 作品カード。画像があれば表示、無ければ原作タイプ別のグラフィックプレースホルダー。 */
@@ -20,6 +20,7 @@ export function TitleCard({ title }: { title: CatalogTitle }) {
             alt={title.name}
             fill
             sizes="(min-width: 1024px) 22vw, (min-width: 640px) 33vw, 50vw"
+            unoptimized={shouldUnoptimizeImage(src)}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
         ) : (

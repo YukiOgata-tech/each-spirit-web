@@ -37,6 +37,26 @@ export const ALLOWED_IMAGE_HOSTS = [
   "management.adhpublic.com",
 ] as const;
 
+const UNOPTIMIZED_IMAGE_HOSTS = [
+  "www.hanmoto.com",
+  "thumbnail.image.rakuten.co.jp",
+  "m.media-amazon.com",
+  "www.tomita-cocoro.jp",
+  "sugitaya.com",
+  "static.wixstatic.com",
+  "niigatacity-ramen.jp",
+  "naoji.jp",
+  "www.visityamagata.jp",
+  "www.sakata-mangetsu.com",
+  "hayashishoten.online",
+  "www.bannaisyokudou.jp",
+  "uende.jp",
+  "delightdesignersworks.com",
+  "seabyluvism.jp",
+  "agu-hair.com",
+  "management.adhpublic.com",
+] as const;
+
 function supabaseHost(): string | null {
   try {
     return process.env.NEXT_PUBLIC_SUPABASE_URL ? new URL(process.env.NEXT_PUBLIC_SUPABASE_URL).hostname : null;
@@ -61,4 +81,23 @@ export function isAllowedImageSrc(src: string | null | undefined): boolean {
 /** 許可された src ならそのまま、許可外（不正・期限切れSNS URL等）なら fallback を返す */
 export function safeImageSrc(src: string | null | undefined, fallback: string): string {
   return isAllowedImageSrc(src) ? (src as string) : fallback;
+}
+
+/**
+ * Vercel Image Transformations を抑えるため、動的OG画像・書籍/affiliate/店舗公式系の
+ * 外部画像は next/image のレイアウトだけ使い、画像最適化は通さない。
+ * Supabase Storage とローカル静的画像は重要ビジュアルで使うことが多いため既定では最適化を残す。
+ */
+export function shouldUnoptimizeImage(src: string | null | undefined): boolean {
+  if (!src) return false;
+  if (src.startsWith("/api/og/")) return true;
+  if (src.startsWith("/")) return false;
+  try {
+    const url = new URL(src);
+    if (url.protocol !== "https:") return false;
+    if (url.hostname === supabaseHost()) return false;
+    return (UNOPTIMIZED_IMAGE_HOSTS as readonly string[]).includes(url.hostname);
+  } catch {
+    return false;
+  }
 }

@@ -3,7 +3,7 @@ import { ExternalLink, ImageOff } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { TagList } from "@/components/cards/TagList";
 import { LikeButton } from "@/components/content/LikeButton";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { isLocationRelevant } from "@/lib/content-models";
 import type { MajorTheme } from "@/lib/major-theme";
 import type { GenericItem } from "@/lib/types";
@@ -27,7 +27,7 @@ export function HeroImage({ item, className, sizes, theme }: { item: GenericItem
   }
   return (
     <div className={`relative overflow-hidden ${className}`}>
-      <Image src={src} alt={item.imageAlt || item.name} fill priority sizes={sizes} className="object-cover" />
+      <Image src={src} alt={item.imageAlt || item.name} fill priority sizes={sizes} unoptimized={shouldUnoptimizeImage(src)} className="object-cover" />
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.02)_0%,rgba(15,23,42,0.42)_100%)]" />
       {item.imageCredit?.url && (
         <a href={item.imageCredit.url} target="_blank" rel="noreferrer"

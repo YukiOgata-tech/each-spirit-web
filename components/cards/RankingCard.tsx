@@ -3,10 +3,12 @@ import Image from "next/image";
 import { ArrowRight, Trophy } from "lucide-react";
 import type { Ranking } from "@/lib/types";
 import { ogRankingImage, routes } from "@/lib/routes";
-import { safeImageSrc } from "@/lib/image-hosts";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { Card, CardContent } from "@/components/ui/card";
 
 export function RankingCard({ ranking, href }: { ranking: Ranking; href?: string }) {
+  const imageSrc = safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title));
+
   return (
     <Link
       href={href ?? routes.ramenRanking(ranking.slug)}
@@ -15,10 +17,11 @@ export function RankingCard({ ranking, href }: { ranking: Ranking; href?: string
       <Card className="h-full overflow-hidden border-[var(--border)] p-0 transition-all duration-200 group-hover:-translate-y-1 group-hover:border-[var(--primary)]/40 group-hover:shadow-md">
         <div className="relative aspect-[16/9] overflow-hidden bg-[linear-gradient(135deg,var(--muted),#ffffff)]">
           <Image
-            src={safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title))}
+            src={imageSrc}
             alt={ranking.title}
             fill
             sizes="(min-width: 768px) 50vw, 100vw"
+            unoptimized={shouldUnoptimizeImage(imageSrc)}
             className="object-cover transition-transform duration-500 group-hover:scale-105"
           />
           <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_45%,rgba(15,23,42,0.55)_100%)]" />

@@ -9,6 +9,7 @@ const hosts = [...ALLOWED_IMAGE_HOSTS, ...(supabaseImageHost ? [supabaseImageHos
 
 const nextConfig: NextConfig = {
   images: {
+    minimumCacheTTL: 60 * 60 * 24 * 365,
     remotePatterns: hosts.map((hostname) => ({ protocol: "https" as const, hostname })),
   },
 };

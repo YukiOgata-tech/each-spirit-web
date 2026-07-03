@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ogRankingImage } from "@/lib/routes";
-import { safeImageSrc } from "@/lib/image-hosts";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 /**
  * ランキング詳細ページの上部に置くヒーロー画像。
@@ -20,7 +20,7 @@ export function RankingHeroImage({
   const src = safeImageSrc(imageUrl, ogRankingImage(title));
   return (
     <div className={`relative mx-auto aspect-[1200/630] w-full max-w-3xl overflow-hidden rounded-2xl border border-[var(--border)] shadow-sm ${className}`}>
-      <Image src={src} alt={title} fill priority sizes="(min-width: 768px) 768px, 100vw" className="object-cover" />
+      <Image src={src} alt={title} fill priority sizes="(min-width: 768px) 768px, 100vw" unoptimized={shouldUnoptimizeImage(src)} className="object-cover" />
     </div>
   );
 }

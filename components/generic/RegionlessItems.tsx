@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowRight, ImageOff, MapPin } from "lucide-react";
 import { TagList } from "@/components/cards/TagList";
 import { getGenericItemsBySection } from "@/lib/content";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { routes } from "@/lib/routes";
 
 /**
@@ -58,6 +58,7 @@ export async function RegionlessItems({
                     alt={item.name}
                     fill
                     sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    unoptimized={shouldUnoptimizeImage(item.imageUrl)}
                     className="object-cover transition duration-700 group-hover:scale-105"
                   />
                 ) : (

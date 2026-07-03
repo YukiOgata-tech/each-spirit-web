@@ -3,7 +3,7 @@ import Image from "next/image";
 import { ArrowRight, ListChecks, Trophy } from "lucide-react";
 import type { LeisureRanking } from "@/lib/types";
 import { ogRankingImage, routes } from "@/lib/routes";
-import { safeImageSrc } from "@/lib/image-hosts";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { Badge } from "@/components/ui/badge";
 
 export function LeisureRankingCard({
@@ -28,6 +28,7 @@ export function LeisureRankingCard({
           alt={ranking.title}
           fill
           sizes="(min-width: 768px) 50vw, 100vw"
+          unoptimized={shouldUnoptimizeImage(hero)}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-950/12 to-transparent" />

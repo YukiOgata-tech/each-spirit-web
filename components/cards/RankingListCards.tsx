@@ -3,7 +3,7 @@ import Image from "next/image";
 import { Trophy } from "lucide-react";
 import type { Ranking } from "@/lib/types";
 import { ogRankingImage } from "@/lib/routes";
-import { safeImageSrc } from "@/lib/image-hosts";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 // 最新記事カラム（NewsArticleCard）と視覚言語を揃えたランキング用カード。
 // トップページで「フィーチャー1件＋行リスト」の左右対称レイアウトを作るために使う。
@@ -35,14 +35,17 @@ function chipOf(ranking: Ranking) {
 
 /** ニュースアプリ風のトップランキング（画像の上に見出しを重ねる大カード） */
 export function RankingFeatureCard({ ranking, href }: { ranking: Ranking; href: string }) {
+  const imageSrc = safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title));
+
   return (
     <Link href={href} className="group block overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] focus-visible:ring-offset-2">
       <div className="relative aspect-[16/9] w-full overflow-hidden bg-[linear-gradient(135deg,var(--muted),#ffffff)]">
         <Image
-          src={safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title))}
+          src={imageSrc}
           alt={ranking.title}
           fill
           sizes="(min-width: 1024px) 40vw, 100vw"
+          unoptimized={shouldUnoptimizeImage(imageSrc)}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_38%,rgba(15,23,42,0.78)_100%)]" />
@@ -63,6 +66,8 @@ export function RankingFeatureCard({ ranking, href }: { ranking: Ranking; href: 
 
 /** ニュースアプリ風のリスト行（左に見出し・右にサムネ）。divide-y のリスト内で使う想定。 */
 export function RankingRow({ ranking, href }: { ranking: Ranking; href: string }) {
+  const imageSrc = safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title));
+
   return (
     <Link href={href} className="group flex items-start gap-3 py-3 transition focus-visible:outline-none sm:gap-4">
       <div className="min-w-0 flex-1">
@@ -74,10 +79,11 @@ export function RankingRow({ ranking, href }: { ranking: Ranking; href: string }
       </div>
       <div className="relative h-[68px] w-[92px] shrink-0 overflow-hidden rounded-md bg-[linear-gradient(135deg,var(--muted),#ffffff)] sm:h-[76px] sm:w-28">
         <Image
-          src={safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title))}
+          src={imageSrc}
           alt={ranking.title}
           fill
           sizes="112px"
+          unoptimized={shouldUnoptimizeImage(imageSrc)}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
         />
       </div>

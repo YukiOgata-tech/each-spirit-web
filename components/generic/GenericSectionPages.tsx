@@ -28,7 +28,7 @@ import {
 import { breadcrumbSchema, itemKeywords, ogItemImageUrl, pageMetadata, speakableWebPageSchema } from "@/lib/seo";
 import { ogRankingImage, routes } from "@/lib/routes";
 import { majorMetaImage } from "@/lib/category-media";
-import { safeImageSrc } from "@/lib/image-hosts";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import type { ContentSection, GenericItem } from "@/lib/types";
 
 type GenericTheme = {
@@ -177,6 +177,7 @@ function GenericItemCard({ section, item, theme }: { section: ContentSection; it
             alt={item.name}
             fill
             sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+            unoptimized={shouldUnoptimizeImage(item.imageUrl)}
             className="object-cover transition duration-700 group-hover:scale-105"
           />
         ) : (
@@ -272,6 +273,7 @@ export async function GenericSectionIndex({ majorCategory, sectionSlug }: { majo
                 fill
                 priority
                 sizes="(min-width: 1024px) 50vw, 100vw"
+                unoptimized={shouldUnoptimizeImage(featured.imageUrl)}
                 className="object-cover"
               />
             ) : (
@@ -387,6 +389,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
     ? "object-contain p-2 transition-transform duration-500 group-hover/image:scale-105"
     : "object-cover transition-transform duration-500 group-hover/image:scale-105";
   const path = rankingHref(ranking);
+  const heroImageSrc = safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title));
   const scoreLabel = ranking.quickTableLabel || "スコア";
   const sectionTop = section.href || `/${majorCategory}/${sectionSlug}`;
   const entryAffiliateRows = await Promise.all(
@@ -429,7 +432,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
             </div>
           </div>
           <div className="relative min-h-[200px] overflow-hidden lg:min-h-[360px]">
-            <Image src={safeImageSrc(ranking.imageUrl, ogRankingImage(ranking.title))} alt={ranking.title} fill priority sizes="(min-width: 1024px) 480px, 100vw" className="object-cover" />
+            <Image src={heroImageSrc} alt={ranking.title} fill priority sizes="(min-width: 1024px) 480px, 100vw" unoptimized={shouldUnoptimizeImage(heroImageSrc)} className="object-cover" />
             <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,23,42,0.04)_0%,rgba(15,23,42,0.42)_100%)]" />
           </div>
         </div>
@@ -444,6 +447,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
           const isExternal = !item && Boolean(entry.externalUrl);
           const name = item?.name ?? entry.displayName ?? entry.itemSlug;
           const imageUrl = item?.imageUrl ?? entry.imageUrl;
+          const imageSrc = safeImageSrc(imageUrl, ogRankingImage(name));
           const description = entry.reason || entry.description;
           const tags = item?.tags?.length ? item.tags : (entry.tags ?? []);
           const areaText = [item?.region, item?.area ?? entry.area].filter(Boolean).join(" ・ ");
@@ -453,7 +457,7 @@ export async function GenericRankingDetailPage({ majorCategory, sectionSlug, slu
             <div className={rankingItemGridClass}>
               <div className={rankingImageFrameClass}>
                 {imageUrl ? (
-                  <Image src={safeImageSrc(imageUrl, ogRankingImage(name))} alt={entry.imageAlt || name} fill sizes={isBookSection ? "(min-width: 1024px) 128px, 28vw" : "(min-width: 1024px) 192px, 40vw"} className={rankingImageClass} />
+                  <Image src={imageSrc} alt={entry.imageAlt || name} fill sizes={isBookSection ? "(min-width: 1024px) 128px, 28vw" : "(min-width: 1024px) 192px, 40vw"} unoptimized={shouldUnoptimizeImage(imageSrc)} className={rankingImageClass} />
                 ) : (
                   <div className="flex h-full w-full items-center justify-center"><ImageOff className="h-7 w-7 text-[var(--primary)]/40" /></div>
                 )}

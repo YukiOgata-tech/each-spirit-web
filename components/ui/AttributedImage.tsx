@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export type ImageCredit = { name: string; url: string };
 
@@ -38,9 +39,9 @@ export function AttributedImage({
   wrapperClassName,
 }: Props) {
   const img = fill ? (
-    <Image src={src} alt={alt} fill sizes={sizes} priority={priority} className={className} />
+    <Image src={src} alt={alt} fill sizes={sizes} priority={priority} unoptimized={shouldUnoptimizeImage(src)} className={className} />
   ) : (
-    <Image src={src} alt={alt} width={width!} height={height!} sizes={sizes} priority={priority} className={className} />
+    <Image src={src} alt={alt} width={width!} height={height!} sizes={sizes} priority={priority} unoptimized={shouldUnoptimizeImage(src)} className={className} />
   );
 
   if (!credit) return <>{img}</>;

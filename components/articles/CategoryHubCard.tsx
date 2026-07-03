@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ogArticleImage, routes } from "@/lib/routes";
-import { isAllowedImageSrc } from "@/lib/image-hosts";
+import { isAllowedImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 /**
  * /articles のカテゴリハブ用の画像主体カード。
@@ -31,6 +31,7 @@ export function CategoryHubCard({
           alt={category}
           fill
           sizes="(min-width: 1024px) 25vw, (min-width: 640px) 33vw, 50vw"
+          unoptimized={shouldUnoptimizeImage(imageSrc)}
           className="object-cover transition duration-500 group-hover:scale-105"
         />
         <div className="absolute inset-0 bg-[linear-gradient(180deg,transparent_35%,rgba(15,23,42,0.78)_100%)]" />
