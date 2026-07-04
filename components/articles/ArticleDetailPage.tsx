@@ -39,8 +39,8 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
       <JsonLd data={faqSchema(article.faqs)} />
 
       {headings.length > 0 && (
-        <aside className="hidden xl:block">
-          <ArticleTableOfContents headings={headings} className="sticky top-32 mt-0 max-h-[calc(100vh-9rem)] overflow-y-auto" />
+        <aside className="sticky top-32 hidden max-h-[calc(100vh-9rem)] self-start overflow-y-auto xl:block">
+          <ArticleTableOfContents headings={headings} />
         </aside>
       )}
 
