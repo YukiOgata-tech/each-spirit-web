@@ -5,6 +5,11 @@ import { ES_CONTENT_CACHE_TAG, createUncachedServerClient } from "@/lib/supabase
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+type RevalidateBody = {
+  path?: string;
+  scope?: string;
+};
+
 /**
  * On-demand ISR 再検証エンドポイント。
  *
@@ -33,7 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, message: "Unauthorized" }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => null)) as { path?: string; scope?: string } | null;
+  const body = (await request.json().catch(() => null)) as RevalidateBody | null;
 
   // ── ピンポイント: 指定パスだけ ───────────────────────────────────────────────
   if (body?.path) {
@@ -43,9 +48,21 @@ export async function POST(request: NextRequest) {
 
   // ── 全体: 従来の全ルート再検証（明示時のみ） ──────────────────────────────────
   if (body?.scope === "all") {
+    const sb = createUncachedServerClient();
+    const runAt = new Date().toISOString();
+
     revalidateTag(ES_CONTENT_CACHE_TAG);
     revalidatePath("/", "layout");
-    return NextResponse.json({ ok: true, mode: "all", revalidatedTag: ES_CONTENT_CACHE_TAG });
+
+    const stateError = await updateLastRunAt(sb, runAt);
+    if (stateError) {
+      return NextResponse.json(
+        { ok: false, mode: "all", message: "Failed to update revalidation state", error: stateError },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ ok: true, mode: "all", revalidatedTag: ES_CONTENT_CACHE_TAG, lastRunAt: runAt });
   }
 
   // ── 差分: 前回以降に changed_at が動いた分だけ ────────────────────────────────
@@ -55,15 +72,38 @@ export async function POST(request: NextRequest) {
 async function revalidateChanged() {
   const sb = createUncachedServerClient();
 
-  const { data: state } = await sb.from("revalidation_state").select("last_run_at").eq("id", 1).maybeSingle();
+  const { data: state, error: stateSelectError } = await sb
+    .from("revalidation_state")
+    .select("last_run_at")
+    .eq("id", 1)
+    .maybeSingle();
+  if (stateSelectError) {
+    return NextResponse.json(
+      { ok: false, mode: "changed", message: "Failed to read revalidation state", error: stateSelectError.message },
+      { status: 500 },
+    );
+  }
+
   const since = state?.last_run_at ?? "1970-01-01T00:00:00Z";
   const runAt = new Date().toISOString();
 
-  const [{ data: articles }, { data: items }, { data: rankings }] = await Promise.all([
+  const [articleResult, itemResult, rankingResult] = await Promise.all([
     sb.from("articles").select("canonical_path, category, tags, major_category, section_slug").gt("changed_at", since),
     sb.from("items").select("canonical_path, major_category, section_slug").gt("changed_at", since),
     sb.from("rankings").select("canonical_path, major_category, section_slug").gt("changed_at", since),
   ]);
+
+  const readError = articleResult.error ?? itemResult.error ?? rankingResult.error;
+  if (readError) {
+    return NextResponse.json(
+      { ok: false, mode: "changed", since, message: "Failed to read changed content", error: readError.message },
+      { status: 500 },
+    );
+  }
+
+  const articles = articleResult.data;
+  const items = itemResult.data;
+  const rankings = rankingResult.data;
 
   const paths = new Set<string>();
   const add = (p?: string | null) => {
@@ -107,7 +147,13 @@ async function revalidateChanged() {
   for (const p of paths) revalidatePath(p);
 
   // 次回の差分基準を更新（読み取り開始時刻を採用し、実行中の変更は次回に回す）
-  await sb.from("revalidation_state").update({ last_run_at: runAt }).eq("id", 1);
+  const stateError = await updateLastRunAt(sb, runAt);
+  if (stateError) {
+    return NextResponse.json(
+      { ok: false, mode: "changed", since, message: "Failed to update revalidation state", error: stateError },
+      { status: 500 },
+    );
+  }
 
   return NextResponse.json({
     ok: true,
@@ -116,5 +162,17 @@ async function revalidateChanged() {
     changedCount,
     revalidatedCount: paths.size,
     revalidated: [...paths],
+    lastRunAt: runAt,
   });
+}
+
+function updateLastRunAt(
+  sb: ReturnType<typeof createUncachedServerClient>,
+  runAt: string,
+) {
+  return sb
+    .from("revalidation_state")
+    .update({ last_run_at: runAt })
+    .eq("id", 1)
+    .then(({ error }) => error?.message ?? null);
 }

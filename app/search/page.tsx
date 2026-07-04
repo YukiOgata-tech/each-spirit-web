@@ -19,7 +19,7 @@ export default async function SearchPage({ searchParams }: PageProps) {
   const { q } = await searchParams;
   const initialQuery = typeof q === "string" ? q : "";
   const categories = getCategories();
-  const results = await searchContent(initialQuery, { limit: 48 });
+  const results = initialQuery.trim().length >= 2 ? await searchContent(initialQuery, { limit: 48 }) : [];
 
   return (
     <main className="min-h-screen bg-slate-50">

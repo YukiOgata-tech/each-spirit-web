@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import type { FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { ArrowUpRight, FileText, MapPin, Search, SlidersHorizontal, Trophy } from "lucide-react";
 import type { Category, SearchResult } from "@/lib/types";
@@ -17,7 +19,6 @@ const typeLabels: Record<SearchResult["type"], string> = {
 };
 
 const MIN_QUERY_LENGTH = 2;
-const SEARCH_DEBOUNCE_MS = 500;
 
 export function DiscoverySearch({
   categories,
@@ -33,58 +34,60 @@ export function DiscoverySearch({
   maxResults?: number;
   expanded?: boolean;
 }) {
+  const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
+  const [searchedQuery, setSearchedQuery] = useState(initialQuery.trim().length >= MIN_QUERY_LENGTH ? initialQuery.trim() : "");
   const [category, setCategory] = useState("all");
   const [type, setType] = useState<SearchResult["type"] | "all">("all");
   const [results, setResults] = useState<SearchResult[]>(initialResults);
   const [loading, setLoading] = useState(false);
   const liveCategories = useMemo(() => categories.filter((item) => item.status === "live"), [categories]);
   const [randomCategories, setRandomCategories] = useState<Category[]>(() => liveCategories.slice(0, 6));
-  const isDefaultView = query.trim() === "";
+  const isDefaultView = searchedQuery === "";
 
   useEffect(() => {
     setRandomCategories([...liveCategories].sort(() => Math.random() - 0.5).slice(0, 6));
   }, [liveCategories]);
 
-  // 検索本体: デバウンスして /api/search を叩く。空クエリは即クリア（DBを叩かない）。
-  // 種別フィルタはサーバ側に委譲。初回は SSR の initialResults を尊重して二重取得しない。
-  const skipFirstFetch = useRef(initialQuery.trim() !== "" && initialResults.length > 0);
-  useEffect(() => {
-    const q = query.trim();
+  async function runSearch(nextQuery = query) {
+    const q = nextQuery.trim();
     if (q.length < MIN_QUERY_LENGTH) {
+      setSearchedQuery("");
       setResults([]);
       setLoading(false);
       return;
     }
-    if (skipFirstFetch.current) {
-      skipFirstFetch.current = false;
-      return;
-    }
-    setLoading(true);
-    const controller = new AbortController();
-    const timer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ q, limit: String(maxResults) });
-        if (type !== "all") params.set("type", type);
-        const res = await fetch(`/api/search?${params.toString()}`, { signal: controller.signal });
-        const json = (await res.json()) as { results?: SearchResult[] };
-        setResults(json.results ?? []);
-      } catch {
-        if (!controller.signal.aborted) setResults([]);
-      } finally {
-        if (!controller.signal.aborted) setLoading(false);
-      }
-    }, SEARCH_DEBOUNCE_MS);
-    return () => {
-      clearTimeout(timer);
-      controller.abort();
-    };
-  }, [query, type, maxResults]);
 
-  // カテゴリ絞り込みのみ返却済み集合にクライアント適用（種別はサーバ側で適用済み）。
+    setSearchedQuery(q);
+    setLoading(true);
+
+    try {
+      const params = new URLSearchParams({ q, limit: String(maxResults) });
+      const res = await fetch(`/api/search?${params.toString()}`);
+      const json = (await res.json()) as { results?: SearchResult[] };
+      setResults(json.results ?? []);
+      if (expanded) router.replace(`/search?${new URLSearchParams({ q }).toString()}`, { scroll: false });
+    } catch {
+      setResults([]);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    runSearch();
+  }
+
+  // 検索実行後の集合に、カテゴリ・種別の絞り込みをクライアント適用する。
   const filtered = useMemo(
-    () => (category === "all" ? results : results.filter((result) => result.category === category)),
-    [results, category],
+    () =>
+      results.filter((result) => {
+        if (category !== "all" && result.category !== category) return false;
+        if (type !== "all" && result.type !== type) return false;
+        return true;
+      }),
+    [results, category, type],
   );
 
   // カテゴリ名 → テーマ色。検索結果では画像を安易にカテゴリ代用しない。
@@ -109,13 +112,21 @@ export function DiscoverySearch({
 
   return (
     <div className="media-card overflow-hidden max-sm:border-0 max-sm:shadow-none" id="search">
-      <div className="grid gap-3 border-b border-slate-200 bg-white p-3 sm:gap-4 sm:p-4 lg:grid-cols-[1fr_auto_auto]">
+      <form onSubmit={handleSubmit} className="grid gap-3 border-b border-slate-200 bg-white p-3 sm:gap-4 sm:p-4 lg:grid-cols-[1fr_auto_auto_auto]">
         <label className="relative block">
           <span className="sr-only">キーワード検索</span>
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
           <input
             value={query}
-            onChange={(event) => setQuery(event.target.value)}
+            onChange={(event) => {
+              const nextQuery = event.target.value;
+              setQuery(nextQuery);
+              if (nextQuery.trim().length < MIN_QUERY_LENGTH) {
+                setSearchedQuery("");
+                setResults([]);
+                setLoading(false);
+              }
+            }}
             placeholder="例: 駐車場あり、週末旅、AIツール、濃厚味噌"
             className="h-11 w-full rounded-md border border-slate-300 bg-slate-50 pl-10 pr-3 text-sm outline-none transition focus:border-[var(--primary)] focus:bg-white focus:ring-4 focus:ring-blue-100"
           />
@@ -137,7 +148,7 @@ export function DiscoverySearch({
           value={type}
           onChange={(event) => setType(event.target.value as SearchResult["type"] | "all")}
           className="h-11 rounded-md border border-slate-300 bg-white px-3 text-sm font-semibold text-slate-700 outline-none focus:border-[var(--primary)]"
-          aria-label="コンテンツ種別"
+            aria-label="コンテンツ種別"
         >
           <option value="all">全種別</option>
           {Object.entries(typeLabels).map(([value, label]) => (
@@ -146,15 +157,18 @@ export function DiscoverySearch({
             </option>
           ))}
         </select>
-      </div>
+        <Button type="submit" className="h-11 rounded-md px-5 font-bold" disabled={loading || query.trim().length < MIN_QUERY_LENGTH}>
+          {loading ? "検索中…" : "検索"}
+        </Button>
+      </form>
 
       <div className="grid gap-3 p-3 sm:p-4">
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 sm:gap-3 sm:text-sm">
           <span className="inline-flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {isDefaultView ? "おすすめカテゴリを6件表示" : query.trim().length < MIN_QUERY_LENGTH ? "2文字以上で検索" : loading ? "検索中…" : `${filtered.length}件を表示`}
+            {isDefaultView ? "おすすめカテゴリを6件表示" : loading ? "検索中…" : `${filtered.length}件を表示`}
           </span>
-          <span>{expanded ? "検索ページで詳細に絞り込み" : "公開カテゴリから探せます"}</span>
+          <span>{query.trim().length < MIN_QUERY_LENGTH ? "2文字以上で検索" : "検索ボタンで実行"}</span>
         </div>
         {isDefaultView ? (
           <div className={expanded ? "grid gap-3 sm:grid-cols-2 xl:grid-cols-3" : "grid gap-3 sm:grid-cols-2 lg:grid-cols-3"}>
@@ -257,7 +271,16 @@ export function DiscoverySearch({
         ) : null}
         <div className="flex flex-wrap gap-2 border-t border-slate-200 pt-4">
           {["駐車場あり", "初心者", "ランキング", "準備中", "AI対応", "週末旅"].map((word) => (
-            <Button key={word} type="button" variant="secondary" size="sm" onClick={() => setQuery(word)}>
+            <Button
+              key={word}
+              type="button"
+              variant="secondary"
+              size="sm"
+              onClick={() => {
+                setQuery(word);
+                runSearch(word);
+              }}
+            >
               {word}
             </Button>
           ))}
