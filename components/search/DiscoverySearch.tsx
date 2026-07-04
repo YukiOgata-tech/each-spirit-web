@@ -16,6 +16,9 @@ const typeLabels: Record<SearchResult["type"], string> = {
   category: "カテゴリ",
 };
 
+const MIN_QUERY_LENGTH = 2;
+const SEARCH_DEBOUNCE_MS = 500;
+
 export function DiscoverySearch({
   categories,
   initialResults = [],
@@ -48,7 +51,7 @@ export function DiscoverySearch({
   const skipFirstFetch = useRef(initialQuery.trim() !== "" && initialResults.length > 0);
   useEffect(() => {
     const q = query.trim();
-    if (q === "") {
+    if (q.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setLoading(false);
       return;
@@ -71,7 +74,7 @@ export function DiscoverySearch({
       } finally {
         if (!controller.signal.aborted) setLoading(false);
       }
-    }, 250);
+    }, SEARCH_DEBOUNCE_MS);
     return () => {
       clearTimeout(timer);
       controller.abort();
@@ -149,7 +152,7 @@ export function DiscoverySearch({
         <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500 sm:gap-3 sm:text-sm">
           <span className="inline-flex items-center gap-2">
             <SlidersHorizontal className="h-4 w-4" />
-            {isDefaultView ? "おすすめカテゴリを6件表示" : loading ? "検索中…" : `${filtered.length}件を表示`}
+            {isDefaultView ? "おすすめカテゴリを6件表示" : query.trim().length < MIN_QUERY_LENGTH ? "2文字以上で検索" : loading ? "検索中…" : `${filtered.length}件を表示`}
           </span>
           <span>{expanded ? "検索ページで詳細に絞り込み" : "公開カテゴリから探せます"}</span>
         </div>
