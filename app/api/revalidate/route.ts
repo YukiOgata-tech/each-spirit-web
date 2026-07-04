@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { submitIndexNow } from "@/lib/indexnow";
 import { ES_CONTENT_CACHE_TAG, createUncachedServerClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
@@ -43,7 +44,8 @@ export async function POST(request: NextRequest) {
   // ── ピンポイント: 指定パスだけ ───────────────────────────────────────────────
   if (body?.path) {
     revalidatePath(body.path);
-    return NextResponse.json({ ok: true, mode: "path", revalidated: body.path });
+    const indexNow = await submitIndexNow([body.path]);
+    return NextResponse.json({ ok: true, mode: "path", revalidated: body.path, indexNow });
   }
 
   // ── 全体: 従来の全ルート再検証（明示時のみ） ──────────────────────────────────
@@ -155,6 +157,8 @@ async function revalidateChanged() {
     );
   }
 
+  const indexNow = await submitIndexNow(paths);
+
   return NextResponse.json({
     ok: true,
     mode: "changed",
@@ -163,6 +167,7 @@ async function revalidateChanged() {
     revalidatedCount: paths.size,
     revalidated: [...paths],
     lastRunAt: runAt,
+    indexNow,
   });
 }
 
