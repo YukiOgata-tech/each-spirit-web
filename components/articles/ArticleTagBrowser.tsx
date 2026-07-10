@@ -1,11 +1,16 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Search, X } from "lucide-react";
+import Link from "next/link";
+import { ChevronDown, ChevronUp, Search, Tags, X } from "lucide-react";
 import type { Article } from "@/lib/types";
 import { ArticleListItem } from "@/components/articles/ArticleListItem";
+import { routes } from "@/lib/routes";
 
 type Entry = { article: Article; href: string };
+
+/** タグチップの初期表示件数。これを超える分は「もっと見る」で展開する。 */
+const DEFAULT_TAG_LIMIT = 16;
 
 /**
  * 記事一覧のタグ絞り込み UI（クライアント側で即時フィルタ、API 非依存）。
@@ -15,6 +20,7 @@ type Entry = { article: Article; href: string };
  */
 export function ArticleTagBrowser({ entries }: { entries: Entry[] }) {
   const [query, setQuery] = useState("");
+  const [expanded, setExpanded] = useState(false);
 
   const tags = useMemo(() => {
     const counts = new Map<string, number>();
@@ -26,6 +32,12 @@ export function ArticleTagBrowser({ entries }: { entries: Entry[] }) {
 
   const q = query.trim().toLowerCase();
   const active = query.trim();
+
+  // 選択中のタグが折りたたみ範囲外にある場合（直接入力・外部リンク由来）は強制的に展開する
+  const activeTagIndex = tags.findIndex(([tag]) => tag === active);
+  const isExpanded = expanded || activeTagIndex >= DEFAULT_TAG_LIMIT;
+  const visibleTags = isExpanded ? tags : tags.slice(0, DEFAULT_TAG_LIMIT);
+  const hiddenCount = tags.length - visibleTags.length;
 
   const filtered = useMemo(() => {
     if (q === "") return entries;
@@ -59,7 +71,7 @@ export function ArticleTagBrowser({ entries }: { entries: Entry[] }) {
 
           <div className="mt-3 flex flex-wrap gap-2">
             <TagChip label="すべて" active={active === ""} onClick={() => setQuery("")} />
-            {tags.map(([tag, count]) => (
+            {visibleTags.map(([tag, count]) => (
               <TagChip
                 key={tag}
                 label={tag}
@@ -68,7 +80,28 @@ export function ArticleTagBrowser({ entries }: { entries: Entry[] }) {
                 onClick={() => setQuery(active === tag ? "" : tag)}
               />
             ))}
+            {tags.length > DEFAULT_TAG_LIMIT && (
+              <button
+                type="button"
+                onClick={() => setExpanded((value) => !value)}
+                className="inline-flex items-center gap-1 rounded-full border border-dashed border-slate-300 bg-white px-3 py-1.5 text-xs font-bold text-slate-500 transition hover:border-[var(--primary)] hover:text-[var(--primary)]"
+              >
+                {isExpanded ? (
+                  <>折りたたむ<ChevronUp className="h-3.5 w-3.5" /></>
+                ) : (
+                  <>+{hiddenCount}件をもっと見る<ChevronDown className="h-3.5 w-3.5" /></>
+                )}
+              </button>
+            )}
           </div>
+
+          <Link
+            href={routes.articles + "/tags"}
+            className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--primary)] hover:underline"
+          >
+            <Tags className="h-3.5 w-3.5" />
+            サイト全体のタグ一覧から探す
+          </Link>
         </div>
       )}
 

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clover, Compass } from "lucide-react";
+import { ArrowRight, Clover, Compass, Tags } from "lucide-react";
 import { getCategories } from "@/lib/content";
 import { routes } from "@/lib/routes";
 
@@ -86,15 +86,25 @@ export function ArticleDiscovery({
         </div>
       </div>
 
-      {showAllArticlesLink && (
+      <div className="flex flex-wrap gap-x-6 gap-y-2">
+        {showAllArticlesLink && (
+          <Link
+            href={routes.articles}
+            className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary)]"
+          >
+            記事一覧をすべて見る
+            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+          </Link>
+        )}
         <Link
-          href={routes.articles}
+          href={routes.articles + "/tags"}
           className="group inline-flex items-center gap-1.5 text-sm font-semibold text-[var(--primary)]"
         >
-          記事一覧をすべて見る
+          <Tags className="h-4 w-4" />
+          タグ一覧から探す
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
         </Link>
-      )}
+      </div>
     </section>
   );
 }

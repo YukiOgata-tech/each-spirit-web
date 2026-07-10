@@ -9,9 +9,11 @@ import { Badge } from "@/components/ui/badge";
 import { LikeButton } from "@/components/content/LikeButton";
 import { AffiliateSurface } from "@/components/affiliate/AffiliateSurface";
 import { AffiliateMarkdownCard } from "@/components/affiliate/AffiliateMarkdownCard";
+import Image from "next/image";
 import { articleSchema, breadcrumbSchema, faqSchema } from "@/lib/seo";
-import { routes } from "@/lib/routes";
+import { routes, ogArticleImage } from "@/lib/routes";
 import { readingTimeMinutes } from "@/lib/reading-time";
+import { safeImageSrc, shouldUnoptimizeImage } from "@/lib/image-hosts";
 import type { Article } from "@/lib/types";
 
 type ArticleDetailPageProps = {
@@ -26,6 +28,7 @@ type ArticleDetailPageProps = {
 export function ArticleDetailPage({ article, markdown, path, categoryLabel, categoryHref, related = [] }: ArticleDetailPageProps) {
   const headings = getMarkdownHeadings(markdown);
   const readingMinutes = readingTimeMinutes(markdown);
+  const coverSrc = safeImageSrc(article.coverImageUrl, ogArticleImage(article.title));
   const breadcrumbs = [
     { name: "トップ", href: routes.home },
     { name: categoryLabel, href: categoryHref },
@@ -45,7 +48,18 @@ export function ArticleDetailPage({ article, markdown, path, categoryLabel, cate
       )}
 
       <article className="min-w-0">
-      <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:p-8 max-sm:shadow-none">
+      <div className="relative aspect-16/9 w-full overflow-hidden rounded-lg border border-slate-200 bg-slate-100 sm:aspect-21/9">
+        <Image
+          src={coverSrc}
+          alt={article.title}
+          fill
+          priority
+          sizes="(min-width: 1024px) 56rem, 100vw"
+          unoptimized={shouldUnoptimizeImage(coverSrc)}
+          className="object-cover"
+        />
+      </div>
+      <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4 shadow-soft sm:mt-6 sm:p-8 max-sm:shadow-none">
         <div className="flex flex-wrap gap-2">
           <Badge>{categoryLabel}</Badge>
           {article.tags.map((tag) => (
