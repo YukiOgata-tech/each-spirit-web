@@ -7,6 +7,7 @@ import { SiteHeader } from "@/components/layout/SiteHeader";
 import { GlobalRouteLoader } from "@/components/layout/GlobalRouteLoader";
 import { SmoothScroll } from "@/components/layout/SmoothScroll";
 import { GoogleAnalytics } from "@/components/seo/GoogleAnalytics";
+import { GoogleAdSense } from "@/components/seo/GoogleAdSense";
 import { JsonLd } from "@/components/seo/JsonLd";
 import { organizationSchema, websiteSchema } from "@/lib/seo";
 import { site } from "@/content/site";
@@ -76,6 +77,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
         <Suspense fallback={null}>
           <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         </Suspense>
+        <GoogleAdSense clientId={process.env.NEXT_PUBLIC_ADSENSE_CLIENT_ID} />
         <GlobalRouteLoader />
         <SmoothScroll />
         <SiteHeader />
