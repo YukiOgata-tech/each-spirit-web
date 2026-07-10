@@ -7,6 +7,7 @@ import { pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
 import { getBeautyRegions, getBeautySalons, getBeautyRankings, getBeautyArticles, getContentSections } from "@/lib/content";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export const metadata = pageMetadata({
   title: "美容を自分らしく選ぶガイド｜商品・ケア方法・施術・サロン",
@@ -65,6 +66,7 @@ export default async function BeautyIndexPage() {
                   src={region.imageUrl}
                   alt={region.name}
                   fill
+                  unoptimized={shouldUnoptimizeImage(region.imageUrl)}
                   className="object-cover transition-transform duration-500 group-hover:scale-105"
                   sizes="(max-width: 640px) 100vw, 50vw"
                 />

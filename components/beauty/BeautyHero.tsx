@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Gem, Palette, Scissors, Wind } from "lucide-react";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 const container = {
   hidden: {},
@@ -132,6 +133,7 @@ export function BeautyHero({ salonCount, rankingCount, region, firstRankingSlug 
                 src={img.src}
                 alt={img.alt}
                 fill
+                unoptimized={shouldUnoptimizeImage(img.src)}
                 className="object-cover"
                 sizes="240px"
               />

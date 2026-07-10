@@ -7,6 +7,7 @@ import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getProteinProducts, getProteinRankings, getProteinTargets } from "@/lib/content";
 import { GenericSectionIndex, genericSectionMetadata } from "@/components/generic/GenericSectionPages";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 type PageProps = { params: Promise<{ section: string }> };
 
@@ -67,6 +68,7 @@ export default async function ProteinIndexPage({ params }: PageProps) {
                     src={target.imageUrl}
                     alt={target.name}
                     fill
+                    unoptimized={shouldUnoptimizeImage(target.imageUrl)}
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(max-width: 640px) 100vw, 33vw"
                   />

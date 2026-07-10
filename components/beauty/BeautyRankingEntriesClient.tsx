@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { Award, ArrowRight } from "lucide-react";
 import type { RankingItem, Salon } from "@/lib/types";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { TreatmentBadge } from "@/components/beauty/TreatmentBadge";
 
 const MEDAL = ["🥇", "🥈", "🥉"];
@@ -34,6 +35,7 @@ export function BeautyRankingEntriesClient({
                 src={salon.imageUrl}
                 alt={salon.name}
                 fill
+                unoptimized={shouldUnoptimizeImage(salon.imageUrl)}
                 className="object-cover"
                 sizes="220px"
               />

@@ -11,6 +11,7 @@ import {
   getProteinProductsByTarget, getProteinRankingsByTarget,
 } from "@/lib/content";
 import type { ProteinTarget } from "@/lib/types";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 type PageProps = { params: Promise<{ section: string; segment: string }> };
 
@@ -47,7 +48,7 @@ export default async function ProteinTargetPage({ params }: PageProps) {
     <div className="protein-theme">
       {/* Target hero */}
       <section className="relative h-72 w-full sm:h-96">
-        <Image src={info.imageUrl} alt={info.name} fill className="object-cover" priority sizes="100vw" />
+        <Image src={info.imageUrl} alt={info.name} fill unoptimized={shouldUnoptimizeImage(info.imageUrl)} className="object-cover" priority sizes="100vw" />
         <div className="absolute inset-0 bg-gradient-to-t from-[#0f172a]/90 via-[#0f172a]/40 to-transparent" />
         <div className="absolute inset-x-0 bottom-0 px-6 pb-10 sm:px-10">
           <Link href={routes.protein} className="text-xs font-bold text-blue-300 hover:text-white">← 全目的一覧</Link>

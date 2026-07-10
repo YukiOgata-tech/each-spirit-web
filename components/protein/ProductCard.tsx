@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Zap } from "lucide-react";
 import type { ProteinProduct } from "@/lib/types";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { NutritionTypeBadge, MacroChip } from "@/components/protein/NutritionBadge";
 
 export function ProductCard({ product }: { product: ProteinProduct }) {
@@ -13,6 +14,7 @@ export function ProductCard({ product }: { product: ProteinProduct }) {
           src={product.imageUrl}
           alt={`${product.brand} ${product.name}`}
           fill
+          unoptimized={shouldUnoptimizeImage(product.imageUrl)}
           className="object-cover transition-transform duration-500 group-hover:scale-105"
           sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
         />

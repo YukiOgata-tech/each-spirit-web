@@ -19,6 +19,7 @@ import {
 import { breadcrumbSchema, pageMetadata, ramenRegionItemListSchema } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import type { Item } from "@/lib/types";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 type PageProps = { params: Promise<{ region: string }> };
 
@@ -73,6 +74,7 @@ export default async function RamenRegionPage({ params }: PageProps) {
               src={regionData.images[0].url}
               alt={regionData.images[0].alt}
               fill
+              unoptimized={shouldUnoptimizeImage(regionData.images[0].url)}
               className="object-cover"
               priority
               sizes="100vw"

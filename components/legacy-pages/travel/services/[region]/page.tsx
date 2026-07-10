@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, pageMetadata, travelAgencyRegionItemListSchema } from "@/lib/seo";
 import { getTravelAgencies, getTravelServiceRegion, getTravelServiceRegions, getTravelServiceRankings } from "@/lib/content";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 type PageProps = { params: Promise<{ region: string }> };
 
@@ -52,7 +53,7 @@ export default async function TravelServicesRegionPage({ params }: PageProps) {
 
       <section className="relative overflow-hidden border-b border-[var(--border)]">
         {regionData.images?.[0]?.url && (
-          <Image src={regionData.images[0].url} alt={regionData.images[0].alt} fill priority sizes="100vw" className="object-cover" />
+          <Image src={regionData.images[0].url} alt={regionData.images[0].alt} fill priority unoptimized={shouldUnoptimizeImage(regionData.images[0].url)} sizes="100vw" className="object-cover" />
         )}
         <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(18,53,69,0.96)_0%,rgba(40,90,111,0.88)_52%,rgba(224,143,62,0.50)_100%)]" />
         <div className="relative z-10 mx-auto grid w-[min(1360px,calc(100%-40px))] gap-8 py-10 max-sm:w-[min(1360px,calc(100%-24px))] sm:py-14 lg:grid-cols-[1.08fr_0.92fr]">

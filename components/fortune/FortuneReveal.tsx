@@ -24,6 +24,7 @@ import { FortuneCategoryDetails } from "@/components/fortune/FortuneCategoryDeta
 import { FortuneExperience3D } from "@/components/fortune/FortuneExperience3D";
 import { createFortuneExportPng } from "@/components/fortune/fortune-export-canvas";
 import { trackEvent } from "@/lib/analytics";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 const GENDER_ICON: Record<FortuneGender, typeof Venus> = {
   male: Mars,
@@ -745,6 +746,7 @@ function DesktopResultDashboard({
                     alt={result.lucky.item.name}
                     width={72}
                     height={72}
+                    unoptimized={shouldUnoptimizeImage(result.lucky.item.image)}
                     className="mx-auto h-12 w-12 rounded-xl object-cover ring-1 ring-white/20 transition group-hover:ring-white/50"
                   />
                 ) : (

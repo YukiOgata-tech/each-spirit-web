@@ -6,6 +6,7 @@ import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2, XCircle } from "lucide-react";
 import type { ProteinProduct, ProteinRankingEntry } from "@/lib/types";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { NutritionTypeBadge, MacroChip } from "@/components/protein/NutritionBadge";
 
 const MEDAL = ["🥇", "🥈", "🥉"];
@@ -32,6 +33,7 @@ export function ProteinRankingEntriesClient({
                 src={product.imageUrl}
                 alt={product.name}
                 fill
+                unoptimized={shouldUnoptimizeImage(product.imageUrl)}
                 className="object-cover"
                 sizes="220px"
               />

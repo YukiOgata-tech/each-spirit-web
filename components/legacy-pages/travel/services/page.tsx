@@ -8,6 +8,9 @@ import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { getTravelAgencies, getTravelApps, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
+
+const HERO_IMAGE = "https://images.unsplash.com/photo-1488646953014-85cb44e25828";
 
 export const metadata = pageMetadata({
   title: "旅行会社・旅行アプリおすすめ比較ガイド｜予約サイト・ツアーのランキングと選び方",
@@ -35,10 +38,11 @@ export default async function TravelServicesIndexPage() {
 
       <section className="relative overflow-hidden border-b border-[var(--border)]">
         <Image
-          src="https://images.unsplash.com/photo-1488646953014-85cb44e25828"
+          src={HERO_IMAGE}
           alt="旅行計画とスマートフォン"
           fill
           priority
+          unoptimized={shouldUnoptimizeImage(HERO_IMAGE)}
           sizes="100vw"
           className="object-cover"
         />

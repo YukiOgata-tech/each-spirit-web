@@ -41,6 +41,10 @@ const UNOPTIMIZED_IMAGE_HOSTS = [
   "www.hanmoto.com",
   "thumbnail.image.rakuten.co.jp",
   "m.media-amazon.com",
+  // Unsplash はURLクエリ（w/q/auto=format）で既に最適化済みのCDNのため、
+  // Vercel側の最適化を通さなくても実害が小さい。地域hero・美容サロン等の
+  // プレースホルダー画像で多用しており、クォータ超過時に一斉に表示崩れする。
+  "images.unsplash.com",
   "www.tomita-cocoro.jp",
   "sugitaya.com",
   "static.wixstatic.com",
@@ -84,9 +88,12 @@ export function safeImageSrc(src: string | null | undefined, fallback: string): 
 }
 
 /**
- * Vercel Image Transformations を抑えるため、動的OG画像・書籍/affiliate/店舗公式系の
- * 外部画像は next/image のレイアウトだけ使い、画像最適化は通さない。
- * Supabase Storage とローカル静的画像は重要ビジュアルで使うことが多いため既定では最適化を残す。
+ * Vercel Image Transformations の月間クォータ（Hobbyプラン）を使い切ると
+ * 未キャッシュの最適化リクエストが 402 OPTIMIZED_IMAGE_REQUEST_PAYMENT_REQUIRED で
+ * 弾かれ、記事本文・カード画像が表示されなくなる（2026-07に実際に発生）。
+ * Supabase Storage の画像はアップロード時点で既に webp 圧縮済みのため、
+ * next/image の最適化を通さなくても実害が小さい。動的OG画像・書籍/affiliate/
+ * 店舗公式系の外部画像と同様、レイアウトだけ next/image を使い最適化は通さない。
  */
 export function shouldUnoptimizeImage(src: string | null | undefined): boolean {
   if (!src) return false;
@@ -95,7 +102,7 @@ export function shouldUnoptimizeImage(src: string | null | undefined): boolean {
   try {
     const url = new URL(src);
     if (url.protocol !== "https:") return false;
-    if (url.hostname === supabaseHost()) return false;
+    if (url.hostname === supabaseHost()) return true;
     return (UNOPTIMIZED_IMAGE_HOSTS as readonly string[]).includes(url.hostname);
   } catch {
     return false;

@@ -6,6 +6,7 @@ import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getRamenRegions, getRamenItemsByRegion, getRamenRankingsByRegion, getRamenArticles } from "@/lib/content";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export const metadata = pageMetadata({
   title: "ラーメンおすすめ比較ガイド｜人気の名店ランキングと選び方・地域別まとめ",
@@ -59,6 +60,7 @@ export default async function RamenIndexPage() {
                     src={region.images[0].url}
                     alt={region.images[0].alt}
                     fill
+                    unoptimized={shouldUnoptimizeImage(region.images[0].url)}
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(min-width: 768px) 50vw, 100vw"
                   />

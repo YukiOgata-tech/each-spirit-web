@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { getLeisureRankings, getLeisureSpot, getLeisureSpots } from "@/lib/content";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { breadcrumbSchema, faqSchema, pageMetadata, speakableWebPageSchema, touristAttractionSchema } from "@/lib/seo";
 import { LikeButton } from "@/components/content/LikeButton";
 import { routes } from "@/lib/routes";
@@ -61,7 +62,7 @@ export default async function LeisureSpotPage({ params }: PageProps) {
       <JsonLd data={speakableWebPageSchema(routes.leisureSpot(region, spot.slug), spot.name)} />
             <section className="overflow-hidden rounded-lg border border-cyan-200 bg-white shadow-soft">
         <div className="relative min-h-[260px] sm:min-h-[360px]">
-          <Image src={visual.imageUrl} alt={visual.imageAlt} fill className="object-cover" priority sizes="100vw" />
+          <Image src={visual.imageUrl} alt={visual.imageAlt} fill unoptimized={shouldUnoptimizeImage(visual.imageUrl)} className="object-cover" priority sizes="100vw" />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-950/76 via-slate-950/18 to-transparent" />
           <div className="absolute bottom-6 left-5 right-5 text-white sm:left-8 sm:right-8">
             <div className="mb-4 flex w-fit items-center gap-2 rounded-md bg-white/16 px-3 py-2 text-sm font-bold backdrop-blur">

@@ -10,6 +10,9 @@ import { Button } from "@/components/ui/button";
 import { breadcrumbSchema, pageMetadata, travelAppItemListSchema } from "@/lib/seo";
 import { getTravelApps } from "@/lib/content";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
+
+const HERO_IMAGE = "https://images.unsplash.com/photo-1526772662000-3f88f10405ff";
 
 export const metadata = pageMetadata({
   title: "旅行アプリおすすめ比較ランキング｜予約・乗換・地図・翻訳アプリの選び方",
@@ -33,10 +36,11 @@ export default async function TravelAppsPage() {
 
       <section className="relative overflow-hidden border-b border-[var(--border)]">
         <Image
-          src="https://images.unsplash.com/photo-1526772662000-3f88f10405ff"
+          src={HERO_IMAGE}
           alt="地図と旅行計画"
           fill
           priority
+          unoptimized={shouldUnoptimizeImage(HERO_IMAGE)}
           sizes="100vw"
           className="object-cover"
         />

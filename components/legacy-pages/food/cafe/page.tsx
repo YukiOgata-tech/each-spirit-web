@@ -6,6 +6,7 @@ import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 import { getCafeRegions, getCafeItemsByRegion, getCafeRankingsByRegion } from "@/lib/content";
 import { RegionlessItems } from "@/components/generic/RegionlessItems";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export const metadata = pageMetadata({
   title: "カフェおすすめ比較ガイド｜人気カフェランキングと電源・WiFi・雰囲気の選び方",
@@ -62,6 +63,7 @@ export default async function CafeIndexPage() {
                       src={region.images[0].url}
                       alt={region.images[0].alt}
                       fill
+                      unoptimized={shouldUnoptimizeImage(region.images[0].url)}
                       className="object-cover transition-transform duration-500 group-hover:scale-105"
                       sizes="(min-width: 768px) 50vw, 100vw"
                     />

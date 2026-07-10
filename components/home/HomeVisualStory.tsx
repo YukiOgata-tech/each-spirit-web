@@ -6,6 +6,7 @@ import Link from "next/link";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowUpRight } from "lucide-react";
 import type { Category } from "@/lib/types";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 const fallbackImage =
   "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&w=900&q=80";
@@ -119,6 +120,7 @@ function CategoryStage({ tile, priority }: { tile: Tile; priority: boolean }) {
         alt={tile.name}
         fill
         priority={priority}
+        unoptimized={shouldUnoptimizeImage(tile.image)}
         sizes="(min-width: 1024px) 540px, 100vw"
         className="object-cover transition-transform duration-700 group-hover:scale-105"
       />

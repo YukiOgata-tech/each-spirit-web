@@ -11,6 +11,7 @@ import { articleHref, getArticlesBySection, getCategory, getLeisureRankings, get
 import { pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export const metadata = pageMetadata({
   title: "レジャー・お出かけスポットおすすめ比較ガイド｜人気の遊び場ランキングと選び方",
@@ -69,13 +70,16 @@ export default async function LeisurePage() {
           <h2 className="section-heading mt-2">公開中の地域</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-3">
-          {regions.map((region) => (
+          {regions.map((region) => {
+            const regionImage = regionImages[region] ?? regionImages.niigata;
+            return (
             <Link key={region} href={routes.leisureRegion(region)} className="group overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
               <div className="relative aspect-[16/9]">
                 <Image
-                  src={regionImages[region]?.src ?? regionImages.niigata.src}
-                  alt={regionImages[region]?.alt ?? regionImages.niigata.alt}
+                  src={regionImage.src}
+                  alt={regionImage.alt}
                   fill
+                  unoptimized={shouldUnoptimizeImage(regionImage.src)}
                   className="object-cover transition duration-500 group-hover:scale-105"
                   sizes="(min-width: 768px) 33vw, 100vw"
                 />
@@ -87,7 +91,8 @@ export default async function LeisurePage() {
                 <p className="mt-2 text-sm leading-7 text-slate-600">屋外・屋内・雨の日・子連れを分けて、公式情報ベースで比較します。</p>
               </div>
             </Link>
-          ))}
+            );
+          })}
         </div>
       </section>
 

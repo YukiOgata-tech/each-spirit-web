@@ -4,6 +4,7 @@ import { ArrowRight, Car, CloudSun, MapPin } from "lucide-react";
 import type { LeisureSpot } from "@/lib/types";
 import { routes } from "@/lib/routes";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { LeisureIcon } from "@/components/leisure/LeisureIcon";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -28,6 +29,7 @@ export function LeisureSpotCard({ region, spot }: { region: string; spot: Leisur
             src={visual.imageUrl}
             alt={visual.imageAlt}
             fill
+            unoptimized={shouldUnoptimizeImage(visual.imageUrl)}
             className="object-cover transition duration-500 group-hover:scale-105"
             sizes="(min-width: 768px) 33vw, 100vw"
           />

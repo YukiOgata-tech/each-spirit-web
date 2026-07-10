@@ -8,6 +8,7 @@ import { breadcrumbSchema, pageMetadata } from "@/lib/seo";
 import { majorMetaImage } from "@/lib/category-media";
 import { routes } from "@/lib/routes";
 import { getTravelRegions, getTravelHotels, getTravelRankings, getContentSections } from "@/lib/content";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 export const metadata = pageMetadata({
   title: "旅行おすすめ比較ガイド｜温泉宿・ホテルのランキングと予約・選び方",
@@ -69,6 +70,7 @@ export default async function TravelIndexPage() {
                     src={region.images[0].url}
                     alt={region.images[0].alt}
                     fill
+                    unoptimized={shouldUnoptimizeImage(region.images[0].url)}
                     className="object-cover transition-transform duration-500 group-hover:scale-105"
                     sizes="(min-width: 640px) 50vw, 100vw"
                   />

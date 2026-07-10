@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { articleHref, getArticlesBySection, getLeisureRankings, getLeisureSpots } from "@/lib/content";
 import { getLeisureVisual } from "@/lib/leisure-visuals";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 import { pageMetadata } from "@/lib/seo";
 import { routes } from "@/lib/routes";
 
@@ -63,7 +64,7 @@ export default async function NiigataLeisurePage() {
                     href={routes.leisureSpot(region, spot.slug)}
                     className={index === 0 ? "group relative min-h-[280px] overflow-hidden rounded-lg shadow-soft sm:row-span-2" : "group relative min-h-[134px] overflow-hidden rounded-lg shadow-soft"}
                   >
-                    <Image src={visual.imageUrl} alt={visual.imageAlt} fill priority={index === 0} className="object-cover transition duration-700 group-hover:scale-105" sizes="(min-width: 1024px) 40vw, 100vw" />
+                    <Image src={visual.imageUrl} alt={visual.imageAlt} fill priority={index === 0} unoptimized={shouldUnoptimizeImage(visual.imageUrl)} className="object-cover transition duration-700 group-hover:scale-105" sizes="(min-width: 1024px) 40vw, 100vw" />
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-950/72 via-slate-950/16 to-transparent" />
                     <div className="absolute bottom-4 left-4 right-4 text-white">
                       <div className="mb-2 flex w-fit items-center gap-2 rounded-md bg-white/16 px-3 py-1.5 text-xs font-bold backdrop-blur">

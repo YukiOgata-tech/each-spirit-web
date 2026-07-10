@@ -7,6 +7,7 @@ import { Gem, TrendingUp, ShieldAlert } from "lucide-react";
 import { CATEGORY_LABEL, LEVEL, type FortuneCategoryKey, type FortuneResult, type FortuneScore } from "@/lib/fortune";
 import { categoryIcon } from "@/components/fortune/FortuneCategoryDetails";
 import { CATEGORY_THEME, CategoryMotif } from "@/components/fortune/category-theme";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 /**
  * 画面幅に追従する、大きく読みやすい運勢データ表示。
@@ -70,6 +71,7 @@ export function FortuneDataReport({
                   alt={result.lucky.item.name}
                   width={72}
                   height={72}
+                  unoptimized={shouldUnoptimizeImage(result.lucky.item.image)}
                   className="mx-auto h-14 w-14 rounded-xl object-cover ring-1 ring-white/20 transition group-hover:ring-white/50 sm:h-16 sm:w-16"
                 />
               ) : (

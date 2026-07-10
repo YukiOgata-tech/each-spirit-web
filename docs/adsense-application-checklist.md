@@ -4,6 +4,8 @@
 
 個別の広告ユニット（`AdUnit` コンポーネント、記事本文・アイテム/ランキング詳細への設置）は AdSense **承認後**に着手する。サイト確認用スクリプトと `ads.txt` は申請ステップの一部として先行導入済み。
 
+**ステータス（2026-07-10）**: Vercel の Production 環境変数に `NEXT_PUBLIC_ADSENSE_CLIENT_ID` を追加し再デプロイ、`each-spirit.com` 本番で確認用スクリプトの出力を確認済み。AdSense へ審査をリクエスト済み（結果待ち）。
+
 ## 済んでいる項目
 
 - **コンテンツ量**: Supabase `es` スキーマで記事45件・アイテム578件・ランキング58件（公開分、2026-07-10時点）。量は十分。
@@ -24,10 +26,9 @@
 - 各記事の文字数・独自性のばらつき（極端に薄い記事が多くないか）
 - 各section・item・rankingページ単体で見たときに「広告を貼るに値するコンテンツ量」があるか（汎用ページ・item数の少ないsectionは特に確認）
 
-## 申請〜承認後の作業（次フェーズ）
+## 承認後の作業（次フェーズ）
 
-1. AdSense 申請・サイト審査（確認用スクリプト・`ads.txt` は導入済みなのでいつでも申請可能）
-2. 承認後、広告ユニットの設置（ヒアリング済み、設置面は「記事詳細 + アイテム/ランキング詳細」）:
+1. 承認後、広告ユニットの設置（ヒアリング済み、設置面は「記事詳細 + アイテム/ランキング詳細」）:
    - `components/articles/ArticleDetailPage.tsx`: 本文（`MarkdownRenderer`）後、`AffiliateSurface`（`placement="article_body"`）付近
    - `components/detail/ItemDetail.tsx`: `{Layout(ctx)}` と `AffiliateSurface`（`placement="item_detail"`）の間、または後
    - `components/generic/GenericSectionPages.tsx` の `GenericRankingDetailPage`: `AffiliateSurface`（L532付近）前後

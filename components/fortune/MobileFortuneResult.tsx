@@ -12,6 +12,7 @@ import {
 import { categoryIcon } from "@/components/fortune/FortuneCategoryDetails";
 import { FortuneScoreVisual } from "@/components/fortune/FortuneScoreVisual";
 import { CATEGORY_LABEL, LEVEL, type FortuneCategoryKey, type FortuneResult, type FortuneScore } from "@/lib/fortune";
+import { shouldUnoptimizeImage } from "@/lib/image-hosts";
 
 const CATEGORY_ACCENT: Partial<Record<FortuneCategoryKey, string>> = {
   love: "#fb7185",
@@ -189,6 +190,7 @@ function LuckySpot({ item }: { item: FortuneResult["lucky"]["item"] }) {
           alt={item.name}
           width={72}
           height={72}
+          unoptimized={shouldUnoptimizeImage(item.image)}
           className="mx-auto h-14 w-14 rounded-2xl object-cover ring-1 ring-white/25 shadow-lg shadow-black/30"
         />
       ) : (
