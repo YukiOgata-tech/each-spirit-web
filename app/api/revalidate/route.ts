@@ -1,7 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { submitIndexNow } from "@/lib/indexnow";
-import { ES_CONTENT_CACHE_TAG, createUncachedServerClient } from "@/lib/supabase-server";
+import {
+  ES_ARTICLES_CACHE_TAG,
+  ES_CONTENT_CACHE_TAG,
+  ES_ITEMS_CACHE_TAG,
+  ES_RANKINGS_CACHE_TAG,
+  createUncachedServerClient,
+} from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,9 +30,8 @@ type RevalidateBody = {
  *                            一覧ページだけを再検証する（iPhone ショートカット等の既定）。
  *
  * 差分モードのポイント:
- *   Next.js は各キャッシュにパスの暗黙タグを自動付与するため、`revalidatePath(具体パス)`
- *   はそのページ配下の Supabase フェッチ（データキャッシュ）も新鮮化する。よって
- *   es-content の全体タグを切らずに「変わったページだけ」を正しく更新できる。
+ *   影響するページパスに加え、変更があった table の Supabase Data Cache タグも切る。
+ *   ページだけを再生成しても Data Cache が古いと、トップや一覧が古い行で再生成されるため。
  */
 export async function POST(request: NextRequest) {
   const secret =
@@ -145,6 +150,10 @@ async function revalidateChanged() {
     add("/");
     add("/sitemap.xml");
   }
+
+  if ((articles?.length ?? 0) > 0) revalidateTag(ES_ARTICLES_CACHE_TAG);
+  if ((items?.length ?? 0) > 0) revalidateTag(ES_ITEMS_CACHE_TAG);
+  if ((rankings?.length ?? 0) > 0) revalidateTag(ES_RANKINGS_CACHE_TAG);
 
   for (const p of paths) revalidatePath(p);
 
