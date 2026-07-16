@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Fingerprint, Radio, ShieldCheck } from "lucide-react";
 import { MysteryImage } from "@/components/mystery/MysteryImage";
 import { MysteryPuzzleCard } from "@/components/mystery/MysteryPuzzleCard";
-import { getMysteryPuzzles } from "@/lib/mystery";
+import { getMysteryPuzzles, MYSTERY_OG_IMAGE } from "@/lib/mystery";
 import { absoluteUrl, routes } from "@/lib/routes";
 
 export const metadata: Metadata = {
@@ -13,7 +13,13 @@ export const metadata: Metadata = {
     title: "謎解き局 | Each Spirit",
     description: "未解決の事件ファイルを開き、暗号に挑戦。",
     url: absoluteUrl(routes.mystery),
-    images: [{ url: absoluteUrl("/mystery/mystery-hero.webp"), width: 1728, height: 920 }],
+    images: [{ url: absoluteUrl(MYSTERY_OG_IMAGE.path), width: MYSTERY_OG_IMAGE.width, height: MYSTERY_OG_IMAGE.height }],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "謎解き局 | Each Spirit",
+    description: "未解決の事件ファイルを開き、暗号に挑戦。",
+    images: [absoluteUrl(MYSTERY_OG_IMAGE.path)],
   },
 };
 

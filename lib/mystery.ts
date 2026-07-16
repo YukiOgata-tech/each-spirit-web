@@ -4,6 +4,11 @@ import { createClient } from "@supabase/supabase-js";
 
 export const ES_MYSTERY_CACHE_TAG = "es-mystery";
 export const ES_MYSTERY_SOLVES_CACHE_TAG = "es-mystery-solves";
+export const MYSTERY_OG_IMAGE = {
+  path: "/mystery/mystery-og.webp",
+  width: 1200,
+  height: 630,
+} as const;
 
 export type MysteryContentModel = "custom" | "markdown" | "staged";
 export type MysteryAnswerMethod = "form" | "file" | "flexible";

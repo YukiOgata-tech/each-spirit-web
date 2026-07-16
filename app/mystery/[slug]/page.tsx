@@ -21,6 +21,7 @@ import { MysteryDifficulty } from "@/components/mystery/MysteryPuzzleCard";
 import {
   getMysteryPuzzle,
   getMysteryPuzzles,
+  MYSTERY_OG_IMAGE,
   mysteryAnswerMethodLabel,
   type MysteryAttachment,
 } from "@/lib/mystery";
@@ -47,7 +48,13 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       title: `${puzzle.title} | 謎解き局`,
       description: puzzle.excerpt,
       url: absoluteUrl(path),
-      images: [{ url: absoluteUrl(puzzle.heroImageUrl || "/mystery/mystery-hero.webp"), width: 1728, height: 920 }],
+      images: [{ url: absoluteUrl(MYSTERY_OG_IMAGE.path), width: MYSTERY_OG_IMAGE.width, height: MYSTERY_OG_IMAGE.height }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${puzzle.title} | 謎解き局`,
+      description: puzzle.excerpt,
+      images: [absoluteUrl(MYSTERY_OG_IMAGE.path)],
     },
   };
 }

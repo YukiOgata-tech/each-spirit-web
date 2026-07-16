@@ -271,6 +271,8 @@ each-spirit:mystery-stage:{slug}
 
 現在の第一問は、ヒーロー画像1件と19件の資料画像がすべてWebPである。
 
+`/mystery` 配下のOpen Graph画像とTwitter Card画像は、問題ごとのヒーロー画像ではなく `public/mystery/mystery-og.webp` を共通使用する。画像サイズは1200×630。
+
 第二問以降の問題画像はSupabase Storageの `mystery-assets` bucketへWebPを主体に保存する。object pathは問題slugを先頭に置く。
 
 ```text
