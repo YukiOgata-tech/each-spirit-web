@@ -7,9 +7,9 @@ import { createServerClient } from "@/lib/supabase-server";
 import { routes } from "@/lib/routes";
 import { StorageUploader, type UploadArticle } from "@/components/admin/StorageUploader";
 
-export const metadata: Metadata = { title: "画像アップロード", robots: { index: false } };
+export const metadata: Metadata = { title: "ファイルアップロード", robots: { index: false } };
 
-const ALLOWED_BUCKETS = ["each-spirit-images", "article-assets"];
+const ALLOWED_BUCKETS = ["each-spirit-images", "article-assets", "mystery-assets"];
 const ALLOWED_BUCKET_SET = new Set(ALLOWED_BUCKETS);
 
 type ArticleRow = {
@@ -108,10 +108,10 @@ export default async function StoragePage() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Admin only
           </div>
-          <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">画像アップロード</h1>
+          <h1 className="mt-2 text-2xl font-black text-slate-950 sm:text-3xl">ファイルアップロード</h1>
           <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
             「記事から選ぶ」では本文（MD）に先に書いた <span className="font-mono text-slate-700">articles/&#123;slug&#125;/</span> のパスへ実ファイルを後から置けます。
-            「自由パスで入れる」ではバケットと既存フォルダを選び、任意のパスにアップロードできます。アップロード時に拡張子へ合わせて最適化し、容量を抑えます。
+            「自由パスで入れる」ではバケットと既存フォルダを選び、任意のパスにアップロードできます。謎解き資料は mystery-assets へ画像・PDF・音声・ZIPを保存できます。
           </p>
         </div>
       </header>

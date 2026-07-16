@@ -2,10 +2,21 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@/lib/supabase-server";
 import { requireAdminUser } from "@/lib/admin";
 
-// アップロード可能なバケット（public・画像専用）。コンテンツ画像は each-spirit-images が正。
-const ALLOWED_BUCKETS = new Set(["each-spirit-images", "article-assets"]);
-const maxBytes = 5 * 1024 * 1024;
-const allowedTypes = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const IMAGE_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "image/gif"]);
+const MYSTERY_ASSET_TYPES = new Set([
+  ...IMAGE_TYPES,
+  "application/pdf",
+  "audio/mpeg",
+  "audio/wav",
+  "text/plain",
+  "application/zip",
+  "application/x-zip-compressed",
+]);
+const BUCKET_CONFIG = new Map([
+  ["each-spirit-images", { maxBytes: 5 * 1024 * 1024, types: IMAGE_TYPES }],
+  ["article-assets", { maxBytes: 5 * 1024 * 1024, types: IMAGE_TYPES }],
+  ["mystery-assets", { maxBytes: 15 * 1024 * 1024, types: MYSTERY_ASSET_TYPES }],
+]);
 
 /**
  * パス正規化: バックスラッシュ→スラッシュ、連続スラッシュを1つに圧縮、前後/先頭/末尾の
@@ -39,17 +50,18 @@ export async function POST(request: NextRequest) {
     const rawPath = String(formData.get("path") ?? "");
     const upsert = String(formData.get("upsert") ?? "") === "true";
 
-    if (!ALLOWED_BUCKETS.has(bucket)) {
+    const config = BUCKET_CONFIG.get(bucket);
+    if (!config) {
       return NextResponse.json({ ok: false, message: "bucket が不正です" }, { status: 400 });
     }
     if (!(file instanceof File)) {
       return NextResponse.json({ ok: false, message: "file is required" }, { status: 400 });
     }
-    if (!allowedTypes.has(file.type)) {
-      return NextResponse.json({ ok: false, message: "対応していない画像形式です（jpeg/png/webp/gif）" }, { status: 400 });
+    if (!config.types.has(file.type)) {
+      return NextResponse.json({ ok: false, message: "対応していないファイル形式です" }, { status: 400 });
     }
-    if (file.size > maxBytes) {
-      return NextResponse.json({ ok: false, message: "ファイルが大きすぎます（上限5MB）" }, { status: 400 });
+    if (file.size > config.maxBytes) {
+      return NextResponse.json({ ok: false, message: `ファイルが大きすぎます（上限${config.maxBytes / 1024 / 1024}MB）` }, { status: 400 });
     }
 
     const path = normalizePath(rawPath);

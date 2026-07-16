@@ -23,8 +23,8 @@ const LABEL_MAP: Record<string, string> = {
   niigata: "新潟",
   // ユーティリティ / アカウント
   account: "マイページ", search: "検索", about: "運営情報", contact: "お問い合わせ",
-  privacy: "プライバシーポリシー", disclaimer: "免責事項", fortune: "占い",
-  login: "ログイン", signup: "新規登録", storage: "画像アップロード", manage: "コンテンツ管理",
+  privacy: "プライバシーポリシー", disclaimer: "免責事項", fortune: "占い", mystery: "謎解き局",
+  login: "ログイン", signup: "新規登録", storage: "ファイルアップロード", manage: "コンテンツ管理",
   likes: "保存した項目", new: "新規作成", edit: "編集",
 };
 

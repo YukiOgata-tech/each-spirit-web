@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ChevronRight, Info, LogIn, LogOut, Mail, Menu, Newspaper, ScrollText, UserCircle, X,
+  ChevronRight, Fingerprint, Info, LogIn, LogOut, Mail, Menu, Newspaper, ScrollText, UserCircle, X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -143,6 +143,21 @@ export function MobileHeaderMenu() {
               </section>
 
               {/* デイリー占い */}
+              <Link
+                href={routes.mystery}
+                onClick={closeMenu}
+                className="mt-4 flex min-h-14 items-center justify-between gap-3 rounded-md border border-slate-700 bg-slate-950 px-4 py-3 text-stone-100 shadow-lg"
+              >
+                <span className="flex items-center gap-3">
+                  <Fingerprint className="h-5 w-5 text-red-500" />
+                  <span>
+                    <span className="block text-sm font-black">謎解き局</span>
+                    <span className="block text-xs font-semibold text-stone-400">公開中の暗号に挑む</span>
+                  </span>
+                </span>
+                <ChevronRight className="h-5 w-5 shrink-0" />
+              </Link>
+
               <Link
                 href={routes.fortune}
                 onClick={closeMenu}

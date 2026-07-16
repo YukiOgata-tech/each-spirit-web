@@ -19,7 +19,7 @@ type Props = {
   publicPrefix: string; // 例: https://xxx.supabase.co/storage/v1/object/public/
 };
 
-const BUCKETS = ["each-spirit-images", "article-assets"] as const;
+const BUCKETS = ["each-spirit-images", "article-assets", "mystery-assets"] as const;
 
 const inputClass =
   "min-h-11 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition placeholder:text-slate-400 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15";
@@ -127,12 +127,12 @@ export function StorageUploader({ articles, folders, publicPrefix }: Props) {
       // HEIC（iPhone）はブラウザで描画できないので、選択時に JPEG へデコードして
       // プレビュー・後段の最適化に使えるようにする。
       let prepared = f;
-      if (isHeic(f)) {
+      if (f.type.startsWith("image/") && isHeic(f)) {
         setConverting(true);
         prepared = await decodeHeicIfNeeded(f);
       }
       setFile(prepared);
-      setPreviewUrl(URL.createObjectURL(prepared));
+      if (prepared.type.startsWith("image/")) setPreviewUrl(URL.createObjectURL(prepared));
     } catch (e) {
       setError(e instanceof Error ? e.message : "HEICの変換に失敗しました");
       setFile(null);
@@ -147,15 +147,16 @@ export function StorageUploader({ articles, folders, publicPrefix }: Props) {
   const finalUrl = normalized ? `${publicPrefix}${bucket}/${normalized}` : "";
 
   const upload = async () => {
-    if (!file) { setError("画像ファイルを選択してください"); return; }
+    if (!file) { setError("ファイルを選択してください"); return; }
     if (!normalized || !/\.[A-Za-z0-9]+$/.test(normalized)) { setError("拡張子付きのパスを入力してください（例: articles/slug/hero.webp）"); return; }
     setUploading(true);
     setError("");
     try {
-      const targetMime = mimeForPath(normalized);
-      const optimized = await optimizeImage(file, targetMime);
+      const uploadFile = file.type.startsWith("image/")
+        ? await optimizeImage(file, mimeForPath(normalized))
+        : file;
       const formData = new FormData();
-      formData.set("file", optimized);
+      formData.set("file", uploadFile);
       formData.set("bucket", bucket);
       formData.set("path", normalized);
       formData.set("upsert", upsert ? "true" : "false");
@@ -333,7 +334,7 @@ export function StorageUploader({ articles, folders, publicPrefix }: Props) {
 
             <div className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs">
               <p className="break-all text-slate-500">公開URL: <span className="font-mono text-slate-700">{finalUrl || "—"}</span></p>
-              <p className="mt-1 text-slate-500">最適化形式: <span className="font-semibold text-slate-700">{normalized ? extLabel(normalized) : "—"}</span>（拡張子に合わせて再エンコード・最大幅1600pxに縮小）</p>
+              <p className="mt-1 text-slate-500">処理: <span className="font-semibold text-slate-700">{file?.type.startsWith("image/") && normalized ? `${extLabel(normalized)}へ最適化` : "元ファイルを保持"}</span></p>
             </div>
 
             {/* ファイル選択 */}
@@ -341,13 +342,19 @@ export function StorageUploader({ articles, folders, publicPrefix }: Props) {
               <input
                 ref={fileRef}
                 type="file"
-                accept="image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif"
+                accept={bucket === "mystery-assets" ? "image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,application/pdf,audio/mpeg,audio/wav,text/plain,application/zip,.heic,.heif,.zip" : "image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.heic,.heif"}
                 className="hidden"
                 onChange={(e) => { void onPickFile(e.target.files?.[0] ?? null); }}
               />
               {previewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={previewUrl} alt="プレビュー" className="aspect-[16/9] w-full max-w-md rounded-lg border border-slate-200 object-cover" />
+              ) : file ? (
+                <div className="flex min-h-32 w-full max-w-md flex-col items-center justify-center gap-2 rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+                  <UploadCloud className="h-7 w-7 text-slate-400" />
+                  <span className="max-w-full truncate text-sm font-bold text-slate-700">{file.name}</span>
+                  <span className="text-xs text-slate-400">{(file.size / 1024 / 1024).toFixed(2)} MB</span>
+                </div>
               ) : (
                 <button
                   type="button"
@@ -356,11 +363,11 @@ export function StorageUploader({ articles, folders, publicPrefix }: Props) {
                   className="flex aspect-[16/9] w-full max-w-md flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 text-slate-400 transition hover:border-orange-400 hover:text-orange-500 disabled:opacity-60"
                 >
                   <ImagePlus className="h-7 w-7" />
-                  <span className="text-sm font-semibold">{converting ? "HEICを変換中…" : "画像を選択（HEIC可）"}</span>
+                  <span className="text-sm font-semibold">{converting ? "HEICを変換中…" : bucket === "mystery-assets" ? "資料ファイルを選択" : "画像を選択（HEIC可）"}</span>
                 </button>
               )}
-              {previewUrl && (
-                <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => fileRef.current?.click()}>別の画像に変更</Button>
+              {file && (
+                <Button type="button" variant="ghost" size="sm" className="mt-2" onClick={() => fileRef.current?.click()}>別のファイルに変更</Button>
               )}
             </div>
 

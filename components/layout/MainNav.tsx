@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Fingerprint } from "lucide-react";
 import type { Category } from "@/lib/types";
 import { routes } from "@/lib/routes";
 
@@ -32,6 +33,13 @@ export function MainNav({ categories }: { categories: Category[] }) {
           </div>
         </div>
       </div>
+      <Link
+        href={routes.mystery}
+        className="ml-1 inline-flex h-10 items-center gap-2 rounded-md border border-slate-700 bg-slate-950 px-3 text-sm font-bold text-stone-100 shadow-sm transition hover:-translate-y-0.5 hover:border-red-700 hover:bg-slate-900 active:translate-y-0"
+      >
+        <Fingerprint className="h-4 w-4 text-red-500" />
+        謎解き局
+      </Link>
       <Link
         href={routes.fortune}
         className="ml-1 inline-flex h-10 items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-600 via-violet-600 to-cyan-500 px-4 text-sm font-black text-white shadow-lg shadow-violet-500/25 ring-1 ring-white/30 transition hover:-translate-y-0.5 hover:shadow-xl hover:shadow-violet-500/35 active:translate-y-0"

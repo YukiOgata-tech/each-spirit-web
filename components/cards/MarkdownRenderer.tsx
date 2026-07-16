@@ -141,6 +141,15 @@ function parseImage(block: string) {
   return { alt: match[1], src: match[2], caption: match[3] };
 }
 
+function parseCodeBlock(block: string) {
+  const match = block.match(/^```([A-Za-z0-9_-]+)?\n([\s\S]*?)\n?```$/);
+  if (!match) return null;
+  return {
+    language: match[1]?.trim() || "text",
+    code: match[2].replace(/\n$/, ""),
+  };
+}
+
 function parseDirective(block: string, name: string) {
   const trimmed = block.trim();
   const prefix = ":::" + name;
@@ -419,6 +428,21 @@ export function MarkdownRenderer({
         }
 
         if (isTable(block)) return renderTable(block, index);
+
+        const codeBlock = parseCodeBlock(block);
+        if (codeBlock) {
+          return (
+            <figure key={index} className="overflow-hidden rounded-xl border border-slate-200 bg-slate-950 shadow-sm">
+              <figcaption className="flex items-center justify-between border-b border-white/10 px-4 py-2.5">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-300">{codeBlock.language}</span>
+                <span className="text-[11px] font-medium text-slate-500">code block</span>
+              </figcaption>
+              <pre className="overflow-x-auto px-4 py-4 text-sm leading-7 text-slate-100">
+                <code className="font-mono">{codeBlock.code}</code>
+              </pre>
+            </figure>
+          );
+        }
 
         const image = parseImage(block);
         if (image) {

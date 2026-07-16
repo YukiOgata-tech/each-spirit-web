@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { revalidatePath, revalidateTag } from "next/cache";
 import { submitIndexNow } from "@/lib/indexnow";
+import { ES_MYSTERY_CACHE_TAG, ES_MYSTERY_SOLVES_CACHE_TAG } from "@/lib/mystery";
 import {
   ES_ARTICLES_CACHE_TAG,
   ES_CONTENT_CACHE_TAG,
@@ -24,6 +25,7 @@ type RevalidateBody = {
  *
  * 挙動（POST body で分岐）:
  *   - `{"path":"/foo"}`   … そのパスだけ再検証（従来どおりのピンポイント）
+ *   - `{"scope":"mystery"}` … 謎解きの問題・ヒント・正解者記録を再検証。
  *   - `{"scope":"all"}`   … 全ルート再検証（es-content タグ + layout）。大規模一括更新時のみ。
  *   - `{}`（省略含む）     … ★差分モード★ 前回実行以降に changed_at が動いた
  *                            articles/items/rankings の canonical_path と、影響する
@@ -48,9 +50,35 @@ export async function POST(request: NextRequest) {
 
   // ── ピンポイント: 指定パスだけ ───────────────────────────────────────────────
   if (body?.path) {
+    const mysteryPath = body.path === "/mystery" || body.path.startsWith("/mystery/");
+    if (mysteryPath) {
+      revalidateTag(ES_MYSTERY_CACHE_TAG);
+      revalidateTag(ES_MYSTERY_SOLVES_CACHE_TAG);
+    }
     revalidatePath(body.path);
     const indexNow = await submitIndexNow([body.path]);
-    return NextResponse.json({ ok: true, mode: "path", revalidated: body.path, indexNow });
+    return NextResponse.json({
+      ok: true,
+      mode: "path",
+      revalidated: body.path,
+      revalidatedTags: mysteryPath ? [ES_MYSTERY_CACHE_TAG, ES_MYSTERY_SOLVES_CACHE_TAG] : [],
+      indexNow,
+    });
+  }
+
+  // ── 謎解き: DB編集後に一覧・詳細・正解者記録をまとめて再検証 ────────────────
+  if (body?.scope === "mystery") {
+    revalidateTag(ES_MYSTERY_CACHE_TAG);
+    revalidateTag(ES_MYSTERY_SOLVES_CACHE_TAG);
+    revalidatePath("/mystery");
+    revalidatePath("/mystery/[slug]", "page");
+
+    return NextResponse.json({
+      ok: true,
+      mode: "mystery",
+      revalidated: ["/mystery", "/mystery/[slug]"],
+      revalidatedTags: [ES_MYSTERY_CACHE_TAG, ES_MYSTERY_SOLVES_CACHE_TAG],
+    });
   }
 
   // ── 全体: 従来の全ルート再検証（明示時のみ） ──────────────────────────────────
@@ -59,6 +87,8 @@ export async function POST(request: NextRequest) {
     const runAt = new Date().toISOString();
 
     revalidateTag(ES_CONTENT_CACHE_TAG);
+    revalidateTag(ES_MYSTERY_CACHE_TAG);
+    revalidateTag(ES_MYSTERY_SOLVES_CACHE_TAG);
     revalidatePath("/", "layout");
 
     const stateError = await updateLastRunAt(sb, runAt);
@@ -69,7 +99,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({ ok: true, mode: "all", revalidatedTag: ES_CONTENT_CACHE_TAG, lastRunAt: runAt });
+    return NextResponse.json({
+      ok: true,
+      mode: "all",
+      revalidatedTags: [ES_CONTENT_CACHE_TAG, ES_MYSTERY_CACHE_TAG, ES_MYSTERY_SOLVES_CACHE_TAG],
+      lastRunAt: runAt,
+    });
   }
 
   // ── 差分: 前回以降に changed_at が動いた分だけ ────────────────────────────────

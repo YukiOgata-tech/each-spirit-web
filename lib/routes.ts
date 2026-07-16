@@ -70,6 +70,8 @@ export const routes = {
   entertainmentRankings: (section: string) => "/entertainment/" + section + "/rankings",
   entertainmentRanking: (section: string, slug: string) => "/entertainment/" + section + "/rankings/" + slug,
   fortune: "/fortune",
+  mystery: "/mystery",
+  mysteryPuzzle: (slug: string) => "/mystery/" + slug,
   authLogin: "/auth/login",
   authSignup: "/auth/signup",
   authCallback: "/auth/callback",

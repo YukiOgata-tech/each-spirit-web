@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import {
   Heart, Bookmark, MapPin, Bell, ClipboardList,
-  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, UploadCloud,
+  Star, Coffee, Trophy, Sparkles, ArrowRight, PenLine, UploadCloud, Fingerprint,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { DashboardCard, DashboardCardEmpty } from "@/components/account/DashboardCard";
@@ -28,6 +28,15 @@ type LikeRow  = { like_type: string; content_kind: string; target_id: string; cr
 type Notification = { id: string; title: string; body: string; action_url: string | null; created_at: string };
 type QuizResult   = { id: string; quiz_type: string; result: Record<string, unknown>; created_at: string };
 type Points = { balance: number; lifetime: number } | null;
+type MysterySolve = {
+  puzzle_id: string;
+  slug: string;
+  case_number: number;
+  title: string;
+  difficulty: number;
+  solved_at: string;
+  hint_count_used: number;
+};
 
 // ── コンテンツ種別の日本語ラベル ────────────────────────
 const CONTENT_KIND_LABELS: Record<string, string> = {
@@ -57,7 +66,7 @@ export default async function AccountPage() {
 
   // データ並列取得（es スキーマを利用するには Supabase Dashboard の
   // Settings > API > Extra schemas に "es" を追加してください）
-  const [profileRes, likesRes, notificationsRes, quizRes, pointsRes] = await Promise.allSettled([
+  const [profileRes, likesRes, notificationsRes, quizRes, pointsRes, mysterySolvesRes] = await Promise.allSettled([
     supabase.from("profiles").select("display_name, avatar, birthday, gender").eq("id", user.id).single(),
     supabase.schema("es").from("content_likes")
       .select("like_type, content_kind, target_id, created_at")
@@ -79,6 +88,7 @@ export default async function AccountPage() {
       .select("balance, lifetime")
       .eq("user_id", user.id)
       .single(),
+    supabase.schema("es").rpc("get_my_mystery_solves"),
   ]);
 
   const profile: Profile = profileRes.status === "fulfilled" ? profileRes.value.data : null;
@@ -86,6 +96,9 @@ export default async function AccountPage() {
   const notifications: Notification[] = notificationsRes.status === "fulfilled" ? (notificationsRes.value.data ?? []) : [];
   const quizResults: QuizResult[] = quizRes.status === "fulfilled" ? (quizRes.value.data ?? []) : [];
   const points: Points = pointsRes.status === "fulfilled" ? pointsRes.value.data : null;
+  const mysterySolves: MysterySolve[] = mysterySolvesRes.status === "fulfilled"
+    ? (mysterySolvesRes.value.data ?? []) as MysterySolve[]
+    : [];
 
   // 集計
   const likeCount        = likes.filter(l => l.like_type === "like").length;
@@ -231,6 +244,40 @@ export default async function AccountPage() {
                     </li>
                   );
                 })}
+              </ul>
+            )}
+          </DashboardCard>
+
+          <DashboardCard
+            title="解読済み暗号"
+            badge={mysterySolves.length > 0 ? mysterySolves.length : undefined}
+          >
+            {mysterySolves.length === 0 ? (
+              <DashboardCardEmpty
+                message="正解者記録に登録された暗号問題はまだありません。"
+                cta={{ label: "謎解き局を見る", href: routes.mystery }}
+              />
+            ) : (
+              <ul className="space-y-2">
+                {mysterySolves.slice(0, 5).map((solve) => (
+                  <li key={solve.puzzle_id}>
+                    <Link
+                      href={routes.mysteryPuzzle(solve.slug)}
+                      className="flex items-center gap-3 rounded-lg border border-[var(--border)] bg-[var(--muted)]/50 px-3 py-2.5 transition hover:border-red-300 hover:bg-red-50/40"
+                    >
+                      <Fingerprint className="h-4 w-4 shrink-0 text-red-700" />
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-semibold text-slate-800">
+                          CASE {String(solve.case_number).padStart(3, "0")} / {solve.title}
+                        </span>
+                        <span className="mt-0.5 block text-xs text-slate-400">
+                          {new Date(solve.solved_at).toLocaleDateString("ja-JP")} · 難易度 {solve.difficulty}/5 · ヒント {solve.hint_count_used}
+                        </span>
+                      </span>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-slate-400" />
+                    </Link>
+                  </li>
+                ))}
               </ul>
             )}
           </DashboardCard>

@@ -3,8 +3,10 @@ import type { MetadataRoute } from "next";
 export const revalidate = 2592000;
 import { articleHref, getBeautyRankings, getBeautyRegions, getBeautySalons, getCafeItemsByRegion, getCafeRankingsByRegion, getCafeRegions, getContentSections, getGenericItemsBySection, getLatestArticles, getLeisureRankings, getLeisureRegions, getLeisureSpots, getProteinProducts, getProteinRankings, getProteinTargets, getRamenItems, getRamenRankings, getRamenRegions, getTravelAgencies, getTravelHotels, getTravelRankings, getTravelRegions, getTravelServiceRankings, getTravelServiceRegions } from "@/lib/content";
 import { absoluteUrl, routes } from "@/lib/routes";
+import { getMysteryPuzzles } from "@/lib/mystery";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const mysteryPuzzles = await getMysteryPuzzles();
   const [leisureRegions, travelRegionsAll, travelServiceRegionsAll, cafeRegionsAll, beautyRegionsAll, proteinTargetsAll, sections] = await Promise.all([
     getLeisureRegions(),
     getTravelRegions(),
@@ -99,7 +101,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     entertainmentSections.map(async (s) => ({ section: s.sectionSlug, items: await getGenericItemsBySection("entertainment", s.sectionSlug) })),
   );
 
-  const staticRoutes = [routes.home, routes.search, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein, routes.entertainment];
+  const staticRoutes = [routes.home, routes.search, routes.about, routes.contact, routes.privacy, routes.disclaimer, routes.ramen, routes.leisure, routes.travel, routes.travelServices, routes.travelApps, routes.cafe, routes.beauty, routes.protein, routes.entertainment, routes.mystery];
 
   return [
     ...staticRoutes.map((path) => ({ url: absoluteUrl(path), lastModified: new Date("2026-06-01") })),
@@ -138,6 +140,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...proteinRankings.map((r) => ({ url: absoluteUrl(routes.proteinRanking(r.target, r.slug)), lastModified: new Date(r.lastUpdatedAt) })),
     ...entertainmentPairs.map(({ section }) => ({ url: absoluteUrl(routes.entertainmentSection(section)), lastModified: new Date("2026-06-22") })),
     ...entertainmentPairs.flatMap(({ section, items }) => items.map((it) => ({ url: absoluteUrl(it.canonicalPath ?? routes.entertainmentTitle(section, it.slug)), lastModified: new Date(it.lastVerifiedAt || "2026-06-22") }))),
+    ...mysteryPuzzles.map((puzzle) => ({
+      url: absoluteUrl(routes.mysteryPuzzle(puzzle.slug)),
+      lastModified: new Date(puzzle.publishedAt || "2026-07-15"),
+    })),
     ...regionlessItems,
   ];
 }
