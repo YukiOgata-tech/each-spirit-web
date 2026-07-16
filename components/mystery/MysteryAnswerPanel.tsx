@@ -192,7 +192,7 @@ function HintsPanel({
               </button>
               {open && (
                 <div className="mystery-hint-markdown mt-2 border-l-2 border-amber-500 pl-4 text-sm text-stone-300">
-                  <MarkdownRenderer markdown={hint.bodyMd} />
+                  <MarkdownRenderer markdown={hint.bodyMd} unoptimizedImages />
                   {hint.penaltyLabel && <p className="mt-2 font-mono text-[11px] text-stone-500">{hint.penaltyLabel}</p>}
                 </div>
               )}

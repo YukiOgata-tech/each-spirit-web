@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -17,6 +16,7 @@ import {
 } from "lucide-react";
 import { MysteryAnswerPanel } from "@/components/mystery/MysteryAnswerPanel";
 import { MysteryContentRenderer } from "@/components/mystery/MysteryContentRenderer";
+import { MysteryImage } from "@/components/mystery/MysteryImage";
 import { MysteryDifficulty } from "@/components/mystery/MysteryPuzzleCard";
 import {
   getMysteryPuzzle,
@@ -73,7 +73,7 @@ export default async function MysteryPuzzlePage({ params }: PageProps) {
   return (
     <div className="mystery-theme min-h-screen bg-[#151514] text-stone-100">
       <section className="relative min-h-[430px] overflow-hidden border-b border-stone-700" aria-labelledby="case-title">
-        <Image
+        <MysteryImage
           src={puzzle.heroImageUrl || "/mystery/mystery-hero.webp"}
           alt="暗号盤と調査資料が置かれた机"
           fill

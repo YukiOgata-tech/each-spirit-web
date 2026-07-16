@@ -122,6 +122,8 @@ DB制約により、`check_only` は `form` でのみ使用できる。`staged` 
 
 カスタム問題の本文やメタデータはDBに保持できるが、専用Reactコンポーネントの変更にはアプリのデプロイが必要となる。
 
+カスタムレンダラーには `puzzle` と `closed` が渡される。`puzzle.heroImageUrl` と `puzzle.attachments[].fileUrl` にはSupabase Storageの公開URLを設定できるため、カスタム問題でも画像URLをコンポーネントへ固定記述する必要はない。
+
 ## 多段階問題
 
 多段階表示は `components/mystery/StagedMysteryRunner.tsx` が担当する。
@@ -256,6 +258,39 @@ each-spirit:mystery-stage:{slug}
 
 管理者は `/account/storage` の自由パスモードで `mystery-assets` を選択し、画像、PDF、音声、テキスト、ZIPをアップロードできる。
 
+## 画像配信
+
+謎解きコンテンツ内の画像はVercel Image Optimizationを使用しない。
+
+- 一覧・詳細のヒーロー、問題カード、カスタム資料は `MysteryImage` を使用する。
+- `MysteryImage` は `next/image` に常に `unoptimized` を設定する。
+- `next/image` のレイアウト制御、`fill`、`sizes`、lazy loadingは引き続き使用する。
+- Markdown問題本文、ヒント、多段階本文は `MarkdownRenderer` に `unoptimizedImages` を渡す。
+- 通常のMarkdown画像以外で使用されるHTML `img` もImage Optimizationを通らない。
+- この設定は謎解きコンテンツ内だけに適用し、サイト全体の `next/image` 設定は変更しない。
+
+現在の第一問は、ヒーロー画像1件と19件の資料画像がすべてWebPである。
+
+第二問以降の問題画像はSupabase Storageの `mystery-assets` bucketへWebPを主体に保存する。object pathは問題slugを先頭に置く。
+
+```text
+{slug}/hero.webp
+{slug}/evidence/01.webp
+{slug}/evidence/02.webp
+{slug}/attachments/{filename}
+```
+
+公開URLは次の形式になる。
+
+```text
+https://{project-ref}.supabase.co/storage/v1/object/public/mystery-assets/{slug}/{path}
+```
+
+- ヒーローは完全な公開URLを `mystery_puzzles.hero_image_url` に保存する。
+- Markdown本文内の画像は完全な公開URLを `body_md` に記述する。
+- 別枠の資料は完全な公開URLを `mystery_attachments.file_url` に保存する。
+- カスタム問題は `puzzle.attachments` から同じ公開URLを受け取れる。
+
 ## 現在の公開問題
 
 Supabaseに登録されている公開問題は1件。
@@ -314,6 +349,7 @@ answer_policy = official | check_only
 | `app/mystery/page.tsx` | 一覧ページ |
 | `app/mystery/[slug]/page.tsx` | 詳細ページ |
 | `components/mystery/MysteryPuzzleCard.tsx` | 一覧カード |
+| `components/mystery/MysteryImage.tsx` | `unoptimized` を強制する謎解き専用画像ラッパー |
 | `components/mystery/MysteryContentRenderer.tsx` | 表示モデルの分岐、カスタムレジストリ |
 | `components/mystery/MysteryAnswerPanel.tsx` | ヒント、ログイン判定、3種類の回答UI |
 | `components/mystery/StagedMysteryRunner.tsx` | 多段階取得・回答・sessionStorage進行 |

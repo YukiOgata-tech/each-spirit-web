@@ -4,8 +4,13 @@ import { StagedMysteryRunner } from "@/components/mystery/StagedMysteryRunner";
 import { UndatedArchiveEvidence } from "@/components/mystery/UndatedArchiveEvidence";
 import type { MysteryPuzzle } from "@/lib/mystery";
 
-const customMysteryRenderers: Record<string, ComponentType> = {
-  undated_archive_v1: UndatedArchiveEvidence,
+export type MysteryCustomRendererProps = {
+  puzzle: MysteryPuzzle;
+  closed: boolean;
+};
+
+const customMysteryRenderers: Record<string, ComponentType<MysteryCustomRendererProps>> = {
+  undated_archive_v1: () => <UndatedArchiveEvidence />,
 };
 
 export function MysteryContentRenderer({ puzzle, closed }: { puzzle: MysteryPuzzle; closed: boolean }) {
@@ -17,13 +22,13 @@ export function MysteryContentRenderer({ puzzle, closed }: { puzzle: MysteryPuzz
     <>
       {puzzle.bodyMd && (
         <div className="mystery-markdown mt-8">
-          <MarkdownRenderer markdown={puzzle.bodyMd} />
+          <MarkdownRenderer markdown={puzzle.bodyMd} unoptimizedImages />
         </div>
       )}
 
       {puzzle.contentModel === "custom" && (
         CustomRenderer
-          ? <CustomRenderer />
+          ? <CustomRenderer puzzle={puzzle} closed={closed} />
           : <p className="mt-8 border-l-2 border-red-700 pl-4 text-sm text-stone-600">専用資料を表示できません。</p>
       )}
 

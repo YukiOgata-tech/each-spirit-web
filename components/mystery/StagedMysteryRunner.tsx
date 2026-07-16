@@ -154,7 +154,7 @@ export function StagedMysteryRunner({ slug, closed }: { slug: string; closed: bo
               <p className="font-mono text-[10px] font-bold text-stone-500">STAGE {String(stage.stageNumber).padStart(2, "0")}</p>
               <h3 className="mt-1 text-lg font-black text-stone-900">{stage.title}</h3>
               <div className="mystery-markdown mt-4">
-                <MarkdownRenderer markdown={stage.bodyMd} />
+                <MarkdownRenderer markdown={stage.bodyMd} unoptimizedImages />
               </div>
             </article>
           );

@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import Image from "next/image";
 import { Fingerprint, Radio, ShieldCheck } from "lucide-react";
+import { MysteryImage } from "@/components/mystery/MysteryImage";
 import { MysteryPuzzleCard } from "@/components/mystery/MysteryPuzzleCard";
 import { getMysteryPuzzles } from "@/lib/mystery";
 import { absoluteUrl, routes } from "@/lib/routes";
@@ -25,7 +25,7 @@ export default async function MysteryIndexPage() {
   return (
     <div className="mystery-theme min-h-screen bg-[#151514] text-stone-100">
       <section className="relative min-h-[390px] overflow-hidden border-b border-stone-700" aria-labelledby="mystery-title">
-        <Image src="/mystery/mystery-hero.webp" alt="暗号盤と日本地図が置かれた調査机" fill priority sizes="100vw" className="object-cover object-center" />
+        <MysteryImage src="/mystery/mystery-hero.webp" alt="暗号盤と日本地図が置かれた調査机" fill priority sizes="100vw" className="object-cover object-center" />
         <div className="absolute inset-0 bg-black/45" />
         <div className="relative mx-auto flex min-h-[390px] w-[min(1180px,calc(100%-40px))] items-center py-12 max-sm:w-[calc(100%-24px)]">
           <div className="max-w-xl">

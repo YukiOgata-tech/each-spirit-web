@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { MysteryImage } from "@/components/mystery/MysteryImage";
 
 type EvidenceItem = {
   archiveId: string;
@@ -264,7 +264,7 @@ export function UndatedArchiveEvidence() {
             data-text-side={item.textSide}
           >
             <div className="mystery-evidence-media">
-              <Image
+              <MysteryImage
                 src={item.image}
                 alt={item.imageAlt}
                 fill

@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Clock3, Fingerprint, Radio, Users } from "lucide-react";
+import { MysteryImage } from "@/components/mystery/MysteryImage";
 import { mysteryAnswerMethodLabel, type MysteryPuzzleSummary } from "@/lib/mystery";
 import { routes } from "@/lib/routes";
 
@@ -19,7 +19,7 @@ export function MysteryPuzzleCard({ puzzle, priority = false }: { puzzle: Myster
     <article className="mystery-case-card group">
       <Link href={routes.mysteryPuzzle(puzzle.slug)} className="grid h-full md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
         <div className="relative min-h-52 overflow-hidden bg-stone-900">
-          <Image
+          <MysteryImage
             src={puzzle.heroImageUrl || "/mystery/mystery-hero.webp"}
             alt=""
             fill

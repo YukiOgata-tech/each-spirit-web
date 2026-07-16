@@ -253,10 +253,12 @@ export function MarkdownRenderer({
   markdown,
   affiliateContext,
   renderAffiliateCard,
+  unoptimizedImages = false,
 }: {
   markdown: string;
   affiliateContext?: MarkdownAffiliateContext;
   renderAffiliateCard?: (fields: MarkdownFields, context?: MarkdownAffiliateContext) => ReactNode;
+  unoptimizedImages?: boolean;
 }) {
   const blocks = stripFrontmatter(markdown).split(/\n\n+/).map((block) => block.trim()).filter(Boolean);
   const headings = getMarkdownHeadings(markdown);
@@ -449,7 +451,7 @@ export function MarkdownRenderer({
           return (
             <figure key={index} className="overflow-hidden rounded-lg border border-slate-200 bg-slate-50">
               <ImageLightbox src={image.src} alt={image.alt}>
-                <Image src={image.src} alt={image.alt} width={1200} height={800} unoptimized={shouldUnoptimizeImage(image.src)} className="h-auto w-full object-cover" />
+                <Image src={image.src} alt={image.alt} width={1200} height={800} unoptimized={unoptimizedImages || shouldUnoptimizeImage(image.src)} className="h-auto w-full object-cover" />
               </ImageLightbox>
               {(image.caption || image.alt) && (
                 <figcaption className="px-4 py-3 text-sm leading-6 text-slate-600">{image.caption || image.alt}</figcaption>
