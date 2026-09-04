@@ -17,10 +17,11 @@ export function SiteFooter() {
           <div className="mb-3 flex items-center gap-3">
             <span className="grid h-9 w-9 place-items-center overflow-hidden rounded-md bg-white">
               <Image
-                src="/brand/each-spirit-mark.png"
+                src="/brand/each-spirit-mark-96.webp"
                 alt=""
                 width={36}
                 height={36}
+                unoptimized
                 className="h-8 w-8 object-contain"
               />
             </span>

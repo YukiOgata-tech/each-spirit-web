@@ -39,12 +39,13 @@ export default function NotFoundPage() {
               <div className="flex items-center gap-2">
                 <span className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-md bg-white shadow-sm ring-1 ring-slate-200 sm:h-10 sm:w-10">
                   <Image
-                    src="/brand/each-spirit-mark.png"
+                    src="/brand/each-spirit-mark-96.webp"
                     alt=""
                     width={40}
                     height={40}
                     className="h-8 w-8 object-contain sm:h-9 sm:w-9"
                     priority
+                    unoptimized
                   />
                 </span>
                 <span>

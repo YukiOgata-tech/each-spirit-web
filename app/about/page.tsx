@@ -154,6 +154,7 @@ function MemberProfile({ member, index }: { member: Member; index: number }) {
             fill
             className="object-contain"
             sizes="(max-width: 640px) calc(100vw - 56px), 220px"
+            unoptimized
           />
         </div>
         <span className="absolute left-3 top-3 text-xs font-black text-white/55">0{index}</span>
